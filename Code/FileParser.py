@@ -5,41 +5,41 @@ Created on Thu Oct 31 15:28:47 2019
 @author: ucasbwh
 """
 
-### Script to process files into the standard csv file format. 
+### Master script that calls other functions. 
 
 import glob
 import os
 import Rover
+import HaImageProc
+import ImageRAWtoBrowse
 
-# Pick folder of interest
+# Select Folder to Process
 TOP_DIR = input("Type the path to the folder where the RAW log files are stored: ")
-#TOP_DIR = r"C:\Users\ucasbwh\OneDrive - University College London\PanCam Documents\Rover Level Testing\Data\190809 - PAN_FIT_01"
 
 ## Search for useful files
-FILT_DIR = "\**\STDRawOcds*.csv"
+FILT_DIR = r"\**\STDRawOcds*.csv"
 ROVER_TM = glob.glob(TOP_DIR + FILT_DIR, recursive=True)
 print("Rover TM CSV Files Found: " + str(len(ROVER_TM)))
 
-FILT_DIR = "\**\STDChrono*.csv"
+FILT_DIR = r"\**\STDChrono*.csv"
 ROVER_TC = glob.glob(TOP_DIR + FILT_DIR, recursive=True)
 print("Rover TC CSV Files Found: " + str(len(ROVER_TC)))
 
-FILT_DIR = "\**\*.ha"
+FILT_DIR = r"\**\*.ha"
 ROVER_HA = glob.glob(TOP_DIR + FILT_DIR, recursive=True)
 print("Rover .ha Files Found: " + str(len(ROVER_HA)))
 
-FILT_DIR = "\**\*HK*.txt"
+FILT_DIR = r"\**\*HK*.txt"
 LV_TM = glob.glob(TOP_DIR + FILT_DIR, recursive=True)
 print("LabView TM Files Found: " + str(len(LV_TM)))
 
-FILT_DIR = "\**\RMAP_CMD*.txt"
+FILT_DIR = r"\**\RMAP_CMD*.txt"
 LV_TC = glob.glob(TOP_DIR + FILT_DIR, recursive=True)
 print("LabView TC Files Found: " + str(len(LV_TC)))
 
-FILT_DIR = "\**\*PSU*.txt"
+FILT_DIR = r"\**\*PSU*.txt"
 LV_PSU = glob.glob(TOP_DIR + FILT_DIR, recursive=True)
 print("LabView PSU Files Found: " + str(len(LV_PSU)))
-
 
 ## Test if processed directory folder exists, if not create it.
 PROC_DIR = os.path.join(TOP_DIR, "PROC")
@@ -56,3 +56,10 @@ if len(ROVER_TM) != 0:
 ## Process files found
 if len(ROVER_TC) != 0:
     Rover.TC_convert(ROVER_TC, PROC_DIR)
+
+if len(ROVER_HA) != 0:
+    HaImageProc.HaImageProc(ROVER_HA, PROC_DIR)
+    ImageGen = True
+
+if ImageGen:
+    ImageRAWtoBrowse.Img_RAW_Browse(PROC_DIR)

@@ -22,7 +22,6 @@ def TM_convert(TMfiles, PROC_DIR):
     # Read CSV files and parse
     for file in TMfiles:
         DT = pd.read_csv(file, sep=';', header=0, index_col=False)
-        print("DT size: ", DT.size)
         DL = DT[DT['NAME'].str.contains("AB.TM.TM_RMI00040")]
         if not DL.empty:
             DG = DL.RAW_DATA.apply(lambda x: x[38:-4])
@@ -33,8 +32,7 @@ def TM_convert(TMfiles, PROC_DIR):
             DF = DF.append(DG, ignore_index=True)
             
         # Rover HK both low and high speed
-        DP = DT.loc[ (DT['NAME'] == "AB.TM.MRSP8001") | (DT['NAME'] == "AB.TM.MRSP8002")]
-        #DP = DT.loc[(DT.APID == '996') & ((DT.DISCRIMINATOR == '1') | (DT.DISCRIMINATOR == '2'))].copy()
+        DP = DT[ (DT['NAME'] == "AB.TM.MRSP8001") | (DT['NAME'] == "AB.TM.MRSP8002")].copy()
         if not DP.empty:
             DG = DP.RAW_DATA.apply(lambda x: x[2:])
             DG = DG.apply(lambda x: bytearray.fromhex(x))
@@ -56,7 +54,7 @@ def TM_convert(TMfiles, PROC_DIR):
             DRS = DRS.append(DP, ignore_index=True)
 
         # Rover HK Thermistors Only contained within low speed HK
-        DK = DT.loc[DT['NAME'] == "AB.TM.MRSP8001"]
+        DK = DT.loc[DT['NAME'] == "AB.TM.MRSP8001"].copy()
         if not DK.empty:
             DW = DK.RAW_DATA.apply(lambda x: x[2:])
             DW = DW.apply(lambda x: bytearray.fromhex(x))
@@ -75,13 +73,15 @@ def TM_convert(TMfiles, PROC_DIR):
     print("Number of Rover Status Entries found: ", DRS.shape[0])
     print("Number of Rover Temperature Entries found: ", DRT.shape[0])
 
-    DF.to_pickle(os.path.join(PROC_DIR, "TM.pickle"))
+    write_dts = DF['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
+
+    DF.to_pickle(os.path.join(PROC_DIR, write_dts + "TM.pickle"))
     print("PanCam TM pickled.")
 
-    DRS.to_pickle(os.path.join(PROC_DIR, "RoverStatus.pickle"))
+    DRS.to_pickle(os.path.join(PROC_DIR, write_dts + "RoverStatus.pickle"))
     print("Rover Status TM pickled.")
 
-    DRT.to_pickle(os.path.join(PROC_DIR, "RoverTemps.pickle"))
+    DRT.to_pickle(os.path.join(PROC_DIR, write_dts + "RoverTemps.pickle"))
     print("Rover Temperatures TM pickled.")
     
 
@@ -105,7 +105,8 @@ def TC_convert(TCfiles, PROC_DIR):
         
     print("Number of PanCam TCs found: ", TC.size)
     
-    TC.to_pickle(os.path.join(PROC_DIR, "TC.pickle"))
+    write_dts = TC['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
+    TC.to_pickle(os.path.join(PROC_DIR, write_dts + "TC.pickle"))
     print("Rover TC pickled")        
     
     

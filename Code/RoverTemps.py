@@ -12,7 +12,8 @@ from matplotlib import gridspec
 import pandas as pd
 import os
 
-PROC_DIR =      r"C:\Users\ucasbwh\OneDrive - University College London\PanCam Documents\Rover Level Testing\Data\191107 - TVAC TP02 Testing\20191106_1734_ERJPMW_CRUISE_CHECKOUTS\PROC" 
+PROC_DIR = input("Type the path to the folder where the PROC folder is stored: ")
+#PROC_DIR =      r"C:\Users\ucasbwh\OneDrive - University College London\PanCam Documents\Rover Level Testing\Data\191107 - TVAC TP02 Testing\20191106_1734_ERJPMW_CRUISE_CHECKOUTS\PROC" 
 
 RVTM = pd.read_pickle(os.path.join(PROC_DIR, "RoverTemps.pickle"))
 print(RVTM['RAW_PIU_T'][0:20])
