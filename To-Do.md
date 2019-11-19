@@ -17,3 +17,5 @@
 -    A general log processing output that has all the text statements I've created stored in a log file.
 -    Break into powered chunks that can be easily navigated
 -    Also look for PanCam service errors such as 5,2
+-   Integrate with git and visual code
+-   Setup PEP8 tools and ensure code is up to standard. 
