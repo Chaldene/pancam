@@ -11,12 +11,17 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import pandas as pd
 import os
+import glob
+from pandas.plotting import register_matplotlib_converters
 
-PROC_DIR = input("Type the path to the folder where the PROC folder is stored: ")
-#PROC_DIR =      r"C:\Users\ucasbwh\OneDrive - University College London\PanCam Documents\Rover Level Testing\Data\191107 - TVAC TP02 Testing\20191106_1734_ERJPMW_CRUISE_CHECKOUTS\PROC" 
+TOP_DIR = input("Type the path to the folder where the PROC folder is stored: ")
 
-RVTM = pd.read_pickle(os.path.join(PROC_DIR, "RoverTemps.pickle"))
-print(RVTM['RAW_PIU_T'][0:20])
+## Search for Rover Temp Files
+FILT_DIR = r"\*RoverTemps.pickle"
+FILE = glob.glob(TOP_DIR + FILT_DIR, recursive=True)
+RVTM = pd.read_pickle(FILE[0])
+
+print("Rover Temp File Found")
 
 gs = gridspec.GridSpec(2, 1, height_ratios=[1, 1])
 f = plt.figure()
