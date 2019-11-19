@@ -1,6 +1,6 @@
 # Prioties
 
--   Make pickle files have data and time tags
+-   Make pickle files have data and time tags error with first file created. 
 -   Go through File Parser and make consolidated
 
 ## Nice to haves
