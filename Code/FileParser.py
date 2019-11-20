@@ -7,59 +7,59 @@ Created on Thu Oct 31 15:28:47 2019
 
 ### Master script that calls other functions. 
 
-import glob
-import os
 import Rover
 import HaImageProc
 import ImageRAWtoBrowse
+from pathlib import Path
+from natsort import natsorted, ns
 
 # Select Folder to Process
-TOP_DIR = input("Type the path to the folder where the RAW log files are stored: ")
+Top_DIR = Path(input("Type the path to the folder where the RAW log files are stored: "))
 
 ## Search for useful files
-FILT_DIR = r"\**\STDRawOcds*.csv"
-ROVER_TM = glob.glob(TOP_DIR + FILT_DIR, recursive=True)
+FILT_DIR = "STDRawOcds*.csv"
+ROVER_TM = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
 print("Rover TM CSV Files Found: " + str(len(ROVER_TM)))
 
-FILT_DIR = r"\**\STDChrono*.csv"
-ROVER_TC = glob.glob(TOP_DIR + FILT_DIR, recursive=True)
+FILT_DIR = "STDChrono*.csv"
+ROVER_TC = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
 print("Rover TC CSV Files Found: " + str(len(ROVER_TC)))
 
-FILT_DIR = r"\**\*.ha"
-ROVER_HA = glob.glob(TOP_DIR + FILT_DIR, recursive=True)
+FILT_DIR = "*ha"
+ROVER_HA = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
 print("Rover .ha Files Found: " + str(len(ROVER_HA)))
 
-FILT_DIR = r"\**\*HK*.txt"
-LV_TM = glob.glob(TOP_DIR + FILT_DIR, recursive=True)
+FILT_DIR = "*HK*.txt"
+LV_TM = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
 print("LabView TM Files Found: " + str(len(LV_TM)))
 
-FILT_DIR = r"\**\RMAP_CMD*.txt"
-LV_TC = glob.glob(TOP_DIR + FILT_DIR, recursive=True)
+FILT_DIR = "RMAP_CMD*.txt"
+LV_TC = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
 print("LabView TC Files Found: " + str(len(LV_TC)))
 
-FILT_DIR = r"\**\*PSU*.txt"
-LV_PSU = glob.glob(TOP_DIR + FILT_DIR, recursive=True)
+FILT_DIR = "*PSU*.txt"
+LV_PSU = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
 print("LabView PSU Files Found: " + str(len(LV_PSU)))
 
 ## Test if processed directory folder exists, if not create it.
-PROC_DIR = os.path.join(TOP_DIR, "PROC")
-if os.path.isdir(PROC_DIR):
+Proc_DIR = Top_DIR / 'PROC'
+if Proc_DIR.is_dir():
     print("-'Processing' Directory already exists")
 else:
     print("Generating 'Processing' directory")
-    os.mkdir(PROC_DIR)
+    PROC_DIR.mkdir()
 
 ## Process files found
 if len(ROVER_TM) != 0:
-    Rover.TM_convert(ROVER_TM,PROC_DIR)
+    Rover.TM_convert(ROVER_TM,Proc_DIR)
 
 ## Process files found
 if len(ROVER_TC) != 0:
-    Rover.TC_convert(ROVER_TC, PROC_DIR)
+    Rover.TC_convert(ROVER_TC, Proc_DIR)
 
 if len(ROVER_HA) != 0:
-    HaImageProc.HaImageProc(ROVER_HA, PROC_DIR)
+    HaImageProc.HaImageProc(ROVER_HA, Proc_DIR)
     ImageGen = True
 
 if ImageGen:
-    ImageRAWtoBrowse.Img_RAW_Browse(PROC_DIR)
+    ImageRAWtoBrowse.Img_RAW_Browse(Proc_DIR)

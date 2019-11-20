@@ -10,16 +10,15 @@ Created on Sun Nov 17 20:38 2019
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import pandas as pd
-import os
-import glob
 from pandas.plotting import register_matplotlib_converters
+from pathlib import Path
 
-TOP_DIR = input("Type the path to the folder where the PROC folder is stored: ")
+Top_DIR = Path(input("Type the path to the folder where the PROC folder is stored: "))
 
 ## Search for Rover Temp Files
-FILT_DIR = r"\*RoverTemps.pickle"
-FILE = glob.glob(TOP_DIR + FILT_DIR, recursive=True)
-RVTM = pd.read_pickle(FILE[0])
+FILT_DIR = "*RoverTemps.pickle"
+PikFile = sorted(Top_DIR.rglob(FILT_DIR))
+RVTM = pd.read_pickle(PikFile[0])
 
 print("Rover Temp File Found")
 
@@ -40,4 +39,3 @@ plt.setp(a0.get_xticklabels(), visible=False)
 
 plt.show()
 print("plot complete")
-

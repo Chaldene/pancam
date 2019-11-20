@@ -26,3 +26,4 @@
 -   Integrate with git and visual code
 -   Make pickle files have data and time tags error with first file created.
 -   Go through File Parser and make consolidated up to image processing
+-   For reading STDRaw files order is not sequential but 0, 1, 10, 11, 2, 20 etc. 

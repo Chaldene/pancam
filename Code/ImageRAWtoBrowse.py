@@ -7,8 +7,7 @@ Created on Thu Nov 14 12:01:04 2019
 
 ### Convert pci_raw to viewable .tiff and create appropriate label
 
-import glob
-import os
+from pathlib import Path
 import numpy as np
 from PIL import Image
 import json
@@ -25,15 +24,15 @@ def Img_RAW_Browse(PROC_DIR):
     print("---Generating Image Browse Products from RAW Images")
 
     ## Search for pci_raw files in the process directory
-    FILT_DIR = r"\IMG_RAW\*.pci_raw"
-    RAW_FILES = glob.glob(PROC_DIR + FILT_DIR, recursive=True)
+    FILT_DIR = "IMG_RAW\*.pci_raw"
+    RAW_FILES = sorted(PROC_DIR.rglob(FILT_DIR))
     print("Number of Rover RAW processed images found: " + str(len(RAW_FILES)))
 
     if len(RAW_FILES) == 0:
         print("No complete Rover RAW images found")
         print("Searching for LabView EGSE files")    
-        FILT_DIR = r"\IMG_RAW\*.bin"
-        RAW_FILES = glob.glob(PROC_DIR + FILT_DIR, recursive=True)
+        FILT_DIR = "IMG_RAW\*.bin"
+        RAW_FILES = sorted(PROC_DIR.rglob(FILT_DIR))
         print("Number of LabView binary images found: " + str(len(RAW_FILES)))
 
     if len(RAW_FILES) == 0:
@@ -46,29 +45,28 @@ def Img_RAW_Browse(PROC_DIR):
             img_rawheader = decodeRAW_ImgHDR(file.read(48))        
             raw_data = np.fromfile(file, dtype='>u2')
             
-            img_rawheader['RAW_Source'] = os.path.basename(curFile)    
+            img_rawheader['RAW_Source'] = curFile.stem
                         
             ig = raw_data.reshape(1024,1024)
             ig2 = ig*(2**8)/(2 **10-1)
             img = Image.fromarray(ig*2**6, mode='I;16')
             
             # Create directory for binary file
-            BRW_DIR = os.path.join(PROC_DIR, "IMG_Browse")
-            if not os.path.isdir(BRW_DIR):
+            BRW_DIR = PROC_DIR / "IMG_Browse"
+            if not BRW_DIR.is_dir():
                 print("Generating 'Processing' directory")
-                os.mkdir(BRW_DIR)
+                BRW_DIR.mkdir()
                 
             # Generate filename
             write_filename = LID_Browse(img_rawheader, 'FM')
-            file_dt = os.path.basename(curFile).split("_")
+            file_dt = (curFile.stem.split("_"))
             write_filename += file_dt[0] + "-" + file_dt[1] + "Z"
-            #write_filename = os.path.basename(curFile).split(".",1)[0] #Old name based on source
             
             # Create .tiff thumbnail
-            write_file = os.path.join(BRW_DIR, write_filename + ".tiff")
-            if os.path.isfile(write_file):
-                os.remove(write_file)
-                print("Deleting file: ", os.path.basename(write_file))
+            write_file = BRW_DIR / (write_filename + ".tiff")
+            if write_file.exists():
+                write_file.unlink()
+                print("Deleting file: ", write_file.stem)
                 
             if img_rawheader['Cam'] == 1:
                 Br_img = img = img.rotate(angle=-90)
@@ -83,14 +81,14 @@ def Img_RAW_Browse(PROC_DIR):
                 ImgRawBrError("Warning invalid CAM number")
                 
             Br_img.save(write_file)
-            print("Creating .tiff: ", os.path.basename(write_file))
+            print("Creating .tiff: ", write_file.stem)
             
             # Write dictionary to a json file (for simplicity)
-            write_file = os.path.join(BRW_DIR, write_filename + ".json")
+            write_file = BRW_DIR / (write_filename + ".json")
             ancil = json.dumps(img_rawheader, separators=(',\n', ': '))
-            if os.path.isfile(write_file):
-                os.remove(write_file)
-                print("Deleting file: ", os.path.basename(write_file))
+            if write_file.exists():
+                write_file.unlink()
+                print("Deleting file: ", write_file.stem)
             with open(write_file, 'w') as f:
                 f.write(ancil)
     
@@ -99,6 +97,6 @@ def Img_RAW_Browse(PROC_DIR):
 
     
 if __name__ == "__main__":
-    DIR= input("Type the path to the folder where the PROC folder is located: ")
+    DIR= Path(input("Type the path to the folder where the PROC folder is located: "))
     
     Img_RAW_Browse(DIR)

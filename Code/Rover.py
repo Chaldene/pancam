@@ -8,9 +8,9 @@ Created on Thu Oct 31 17:18:02 2019
 ### File for generating Rover TM csv in generic python format
 
 import pandas as pd
-import os
+from pathlib import Path
 from bitstruct import unpack_from as upf
-import binascii  # Used if wanting to output ascii to terminal
+#import binascii  # Used if wanting to output ascii to terminal
 
 def TM_convert(TMfiles, PROC_DIR):
    
@@ -75,13 +75,13 @@ def TM_convert(TMfiles, PROC_DIR):
 
     write_dts = DF['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
 
-    DF.to_pickle(os.path.join(PROC_DIR, write_dts + "TM.pickle"))
+    DF.to_pickle(PROC_DIR / (write_dts + "TM.pickle") )
     print("PanCam TM pickled.")
 
-    DRS.to_pickle(os.path.join(PROC_DIR, write_dts + "RoverStatus.pickle"))
+    DRS.to_pickle(PROC_DIR / (write_dts + "RoverStatus.pickle") )
     print("Rover Status TM pickled.")
 
-    DRT.to_pickle(os.path.join(PROC_DIR, write_dts + "RoverTemps.pickle"))
+    DRT.to_pickle(PROC_DIR / (write_dts + "RoverTemps.pickle") )
     print("Rover Temperatures TM pickled.")
     
 
@@ -106,7 +106,7 @@ def TC_convert(TCfiles, PROC_DIR):
     print("Number of PanCam TCs found: ", TC.size)
     
     write_dts = TC['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
-    TC.to_pickle(os.path.join(PROC_DIR, write_dts + "TC.pickle"))
+    TC.to_pickle(PROC_DIR / (write_dts  + "TC.pickle") )
     print("Rover TC pickled")        
     
     
