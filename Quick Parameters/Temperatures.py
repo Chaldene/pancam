@@ -118,9 +118,7 @@ def Temperatures(PROC_DIR):
     f.set_figwidth(9)
     f.tight_layout()
     f.show()
-    
-    
-    
+      
     ## Raw Temperatures and heaters
     #Start plot
     p1 = df['DT']

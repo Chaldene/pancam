@@ -18,16 +18,17 @@ def TM_convert(TMfiles, PROC_DIR):
     DF = pd.DataFrame()
     DRS = pd.DataFrame()
     DRT = pd.DataFrame()
+    DG = pd.DataFrame()
 
     # Read CSV files and parse
     for file in TMfiles:
         DT = pd.read_csv(file, sep=';', header=0, index_col=False)
         DL = DT[DT['NAME'].str.contains("AB.TM.TM_RMI00040")]
         if not DL.empty:
-            DG = DL.RAW_DATA.apply(lambda x: x[38:-4])
-            DG = DG.apply(lambda x: bytearray.fromhex(x))
-            DG = DG.apply(lambda x: pd.Series(list(x)))
-            DG = DG.astype(pd.Int64Dtype())
+            DG['RAW'] = DL.RAW_DATA.apply(lambda x: x[38:-4])
+            #DG = DG.apply(lambda x: bytearray.fromhex(x))
+            #DG = DG.apply(lambda x: pd.Series(list(x)))
+            #DG = DG.astype(pd.Int64Dtype())
             DG['DT'] = pd.to_datetime(DL['GROUND_REFERENCE_TIME'], format='%d/%m/%Y %H:%M:%S.%f')
             DF = DF.append(DG, ignore_index=True)
             
@@ -75,7 +76,7 @@ def TM_convert(TMfiles, PROC_DIR):
 
     write_dts = DF['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
 
-    DF.to_pickle(PROC_DIR / (write_dts + "TM.pickle") )
+    DF.to_pickle(PROC_DIR / (write_dts + "RAW_TM.pickle") )
     print("PanCam TM pickled.")
 
     DRS.to_pickle(PROC_DIR / (write_dts + "RoverStatus.pickle") )
@@ -106,7 +107,7 @@ def TC_convert(TCfiles, PROC_DIR):
     print("Number of PanCam TCs found: ", TC.size)
     
     write_dts = TC['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
-    TC.to_pickle(PROC_DIR / (write_dts  + "TC.pickle") )
+    TC.to_pickle(PROC_DIR / (write_dts  + "RAW_TC.pickle") )
     print("Rover TC pickled")        
     
     

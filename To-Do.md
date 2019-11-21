@@ -1,6 +1,7 @@
 # Prioties
 -   Generate HK Ess and Non-Ess RAW
 -   Generate HK Ess and Non-Ess Calibrated for Key Variables
+-   Update decodeRAW_ImgHDR with new function
 -   Plot these results. 
 
 ## Nice to haves

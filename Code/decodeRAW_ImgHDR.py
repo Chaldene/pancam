@@ -17,6 +17,18 @@ def decodeRAW_ImgHDR(header_bytes):
     if len(header_bytes) != 48:
         raise decodeRAW_IMGHDR_Error('Img header bytes not 48')
     
+    # Byte 0
+    img_info['Block_Type'] = PandUPF(header_bytes, 'u1', 0, 0)
+    img_info['TM_Criticality'] = PandUPF(header_bytes, 'u2', 0, 1)
+    img_in['MMS_Dest'] = PandUPF(header_bytes, 'u1', 0, 3)
+    img_in['Instr_ID'] = PandUPF(header_bytes, 'u4', 0, 4)
+    #Byte 1
+    img_in['TM_Type_ID'] = PandUPF(header_bytes, 'u6', 0, 8)
+    img_in['Seq_Flag'] = PandUPF(header_bytes, 'u2', 0, 14)
+    #Byte 2-7
+    img_in['Pkt_CUC'] = PandUPF(header_bytes, 'u48', 0, 16)
+    #Byte 8-10
+    img_in['Data_Len'] = PandUPF(header_bytes, 'u24', 0, 64)
     #Byte 0
     img_info['Block_Type'] = upf('u1', header_bytes, offset=0)[0]
     img_info['TM_Criticality'] = upf('u2', header_bytes, offset=1)[0]

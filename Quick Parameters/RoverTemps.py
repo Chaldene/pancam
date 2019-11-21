@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import pandas as pd
 from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 from pathlib import Path
 
 Top_DIR = Path(input("Type the path to the folder where the PROC folder is stored: "))
@@ -29,6 +30,7 @@ a0 = f.add_subplot(gs[0])
 a1 = f.add_subplot(gs[1], sharex=a0)
 
 a0.plot(RVTM['DT'], RVTM['PIU_T'], '.', label='PIU')
+
 a1.plot(RVTM['DT'], RVTM['DCDC_T'], '.', label='DCDC')
 
 a0.grid(True)
