@@ -1,6 +1,7 @@
 # Prioties
 -   Generate HK Ess and Non-Ess RAW
 -   Generate HK Ess and Non-Ess Calibrated for Key Variables
+-   Identify why there is data duplication in Rover TM '190809 - PAN_FIT_01'
 -   Update decodeRAW_ImgHDR with new function
 -   Plot these results. 
 
