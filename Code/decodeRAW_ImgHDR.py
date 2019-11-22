@@ -49,7 +49,7 @@ def decodeRAW_ImgHDR(header_bytes):
     #Byte 13-16
     img_info['SOL'] = upf('u12', header_bytes, offset=104)[0]
     img_info['Task_ID'] = upf('u7', header_bytes, offset=116)[0]
-    img_info['Task_Run_No'] = upf('u7', header_bytes, offset=123)[0]
+    img_info['Task_RNO'] = upf('u7', header_bytes, offset=123)[0]
     img_info['Cam'] = upf('u2', header_bytes, offset=130)[0]
     img_info['FW'] = upf('u4', header_bytes, offset=132)[0]
     #Byte 17
