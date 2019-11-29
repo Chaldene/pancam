@@ -13,7 +13,7 @@ import math
 import bitstruct
 from collections import namedtuple
 from datetime import datetime
-import os
+from pathlib import Path
 #import binascii  # Used if wanting to output ascii to terminal
 
 class HaReadError(Exception):
@@ -32,14 +32,14 @@ def HaImageProc(ROVER_HA, DIR):
     SCI_PC =  {}
     SCI_IDS = {}
     LDTO = 16 #Offset before TM structure appear
-    write_file = ''
+    write_file = Path()
 
     Sci_Len = (0,)
     written_bytes = 0
 
     for file in ROVER_HA:
         with open(file, 'r') as curFile:
-            print("Reading " + os.path.basename(file))
+            print("Reading " + file.stem)
             
             ## Check header of ha file matches that expected
             HA_HEADER = [next(curFile) for x in range(5)]
@@ -89,7 +89,7 @@ def HaImageProc(ROVER_HA, DIR):
                     else:
                         # Check old length
                         if Sci_Len[0] != written_bytes:
-                            os.rename(write_file, write_file + ".part")
+                            write_file.replace(write_file.with_suffix(".part"))
                             print("Warning missing data")
                             print("Expected Write: ",Sci_Len[0])
                             print("Actual Write: ", written_bytes)
@@ -99,22 +99,22 @@ def HaImageProc(ROVER_HA, DIR):
                         Sci_Len = bitstruct.unpack('u32',PKT_Bin[23:27])
                             
                         # Create directory for binary file
-                        IMG_RAW_DIR = os.path.join(DIR, r"IMG_RAW")
-                        if not os.path.isdir(IMG_RAW_DIR):
+                        IMG_RAW_DIR = DIR / "IMG_RAW"
+                        if not IMG_RAW_DIR.is_dir():
                             print("Generating 'Processing' directory")
-                            os.mkdir(IMG_RAW_DIR)
+                            IMG_RAW_DIR.mkdir()
                                     
                         # Write science data to binary file
                         write_dt = datetime.strptime(PKT_HD[1][16:-1], '%d/%m/%Y %H:%M:%S.%f')
                         write_dts = write_dt.strftime('%y%m%d_%H%M%S_')
                         write_filename = write_dts + str(Sci_ldt_hdr.Unit_ID) + ".pci_raw"
-                        write_file = os.path.join(IMG_RAW_DIR, write_filename)
-                        if os.path.isfile(write_file):
-                            os.remove(write_file)
-                            print("Deleting file: ", os.path.basename(write_file))
+                        write_file = IMG_RAW_DIR / write_filename
+                        if write_file.exists():
+                            write_file.unlink()
+                            print("Deleting file: ", write_file.stem)
                             ### Need to add handling this case and raise exception 
                         with open(write_file, 'wb') as wf:
-                            print("Creating file: ", os.path.basename(write_file))
+                            print("Creating file: ", write_file.stem)
                             wf.write(PKT_Bin[29:-2])
                             written_bytes = len(PKT_Bin[29:-2])
                                     
@@ -163,8 +163,8 @@ def HaImageProc(ROVER_HA, DIR):
 if __name__ == "__main__":
     DIR = input("Type the path to the folder where the .ha log files are stored: ")
     
-    FILT_DIR = r"\**\*.ha"
-    ROVER_HA = glob.glob(DIR + FILT_DIR, recursive=True)
+    FILT_DIR = "\**\*.ha"
+    ROVER_HA = DIR.rglob(FILT_DIR)
     print("Rover .ha Files Found: " + str(len(ROVER_HA)))
     
     if  len(ROVER_HA) != 0:
