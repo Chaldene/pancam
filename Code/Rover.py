@@ -12,7 +12,8 @@ from pathlib import Path
 from bitstruct import unpack_from as upf
 #import binascii  # Used if wanting to output ascii to terminal
 
-def TM_convert(TMfiles, PROC_DIR):
+def TM_extract(TMfiles, PROC_DIR):
+    """Searches for TM with Rover files and creates a binary array of each file found"""
    
     print("---Processing Rover TM Files")    
     DF = pd.DataFrame()
@@ -22,15 +23,13 @@ def TM_convert(TMfiles, PROC_DIR):
 
     # Read CSV files and parse
     for file in TMfiles:
+        print("Reading ", file.name)
         DT = pd.read_csv(file, sep=';', header=0, index_col=False)
-        DL = DT[DT['NAME'].str.contains("AB.TM.TM_RMI00040")]
+        DL = DT[ (DT['NAME'] == "AB.TM.TM_RMI000401") | (DT['NAME'] == "AB.TM_TM_RMI000402")].copy() 
         if not DL.empty:
-            DG['RAW'] = DL.RAW_DATA.apply(lambda x: x[38:-4])
-            #DG = DG.apply(lambda x: bytearray.fromhex(x))
-            #DG = DG.apply(lambda x: pd.Series(list(x)))
-            #DG = DG.astype(pd.Int64Dtype())
-            DG['DT'] = pd.to_datetime(DL['GROUND_REFERENCE_TIME'], format='%d/%m/%Y %H:%M:%S.%f')
-            DF = DF.append(DG, ignore_index=True)
+            DL['RAW'] = DL.RAW_DATA.apply(lambda x: x[38:-4])
+            DL['DT'] = pd.to_datetime(DL['GROUND_REFERENCE_TIME'], format='%d/%m/%Y %H:%M:%S.%f')
+            DF = DF.append(DL[['RAW','DT']], ignore_index=True)
             
         # Rover HK both low and high speed
         DP = DT[ (DT['NAME'] == "AB.TM.MRSP8001") | (DT['NAME'] == "AB.TM.MRSP8002")].copy()
@@ -74,20 +73,24 @@ def TM_convert(TMfiles, PROC_DIR):
     print("Number of Rover Status Entries found: ", DRS.shape[0])
     print("Number of Rover Temperature Entries found: ", DRT.shape[0])
 
-    write_dts = DF['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
+    if DF.shape[0] != 0:    
+        write_dts = DF['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
+        DF.to_pickle(PROC_DIR / (write_dts + "Unproc_TM.pickle") )
+        print("PanCam TM pickled.")
 
-    DF.to_pickle(PROC_DIR / (write_dts + "RAW_TM.pickle") )
-    print("PanCam TM pickled.")
+    if DRS.shape[0] != 0:
+        write_dts = DRS['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
+        DRS.to_pickle(PROC_DIR / (write_dts + "RoverStatus.pickle") )
+        print("Rover Status TM pickled.")
 
-    DRS.to_pickle(PROC_DIR / (write_dts + "RoverStatus.pickle") )
-    print("Rover Status TM pickled.")
-
-    DRT.to_pickle(PROC_DIR / (write_dts + "RoverTemps.pickle") )
-    print("Rover Temperatures TM pickled.")
+    if DRT.shape[0] != 0:
+        write_dts = DRT['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
+        DRT.to_pickle(PROC_DIR / (write_dts + "RoverTemps.pickle") )
+        print("Rover Temperatures TM pickled.")
     
 
 
-def TC_convert(TCfiles, PROC_DIR):
+def TC_extract(TCfiles, PROC_DIR):
     
     print("---Processing Rover TC Files")
     
@@ -99,16 +102,18 @@ def TC_convert(TCfiles, PROC_DIR):
         dp = dt[dt['DESCRIPTION'].str.contains("Pan Cam", na=False) & dt['NAME'].str.contains("CRM", na=False)].copy()
         dm = dp['VARIABLE_PART'].str.split(',', -1, expand=True)
         
-        TC = pd.concat([dp[['NAME', 'DESCRIPTION', 'GROUND_REFERENCE_TIME']], dm.loc[:,9:]], axis=1)
-        TC['DT'] = pd.to_datetime(TC['GROUND_REFERENCE_TIME'], format='%d/%m/%Y %H:%M:%S.%f')
-        TC['ACTION'] = TC['DESCRIPTION'].map(lambda x: x.lstrip('Pan Cam'))
-        TC['LEVEL'] = 1
+        if not dp.empty:
+            TC = pd.concat([dp[['NAME', 'DESCRIPTION', 'GROUND_REFERENCE_TIME']], dm.loc[:,9:]], axis=1)
+            TC['DT'] = pd.to_datetime(TC['GROUND_REFERENCE_TIME'], format='%d/%m/%Y %H:%M:%S.%f')
+            TC['ACTION'] = TC['DESCRIPTION'].map(lambda x: x.lstrip('Pan Cam'))
+            TC['LEVEL'] = 1
         
     print("Number of PanCam TCs found: ", TC.size)
     
-    write_dts = TC['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
-    TC.to_pickle(PROC_DIR / (write_dts  + "RAW_TC.pickle") )
-    print("Rover TC pickled")        
+    if TC.shape[0] !=0:
+        write_dts = TC['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
+        TC.to_pickle(PROC_DIR / (write_dts  + "Unproc_TC.pickle") )
+        print("Rover TC pickled")        
     
     
         
@@ -116,5 +121,5 @@ if __name__ == "__main__":
     TMfiles = [r'C:\Users\ucasbwh\OneDrive - University College London\PanCam Documents\Rover Level Testing\Data\191107 - TVAC TP02 Testing\20191106_1734_ERJPMW_CRUISE_CHECKOUTS\20191106_1734_CRUISE_CHECKOUT-203\STDRawOcdsAnalysis.csv']
     TCfiles = [r"C:\Users\ucasbwh\OneDrive - University College London\PanCam Documents\Rover Level Testing\Data\191107 - TVAC TP02 Testing\20191106_1734_ERJPMW_CRUISE_CHECKOUTS\20191106_1734_CRUISE_CHECKOUT_TMTC-203\STDChronoAnalysis.csv"]
     Dir =      r"C:\Users\ucasbwh\OneDrive - University College London\PanCam Documents\Rover Level Testing\Data\191107 - TVAC TP02 Testing\20191106_1734_ERJPMW_CRUISE_CHECKOUTS\PROC"
-    TM_convert(TMfiles, Dir)
-    TC_convert(TCfiles, Dir)
+    TM_extract(TMfiles, Dir)
+    TC_extract(TCfiles, Dir)

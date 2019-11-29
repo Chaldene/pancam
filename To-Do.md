@@ -1,13 +1,11 @@
 # Prioties
--   Generate HK Ess and Non-Ess RAW
 -   Generate HK Ess and Non-Ess Calibrated for Key Variables
--   Update decodeRAW_ImgHDR with new function
+-   Identify why there is data duplication in Rover TM '190809 - PAN_FIT_01'
 -   Plot these results. 
 
 ## Nice to haves
 -   Generate HK Ess and Non-Ess Calibrated for the rest of the variables
--   Switch from os module to the new python path module
--	Allow functions to check if a valid pickle file is found
+-   Guareenteed way to distinguish between WAC and HRC CRs with just TM
 -	Look into converting into archive database
 -	Is it possible to heavily compress raw data
 -   Set errors between 0 and 1 for a clear view
@@ -28,3 +26,8 @@
 -   Make pickle files have data and time tags error with first file created.
 -   Go through File Parser and make consolidated up to image processing
 -   For reading STDRaw files order is not sequential but 0, 1, 10, 11, 2, 20 etc. 
+-   Generate HK Ess and Non-Ess RAW
+-   Ensure comments label all parameters
+-   Update decodeRAW_ImgHDR with new function
+-   Switch from os module to the new python path module
+-	Allow functions to check if a valid pickle file is found

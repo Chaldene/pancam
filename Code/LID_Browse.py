@@ -31,7 +31,7 @@ def LID_Browse(RawHDR_Dict, Model):
     
     #TaskID, Run Number, Image Number
     LID_str += "{0:0=3d}".format(RawHDR_Dict['Task_ID']) + "_"
-    LID_str += "{0:0=3d}".format(RawHDR_Dict['Task_Run_No']) + "_"
+    LID_str += "{0:0=3d}".format(RawHDR_Dict['Task_RNO']) + "_"
     LID_str += "{0:0=3d}".format(RawHDR_Dict['Img_No']) + "_"
     
     #Temp and Integration time (Uncal for now)

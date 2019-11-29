@@ -6,12 +6,13 @@ Created on Thu Oct 31 15:28:47 2019
 """
 
 ### Master script that calls other functions. 
+from pathlib import Path
+from natsort import natsorted, ns
 
 import Rover
 import HaImageProc
 import ImageRAWtoBrowse
-from pathlib import Path
-from natsort import natsorted, ns
+import decodeRAW_HK
 
 # Select Folder to Process
 Top_DIR = Path(input("Type the path to the folder where the RAW log files are stored: "))
@@ -47,19 +48,23 @@ if Proc_DIR.is_dir():
     print("-'Processing' Directory already exists")
 else:
     print("Generating 'Processing' directory")
-    PROC_DIR.mkdir()
+    Proc_DIR.mkdir()
 
-## Process files found
+## Process primary files found
 if len(ROVER_TM) != 0:
-    Rover.TM_convert(ROVER_TM,Proc_DIR)
+    Rover.TM_extract(ROVER_TM,Proc_DIR)
 
-## Process files found
 if len(ROVER_TC) != 0:
-    Rover.TC_convert(ROVER_TC, Proc_DIR)
+    Rover.TC_extract(ROVER_TC, Proc_DIR)
 
 if len(ROVER_HA) != 0:
-    HaImageProc.HaImageProc(ROVER_HA, Proc_DIR)
-    ImageGen = True
+    ImageGen = HaImageProc.HaImageProc(ROVER_HA, Proc_DIR)
 
-if ImageGen:
+## Process secondary files
+FILT_DIR = "*Unproc_TM.pickle"
+if len(sorted(Proc_DIR.rglob(FILT_DIR))) != 0:
+    decodeRAW_HK.decode(Proc_DIR)
+
+FILT_DIR = "*.raw"
+if len(sorted(Proc_DIR.rglob(FILT_DIR))) != 0:
     ImageRAWtoBrowse.Img_RAW_Browse(Proc_DIR)
