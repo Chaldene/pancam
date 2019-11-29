@@ -5,6 +5,7 @@
 
 ## Nice to haves
 -   Generate HK Ess and Non-Ess Calibrated for the rest of the variables
+-   Read in calibraitons from files rather than stored in software
 -   Guareenteed way to distinguish between WAC and HRC CRs with just TM
 -	Look into converting into archive database
 -	Is it possible to heavily compress raw data

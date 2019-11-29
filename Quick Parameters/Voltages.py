@@ -16,8 +16,8 @@ def Voltages(PROC_DIR):
     
     print("---Producing Voltage Plots")   
     
-    TC = pd.read_pickle(os.path.join(PROC_DIR, "*TC.pickle"))
-    df = pd.read_pickle(os.path.join(PROC_DIR, "*TM.pickle"))
+    TC = pd.read_pickle(os.path.join(PROC_DIR, "191106_211352_Unproc_TC.pickle"))
+    df = pd.read_pickle(os.path.join(PROC_DIR, "191106_212023_Unproc_HKTM.pickle"))
     
     myFmt = mdates.DateFormatter('%H:%M')
 

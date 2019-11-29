@@ -13,6 +13,7 @@ import Rover
 import HaImageProc
 import ImageRAWtoBrowse
 import decodeRAW_HK
+import Cal_HK
 
 # Select Folder to Process
 Top_DIR = Path(input("Type the path to the folder where the RAW log files are stored: "))
@@ -61,10 +62,10 @@ if len(ROVER_HA) != 0:
     ImageGen = HaImageProc.HaImageProc(ROVER_HA, Proc_DIR)
 
 ## Process secondary files
-FILT_DIR = "*Unproc_TM.pickle"
-if len(sorted(Proc_DIR.rglob(FILT_DIR))) != 0:
-    decodeRAW_HK.decode(Proc_DIR)
+decodeRAW_HK.decode(Proc_DIR)
 
 FILT_DIR = "*.raw"
 if len(sorted(Proc_DIR.rglob(FILT_DIR))) != 0:
     ImageRAWtoBrowse.Img_RAW_Browse(Proc_DIR)
+
+Cal_HK.cal_HK(Proc_DIR)

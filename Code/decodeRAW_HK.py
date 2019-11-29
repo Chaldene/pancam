@@ -19,11 +19,16 @@ def decode(PROC_DIR):
     """Takes the unprocessed telemetry and produces a RAW pandas array of all the PanCam parameters"""
 
     print("---Processing RAW TM Files")   
-    ## Search for PanCam TM Files
-    FILT_DIR = "*Unproc_TM.pickle"
+    
+    ## Search for PanCam unprocessed TM Files
+    FILT_DIR = "*Unproc_HKTM.pickle"
     PikFile = sorted(PROC_DIR.rglob(FILT_DIR))
 
-    if len(PikFile) > 1:
+    if len(PikFile) == 0:
+        print("**No Unprocessed TM Files Found**")
+        print("Decoding TM HK Files Aborted")
+        return
+    elif len(PikFile) > 1:
         decodeRAW_HK_Error("Warning more than one 'Unproc_TM.pickle' found.")
 
     RTM = pd.read_pickle(PikFile[0])
@@ -308,10 +313,15 @@ def decode(PROC_DIR):
     del HRCBin
 
     ## Write a new file with RAW data
-    write_file = PROC_DIR / (PikFile[0].stem.split('_Unproc')[0] + "_RAW_TM.pickle")
+    write_file = PROC_DIR / (PikFile[0].stem.split('_Unproc')[0] + "_RAW_HKTM.pickle")
     if write_file.exists():
         write_file.unlink()
         print("Deleting file: ", write_file.stem)
     with open(write_file, 'w') as f:
         TM.to_pickle(write_file)
         print("PanCam RAW TM pickled.") 
+
+if __name__ == "__main__":
+    DIR = Path(input("Type the path to the PROC folder where the processed files are stored: "))
+
+    decode(DIR)

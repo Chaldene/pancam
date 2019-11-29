@@ -75,8 +75,8 @@ def TM_extract(TMfiles, PROC_DIR):
 
     if DF.shape[0] != 0:    
         write_dts = DF['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
-        DF.to_pickle(PROC_DIR / (write_dts + "Unproc_TM.pickle") )
-        print("PanCam TM pickled.")
+        DF.to_pickle(PROC_DIR / (write_dts + "Unproc_HKTM.pickle") )
+        print("PanCam HKTM pickled.")
 
     if DRS.shape[0] != 0:
         write_dts = DRS['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
