@@ -1,10 +1,11 @@
 # Prioties
--   Generate HK Ess and Non-Ess Calibrated for Key Variables
 -   Identify why there is data duplication in Rover TM '190809 - PAN_FIT_01'
--   Plot these results. 
+-   Plot these results.
+-   Look into the best use of the Pandas Int64 and how best to draw missing data. 
 
 ## Nice to haves
 -   Generate HK Ess and Non-Ess Calibrated for the rest of the variables
+-   Replace Temperature calibrations with a dictionary
 -   Read in calibraitons from files rather than stored in software
 -   Guareenteed way to distinguish between WAC and HRC CRs with just TM
 -	Look into converting into archive database
@@ -13,7 +14,6 @@
 -   Plot points rather than lines
 -   Scroll bar for viewing
 -   Save all plots
--   Change labels from 0,1,2,3 to WACL, WACR etc.
 -   Create a calculation array that stores useful temps, voltages, HRC etc.
 -   Look at creating a nice interface for it all
 -   A general log processing output that has all the text statements I've created stored in a log file.
@@ -32,3 +32,5 @@
 -   Update decodeRAW_ImgHDR with new function
 -   Switch from os module to the new python path module
 -	Allow functions to check if a valid pickle file is found
+-   Generate HK Ess and Non-Ess Calibrated for Key Variables
+-   Change labels from 0,1,2,3 to WACL, WACR etc.

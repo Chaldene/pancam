@@ -31,7 +31,8 @@ def cal_HK(PROC_DIR):
 
     ## Read RAW TM pickle file
     RAW = pd.read_pickle(PikFile[0])
-    CalTM = RAW['DT'].copy()
+    CalTM = pd.DataFrame()
+    CalTM['DT'] = RAW['DT'].copy()
 
     ## Voltages
     ratio = 4096*1.45914
@@ -41,6 +42,8 @@ def cal_HK(PROC_DIR):
     CalTM['Volt_1V5'] = CalTM['Volt_Ref'] * RAW['Volt_1V5']/4096
 
     ## Temperatures
+    #Cal_A = {"LFW":306.90, "RFW":308.57, "HRC":313.57, "LWAC":307.91, "RWAC":307.17, "LDO":310.42, "ACT":304.15}
+    #Cal_B = {"LFW":-268.21, "RFW":-268.14, "HRC":-274.94, "LWAC":-267.41, "RWAC":-266.71, "LDO":-270.04, "ACT":-264.52}
     Cal_A = [306.90, 308.57, 313.57, 307.91, 307.17, 310.42, 304.15]
     Cal_B = [-268.21, -268.14, -274.94, -267.41, -266.71, -270.04, -264.52]
 
