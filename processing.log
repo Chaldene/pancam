@@ -1,0 +1,12 @@
+2019-12-05 17:11:22,770 - <module> - INFO - 
+
+
+
+
+2019-12-05 17:11:22,770 - <module> - INFO - Running Plotter.py as main
+2019-12-05 17:11:22,771 - <module> - INFO - Reading directory: .
+2019-12-05 17:11:22,771 - Rover_Temperatures - INFO - Producing Rover Temperature Plot
+2019-12-05 17:11:22,771 - MakeHKPlotsDir - INFO - Generating 'HK Plots' directory
+2019-12-05 17:11:22,772 - Find_Files - INFO - Find_Files Called
+2019-12-05 17:11:22,819 - Find_Files - ERROR - No *RoverStatus.pickle Files Found
+2019-12-05 17:11:22,820 - Rover_Temperatures - ERROR - No file found - ABORTING

@@ -1,7 +1,8 @@
 # Prioties
 -   Identify why there is data duplication in Rover TM '190809 - PAN_FIT_01'
--   Plot these results.
 -   Look into the best use of the Pandas Int64 and how best to draw missing data. 
+-   Check HaImageProc verifies that the last image is complete
+-   Hide x-axis labels on multi-stack, particularly for overview as can see extra numbers.
 
 ## Nice to haves
 -   Generate HK Ess and Non-Ess Calibrated for the rest of the variables
@@ -13,12 +14,12 @@
 -   Set errors between 0 and 1 for a clear view
 -   Plot points rather than lines
 -   Scroll bar for viewing
--   Save all plots
 -   Create a calculation array that stores useful temps, voltages, HRC etc.
 -   Look at creating a nice interface for it all
--   A general log processing output that has all the text statements I've created stored in a log file.
 -   Break into powered chunks that can be easily navigated
 -   Also look for PanCam service errors such as 5,2
+-   Automatically generated ICD from files
+-   More checks of the data integrity
 
 -   Setup PEP8 tools and ensure code is up to standard. 
 
@@ -34,3 +35,6 @@
 -	Allow functions to check if a valid pickle file is found
 -   Generate HK Ess and Non-Ess Calibrated for Key Variables
 -   Change labels from 0,1,2,3 to WACL, WACR etc.
+-   Plot these results.
+-   A general log processing output that has all the text statements I've created stored in a log file.
+-   Save all plots

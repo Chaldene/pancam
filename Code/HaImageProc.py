@@ -49,7 +49,7 @@ def HaImageProc(ROV_DIR):
 
     for file in ROVER_HA:
         with open(file, 'r') as curFile:
-            logger.info("Reading %s" + file.name)
+            logger.info("Reading %s", file.name)
             
             ## Check header of ha file matches that expected
             HA_HEADER = [next(curFile) for x in range(5)]
@@ -103,6 +103,9 @@ def HaImageProc(ROV_DIR):
                             logger.warning("Missing data")
                             logger.warning("Expected Write: %d",Sci_Len[0])
                             logger.warning("Actual Write: %d", written_bytes)
+                            logger.warning("Packet ID: %s", PKT_HD[1])
+                            logger.warning("Next LDT Unit ID: %s", str(Sci_ldt_hdr.Unit_ID))
+                            logger.warning("Next LDT Seq ID: %s", str(Sci_ldt_hdr.SEQ))
                             
                         # Get new length    
                         SCI_PC.update({Sci_ldt_hdr.Unit_ID: True})

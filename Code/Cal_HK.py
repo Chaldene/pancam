@@ -26,6 +26,7 @@ def cal_HK(PROC_DIR):
     PikFile = PC_Fns.Find_Files(PROC_DIR, "*RAW_HKTM.pickle")
     if not PikFile:
         logger.error("No files found - ABORTING")
+        return
 
     ## Read RAW TM pickle file
     RAW = pd.read_pickle(PikFile[0])
@@ -45,13 +46,13 @@ def cal_HK(PROC_DIR):
     Cal_A = [306.90, 308.57, 313.57, 307.91, 307.17, 310.42, 304.15]
     Cal_B = [-268.21, -268.14, -274.94, -267.41, -266.71, -270.04, -264.52]
 
-    CalTM['Temp_LFW']  = RAW['Temp_LFW']  * Cal_A[0] / CalTM['Volt_Ref'] + Cal_B[0]
-    CalTM['Temp_RFW']  = RAW['Temp_RFW']  * Cal_A[1] / CalTM['Volt_Ref'] + Cal_B[1]
-    CalTM['Temp_HRC']  = RAW['Temp_HRC']  * Cal_A[2] / CalTM['Volt_Ref'] + Cal_B[2]
-    CalTM['Temp_LWAC'] = RAW['Temp_LWAC'] * Cal_A[3] / CalTM['Volt_Ref'] + Cal_B[3]
-    CalTM['Temp_RWAC'] = RAW['Temp_RWAC'] * Cal_A[4] / CalTM['Volt_Ref'] + Cal_B[4]
-    CalTM['Temp_LDO']  = RAW['Temp_LDO']  * Cal_A[5] / CalTM['Volt_Ref'] + Cal_B[5]
-    CalTM['Temp_HRCA'] = RAW['Temp_HRCA'] * Cal_A[6] / CalTM['Volt_Ref'] + Cal_B[6]
+    CalTM['Temp_LFW']  = RAW['Temp_LFW']  * Cal_A[0] / RAW['Volt_Ref'] + Cal_B[0]
+    CalTM['Temp_RFW']  = RAW['Temp_RFW']  * Cal_A[1] / RAW['Volt_Ref'] + Cal_B[1]
+    CalTM['Temp_HRC']  = RAW['Temp_HRC']  * Cal_A[2] / RAW['Volt_Ref'] + Cal_B[2]
+    CalTM['Temp_LWAC'] = RAW['Temp_LWAC'] * Cal_A[3] / RAW['Volt_Ref'] + Cal_B[3]
+    CalTM['Temp_RWAC'] = RAW['Temp_RWAC'] * Cal_A[4] / RAW['Volt_Ref'] + Cal_B[4]
+    CalTM['Temp_LDO']  = RAW['Temp_LDO']  * Cal_A[5] / RAW['Volt_Ref'] + Cal_B[5]
+    CalTM['Temp_HRCA'] = RAW['Temp_HRCA'] * Cal_A[6] / RAW['Volt_Ref'] + Cal_B[6]
     
     write_file = PROC_DIR / (PikFile[0].stem.split('_RAW')[0] + "_Cal_HKTM.pickle")
     if write_file.exists():
