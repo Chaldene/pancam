@@ -8,6 +8,10 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
+
+import PC_Fns
 
 class cal_HK_Error(Exception):
     """error for unexpected things"""
@@ -16,18 +20,12 @@ class cal_HK_Error(Exception):
 def cal_HK(PROC_DIR):
     """Takes the processed telemetery and produces calibrated HK pandas array"""
 
-    print("---Calibrating TM HK Files")
+    logger.info("Calibrating TM HK Files")
 
     ## Search for PanCam Processed Files
-    FILT_DIR = "*RAW_HKTM.pickle"
-    PikFile = sorted(PROC_DIR.rglob(FILT_DIR))
-    
-    if len(PikFile) == 0:
-        print("**No RAW HKTM Files Found**")
-        print("Decoding TM HK Files Aborted")
-        return
-    elif len(PikFile) > 1:
-        cal_HK_Error("Warning more than one 'RAW_TM.pickle' found.")
+    PikFile = PC_Fns.Find_Files(PROC_DIR, "*RAW_HKTM.pickle")
+    if not PikFile:
+        logger.error("No files found - ABORTING")
 
     ## Read RAW TM pickle file
     RAW = pd.read_pickle(PikFile[0])
@@ -58,12 +56,19 @@ def cal_HK(PROC_DIR):
     write_file = PROC_DIR / (PikFile[0].stem.split('_RAW')[0] + "_Cal_HKTM.pickle")
     if write_file.exists():
         write_file.unlink()
-        print("Deleting file: ", write_file.stem)
+        logger.info("Deleting file: %s", write_file.stem)
     with open(write_file, 'w') as f:
         CalTM.to_pickle(write_file)
-        print("PanCam Cal HK TM pickled.") 
+        logger.info("PanCam Cal HK TM pickled.") 
 
 if __name__ == "__main__":
     DIR = Path(input("Type the path to the PROC folder where the processed files are stored: "))
+
+    logging.basicConfig(filename=(DIR / 'processing.log'),
+                        level=logging.INFO,
+                        format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+    logger.info('\n\n\n\n')
+    logger.info("Running Cal_HK.py as main")
+    logger.info("Reading directory: %s", DIR)
 
     cal_HK(DIR)

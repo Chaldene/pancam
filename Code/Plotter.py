@@ -13,6 +13,10 @@ import pandas as pd
 from pandas.plotting import register_matplotlib_converters
 import numpy as np 
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
+
+import PC_Fns
 
 register_matplotlib_converters()
 myFmt = mdates.DateFormatter('%H:%M')
@@ -31,16 +35,16 @@ class plotter_Error(Exception):
     """error for unexpected things"""
     pass
 
+
 def MakeHKPlotsDir(PROC_DIR):
     """Checks to see if the 'HK Plots' directory has been generated, if not creates it"""
     HK_DIR = PROC_DIR / HK_Plot_Location
     if HK_DIR.is_dir():
-        print("-'HK Plots' Directory already exists")
+        logger.info("'HK Plots' Directory already exists")
     else:
-        print("Generating 'HK Plots' directory")
+        logger.info("Generating 'HK Plots' directory")
         HK_DIR.mkdir()
     return HK_DIR
-
 
 
 def zero_to_nan(values):
@@ -52,24 +56,18 @@ def zero_to_nan(values):
     return List, List_Low, List_High
 
 
-
-def HK_Voltages(PROC_DIR, Interact):
+def HK_Voltages(PROC_DIR, Interact=False):
     """"Produces a calibrated and uncalibrated voltage plots from pickle files"""
 
-    print("---Producing Voltage Plots")
+    logger.info("Producing Voltage Plots")
 
     HK_DIR = MakeHKPlotsDir(PROC_DIR)
 
     ## Search for PanCam RAW Processed Files
-    FILT_DIR = "*RAW_HKTM.pickle"
-    RawPikFile = sorted(PROC_DIR.rglob(FILT_DIR))
-
-    if len(RawPikFile) == 0:
-        print("**No RAW HKTM Files Found**")
-        print("Plotting TM HK Voltages Aborted")
+    RawPikFile = PC_Fns.Find_Files(PROC_DIR, "*RAW_HKTM.pickle", SingleFile=True)
+    if not RawPikFile:
+        logger.error("No file found - ABORTING")
         return
-    elif len(RawPikFile) > 1:
-        plotter_Error("Warning more than one 'RAW_TM.pickle' found, only first used.") 
 
     RAW = pd.read_pickle(RawPikFile[0])
 
@@ -104,15 +102,10 @@ def HK_Voltages(PROC_DIR, Interact):
         plt.show(block=False)
 
     ## Search for PanCam CAL Processed Files
-    FILT_DIR = "*Cal_HKTM.pickle"
-    CalPikFile = sorted(PROC_DIR.rglob(FILT_DIR))
-
-    if len(CalPikFile) == 0:
-        print("**No Cal HKTM Files Found**")
-        print("Plotting TM HK Voltages Aborted")
+    CalPikFile = PC_Fns.Find_Files(PROC_DIR, "*Cal_HKTM.pickle", SingleFile=True)
+    if not CalPikFile:
+        logger.error("No file found - ABORTING")
         return
-    elif len(CalPikFile) > 1:
-        plotter_Error("Warning more than one 'Cal_TM.pickle' found") 
 
     Cal = pd.read_pickle(CalPikFile[0])
 
@@ -150,25 +143,21 @@ def HK_Voltages(PROC_DIR, Interact):
     if Interact:
         plt.show(block=True)
 
+    logger.info("Producing Voltage Plots Completed")
 
 
-def HK_Temperatures(PROC_DIR, Interact):
+def HK_Temperatures(PROC_DIR, Interact=False):
     """"Produces a calibrated and uncalibrated temperature plots from pickle files"""
 
-    print("---Producing Temperature Plots")
+    logger.info("Producing Temperature Plots")
 
     HK_DIR = MakeHKPlotsDir(PROC_DIR)
 
     ## Search for PanCam RAW Processed Files
-    FILT_DIR = "*RAW_HKTM.pickle"
-    RawPikFile = sorted(PROC_DIR.rglob(FILT_DIR))
-
-    if len(RawPikFile) == 0:
-        print("**No RAW HKTM Files Found**")
-        print("Plotting TM HK Temperatures Aborted")
+    RawPikFile = PC_Fns.Find_Files(PROC_DIR, "*RAW_HKTM.pickle", SingleFile=True)
+    if not RawPikFile:
+        logger.error("No file found - ABORTING")
         return
-    elif len(RawPikFile) > 1:
-        plotter_Error("Warning more than one 'RAW_TM.pickle' found only first used.") 
 
     RAW = pd.read_pickle(RawPikFile[0])
 
@@ -231,15 +220,10 @@ def HK_Temperatures(PROC_DIR, Interact):
         plt.show(block=False)
 
     ## Search for PanCam CAL Processed Files
-    FILT_DIR = "*Cal_HKTM.pickle"
-    CalPikFile = sorted(PROC_DIR.rglob(FILT_DIR))
-
-    if len(CalPikFile) == 0:
-        print("**No Cal HKTM Files Found**")
-        print("Plotting TM HK Voltages Aborted")
+    CalPikFile = PC_Fns.Find_Files(PROC_DIR, "*Cal_HKTM.pickle", SingleFile=True)
+    if not CalPikFile:
+        logger.error("No file found - ABORTING")
         return
-    elif len(CalPikFile) > 1:
-        plotter_Error("Warning more than one 'Cal_TM.pickle' found") 
 
     Cal = pd.read_pickle(CalPikFile[0])
 
@@ -269,39 +253,30 @@ def HK_Temperatures(PROC_DIR, Interact):
 
     if Interact:
         plt.show(block=True)
+
+    logger.info("Producing Temperature Plots Completed")
     
 
-
-def Rover_Temperatures(PROC_DIR, Interact):
+def Rover_Temperatures(PROC_DIR, Interact=False):
     """"Produces a Rover temperature plot from pickle files"""
 
-    print("---Producing Rover Temperature Plot")
+    logger.info("Producing Rover Temperature Plot")
 
     HK_DIR = MakeHKPlotsDir(PROC_DIR)
 
     ## Search for PanCam Rover Status Processed Files
-    FILT_DIR = "*RoverStatus.pickle"
-    RawPikFile = sorted(PROC_DIR.rglob(FILT_DIR))
-
-    if len(RawPikFile) == 0:
-        print("**No Rover Status Files Found**")
-        print("Plotting Rover Temperatures Aborted")
+    RawPikFile = PC_Fns.Find_Files(PROC_DIR, "*RoverStatus.pickle", SingleFile=True)
+    if not RawPikFile:
+        logger.error("No file found - ABORTING")
         return
-    elif len(RawPikFile) > 1:
-        plotter_Error("Warning more than one 'RoverStatus.pickle' found only first used.")
 
     ROV = pd.read_pickle(RawPikFile[0])
 
     ## Search for PanCam Rover Temperature Processed Files
-    FILT_DIR = "*RoverTemps.pickle"
-    RawPikFile = sorted(PROC_DIR.rglob(FILT_DIR))
-
-    if len(RawPikFile) == 0:
-        print("**No Rover Temps Files Found**")
-        print("Plotting Rover Temperatures Aborted")
+    RawPikFile = PC_Fns.Find_Files(PROC_DIR, "*RoverTemps.pickle", SingleFile=True)
+    if not RawPikFile:
+        logger.error("No file found - ABORTING")
         return
-    elif len(RawPikFile) > 1:
-        plotter_Error("Warning more than one 'RoverTemps.pickle' found only first used.") 
 
     TMP = pd.read_pickle(RawPikFile[0])
 
@@ -336,25 +311,22 @@ def Rover_Temperatures(PROC_DIR, Interact):
     if Interact:
         plt.show()
 
+    logger.info("Producing Rover Temperature Plot Completed")
 
 
-def Rover_Power(PROC_DIR, Interact):
+
+def Rover_Power(PROC_DIR, Interact=False):
     """"Produces a Rover power consumption plot from pickle files"""
 
-    print("---Producing Rover Power Plot")
+    logger.info("Producing Rover Power Plot")
 
     HK_DIR = MakeHKPlotsDir(PROC_DIR)
 
     ## Search for PanCam Rover Status Processed Files
-    FILT_DIR = "*RoverStatus.pickle"
-    RawPikFile = sorted(PROC_DIR.rglob(FILT_DIR))
-
-    if len(RawPikFile) == 0:
-        print("**No Rover Status Files Found**")
-        print("Plotting Rover Power Aborted")
+    RawPikFile = PC_Fns.Find_Files(PROC_DIR, "*RoverStatus.pickle", SingleFile=True)
+    if not RawPikFile:
+        logger.error("No file found - ABORTING")
         return
-    elif len(RawPikFile) > 1:
-        plotter_Error("Warning more than one 'RoverStatus.pickle' found only first used.")
 
     ROV = pd.read_pickle(RawPikFile[0])
 
@@ -423,11 +395,106 @@ def Rover_Power(PROC_DIR, Interact):
     if Interact:
         plt.show()
 
+    logger.info("Producing Rover Power Plot Completed")
+
+
+
+def HK_Overview(PROC_DIR, Interact=False):
+    """"Produces an overview of the TCs, Power Status and Errors"""
+
+    logger.info("Producing Overview Plot")
+
+    HK_DIR = MakeHKPlotsDir(PROC_DIR)
+
+    ## Search for PanCam RAW Processed Files
+    RawPikFile = PC_Fns.Find_Files(PROC_DIR, "*RAW_HKTM.pickle", SingleFile=True)
+    if not RawPikFile:
+        logger.info("No file found - ABORTING")
+        return
+
+    RAW = pd.read_pickle(RawPikFile[0])
+
+    ## Search for PanCam Rover Telecommands
+    # May need to switch to detect if Rover TC or LabView TC
+    TCPikFile = PC_Fns.Find_Files(PROC_DIR, "*Unproc_TC.pickle", SingleFile=True)
+    if not TCPikFile:
+        logger.info("No file found - ABORTING")
+        return
+
+    TC = pd.read_pickle(TCPikFile[0])
+
+    # RAW Plot and Heater
+    gs = gridspec.GridSpec(4, 1, height_ratios=[1, 0.5, 0.5, 0.5])
+    gs.update(hspace=0.0)
+    fig = plt.figure(figsize=(14.0, 9.0))
+    ax0 = fig.add_subplot(gs[0])
+    ax1 = fig.add_subplot(gs[1], sharex=ax0)
+    ax2 = fig.add_subplot(gs[2], sharex=ax0)
+    ax3 = fig.add_subplot(gs[3], sharex=ax0)
+    # Action List
+    size = TC.shape[0]
+    TC['LEVEL'] = 1
+    markerline, stemline, baseline = ax0.stem(TC['DT'], TC['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
+    plt.setp(markerline, mec="k", mfc="w", zorder=3)
+    markerline.set_ydata(np.zeros(size))
+    ax0.text(.99,.95,'Action List', horizontalalignment='right', transform=ax0.transAxes)
+    ax0.grid(True)
+    for i in range(0, size):
+        ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0,-2),
+            textcoords="offset points", va="top", ha="right", rotation=90)
+
+    # Cam Power and Enable
+    ax1.plot(RAW.DT, RAW.Stat_PIU_En.astype('int64'), label='ENA')
+    ax1.plot(RAW.DT, RAW.Stat_PIU_Pw.astype('int64'), label='PWR')
+    ax1.text(.99, .9, 'Cam ENA and PWR', color='0.25', fontweight='bold', horizontalalignment='right', transform=ax1.transAxes)
+    ax1.legend(loc='center right', bbox_to_anchor= (1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
+    ax1.grid(True)
+    ax1.set_yticks([0, 1, 2, 3])
+    ax1.set_yticklabels(['None', 'WACL', 'WACR', 'HRC'])
+
+    # PIU Errors
+    ax2.plot(RAW.DT, RAW.ERR_1_CMD.astype('int64') !=0 , '.', label='CMD')
+    ax2.plot(RAW.DT, RAW.ERR_1_FW.astype('int64') !=0 ,  '.', label='FW')
+    ax2.plot(RAW.DT, (RAW.ERR_2_LWAC.astype('int64') !=0) & (RAW.ERR_2_LWAC.astype('int64') != 0x4), '.', label='LWAC')
+    ax2.plot(RAW.DT, (RAW.ERR_2_RWAC.astype('int64') !=0) & (RAW.ERR_2_RWAC.astype('int64') != 0x4), '.', label='RWAC')
+    ax2.plot(RAW.DT, RAW.ERR_3_HRC.astype('int64') !=0,  '.', label='HRC')
+    ax2.legend(loc='center right', bbox_to_anchor= (1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
+    ax2.set_ylim([-0.1,1.1])
+    ax2.get_yaxis().set_visible(False)
+    ax2.grid(True)
+    ax2.text(.99, .9, 'Errors excl. WAC CMD TO', color='0.25', fontweight='bold', horizontalalignment='right', transform=ax2.transAxes)
+
+    ax3.plot(RAW.DT, RAW.ERR_2_LWAC.astype('int64') ==0x4, '.', label='LWAC', color='C2')
+    ax3.plot(RAW.DT, RAW.ERR_2_RWAC.astype('int64') ==0x4, '.', label='RWAC', color='C3')
+    ax3.legend(loc='center right', bbox_to_anchor= (1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
+    ax3.set_ylim([-0.1,1.1])
+    ax3.get_yaxis().set_visible(False)
+    ax3.grid(True)
+    ax3.text(.99, .9, 'WAC CMD TO Error', color='0.25', fontweight='bold', horizontalalignment='right', transform=ax3.transAxes)
+    ax3.set_xlabel('Data Time')
+    ax3.xaxis.set_major_formatter(myFmt)
+
+    fig.tight_layout()
+    fig.savefig(HK_DIR / 'HK_OVR.png')
+
+    if Interact:
+        plt.show(block=True)
+
+    logger.info("Producing Overview Plot Completed")
+
 
 
 if __name__ == "__main__":
-    #DIR = Path(input("Type the path to the PROC folder where the processed files are stored: "))
-    DIR = Path(r"C:\Users\ucasbwh\OneDrive - University College London\PanCam Documents\Rover Level Testing\Data\191107 - TVAC TP02 Testing\20191106_1734_ERJPMW_CRUISE_CHECKOUTS\PROC")
+    DIR = Path(input("Type the path to the PROC folder where the processed files are stored: "))
+
+    logging.basicConfig(filename=(DIR / 'processing.log'),
+                        level=logging.INFO,
+                        format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+    logger.info('\n\n\n\n')
+    logger.info("Running Plotter.py as main")
+    logger.info("Reading directory: %s", DIR)
+
     #HK_Temperatures(DIR, True)
     #Rover_Temperatures(DIR, True)
-    Rover_Power(DIR, True)
+    #Rover_Power(DIR, True)
+    HK_Overview(DIR, True)

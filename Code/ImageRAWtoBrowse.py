@@ -11,9 +11,11 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 from decodeRAW_ImgHDR import decodeRAW_ImgHDR
-from LID_Browse import LID_Browse
+import PC_Fns
 
 class ImgRawBrError(Exception):
     """error for unexpected things"""
@@ -21,26 +23,16 @@ class ImgRawBrError(Exception):
 
 def Img_RAW_Browse(PROC_DIR):
 
-    print("---Generating Image Browse Products from RAW Images")
+    logger.info("Generating Image Browse Products from RAW Images")
 
     ## Search for pci_raw files in the process directory
-    FILT_DIR = "IMG_RAW\*.pci_raw"
-    RAW_FILES = sorted(PROC_DIR.rglob(FILT_DIR))
-    print("Number of Rover RAW processed images found: " + str(len(RAW_FILES)))
-
-    if len(RAW_FILES) == 0:
-        print("No complete Rover RAW images found")
-        print("Searching for LabView EGSE files")    
-        FILT_DIR = "IMG_RAW\*.bin"
-        RAW_FILES = sorted(PROC_DIR.rglob(FILT_DIR))
-        print("Number of LabView binary images found: " + str(len(RAW_FILES)))
-
-    if len(RAW_FILES) == 0:
-        raise ImgRawBrError("No complete RAW images found")
+    RAW_FILES = PC_Fns.Find_Files(PROC_DIR, "IMG_RAW\*.pci_raw")
+    if not RAW_FILES:
+        logger.error("No files found - ABORTING")  
 
     ## Create for loop here
     for curFile in RAW_FILES:
-        
+        logger.info("Reading %s", curFile.name)
         with open(curFile, 'rb') as file:
             img_rawheader = decodeRAW_ImgHDR(file.read(48))        
             raw_data = np.fromfile(file, dtype='>u2')
@@ -54,11 +46,11 @@ def Img_RAW_Browse(PROC_DIR):
             # Create directory for binary file
             BRW_DIR = PROC_DIR / "IMG_Browse"
             if not BRW_DIR.is_dir():
-                print("Generating 'Processing' directory")
+                logger.info("Generating 'Processing' directory")
                 BRW_DIR.mkdir()
                 
             # Generate filename
-            write_filename = LID_Browse(img_rawheader, 'FM')
+            write_filename = PC_Fns.LID_Browse(img_rawheader, 'FM')
             file_dt = (curFile.stem.split("_"))
             write_filename += file_dt[0] + "-" + file_dt[1] + "Z"
             
@@ -66,7 +58,7 @@ def Img_RAW_Browse(PROC_DIR):
             write_file = BRW_DIR / (write_filename + ".tiff")
             if write_file.exists():
                 write_file.unlink()
-                print("Deleting file: ", write_file.stem)
+                logger.info("Deleting file: %s", write_file.stem)
                 
             if img_rawheader['Cam'] == 1:
                 Br_img = img = img.rotate(angle=-90)
@@ -81,22 +73,29 @@ def Img_RAW_Browse(PROC_DIR):
                 ImgRawBrError("Warning invalid CAM number")
                 
             Br_img.save(write_file)
-            print("Creating .tiff: ", write_file.stem)
+            logger.info("Creating .tiff: %s", write_file.stem)
             
             # Write dictionary to a json file (for simplicity)
             write_file = BRW_DIR / (write_filename + ".json")
             ancil = json.dumps(img_rawheader, separators=(',\n', ': '))
             if write_file.exists():
                 write_file.unlink()
-                print("Deleting file: ", write_file.stem)
+                logger.info("Deleting file: %s", write_file.stem)
             with open(write_file, 'w') as f:
                 f.write(ancil)
     
-    print("---Generating Image Browse Products from RAW Images - Completed")
+    logger.info("Generating Image Browse Products from RAW Images Completed")
 
 
     
 if __name__ == "__main__":
     DIR= Path(input("Type the path to the folder where the PROC folder is located: "))
+
+    logging.basicConfig(filename=(DIR / 'processing.log'),
+                        level=logging.INFO,
+                        format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+    logger.info('\n\n\n\n')
+    logger.info("Running ImageRAWtoBrowse.py as main")
+    logger.info("Reading directory: %s", DIR)
     
     Img_RAW_Browse(DIR)

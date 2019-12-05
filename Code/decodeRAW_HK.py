@@ -8,7 +8,11 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from PandasUnpackBinaries import PandUPF
+from PC_Fns import PandUPF
+import logging
+logger = logging.getLogger(__name__)
+
+import PC_Fns
 
 class decodeRAW_HK_Error(Exception):
     """error for unexpected things"""
@@ -18,18 +22,13 @@ class decodeRAW_HK_Error(Exception):
 def decode(PROC_DIR):
     """Takes the unprocessed telemetry and produces a RAW pandas array of all the PanCam parameters"""
 
-    print("---Processing RAW TM Files")   
+    logger.info("---Processing RAW TM Files")   
     
     ## Search for PanCam unprocessed TM Files
-    FILT_DIR = "*Unproc_HKTM.pickle"
-    PikFile = sorted(PROC_DIR.rglob(FILT_DIR))
-
-    if len(PikFile) == 0:
-        print("**No Unprocessed TM Files Found**")
-        print("Decoding TM HK Files Aborted")
+    PikFile = PC_Fns.Find_Files(PROC_DIR, "*Unproc_HKTM.pickle", SingleFile=True)
+    if not PikFile:
+        logger.error("No files found - ABORTING")
         return
-    elif len(PikFile) > 1:
-        decodeRAW_HK_Error("Warning more than one 'Unproc_TM.pickle' found.")
 
     RTM = pd.read_pickle(PikFile[0])
     Bin = RTM['RAW'].apply(lambda x: bytearray.fromhex(x))
@@ -65,9 +64,13 @@ def decode(PROC_DIR):
     TM['Temp_HRCA'] = PandUPF(Bin, 'u16', 30, 0)        #PAN_TM_PIU_HKN_HRCAT and PAN_TM_PIU_HK_HRCAT
 
     #Byte 32-33 Error Codes
-    TM['ERR_1'] = PandUPF(Bin, 'u16', 32, 0)            #PAN_TM_ PIU_ HKN_ ERR1 and PAN_TM_PIU_ HK_ ERR1
-    TM['ERR_2'] = PandUPF(Bin, 'u16', 34, 0)            #PAN_TM_ PIU_ HKN_ ERR2 and PAN_TM_PIU_ HK_ ERR2
-    TM['ERR_3'] = PandUPF(Bin, 'u16', 36, 0)            #PAN_TM_ PIU_ HKN_ ERR3 and PAN_TM_PIU_HK_ ERR3
+    TM['ERR_1_CMD']  = PandUPF(Bin, 'u8', 32, 0)            #PAN_TM_ PIU_ HKN_ ERR1 and PAN_TM_PIU_ HK_ ERR1
+    TM['ERR_1_FW']   = PandUPF(Bin, 'u8', 33, 0)
+    TM['ERR_2_LWAC'] = PandUPF(Bin, 'u8', 34, 0)            #PAN_TM_ PIU_ HKN_ ERR2 and PAN_TM_PIU_ HK_ ERR2
+    TM['ERR_2_RWAC'] = PandUPF(Bin, 'u8', 34, 0)
+    TM['ERR_3_HRC']  = PandUPF(Bin, 'u8', 36, 0)            #PAN_TM_ PIU_ HKN_ ERR3 and PAN_TM_PIU_HK_ ERR3
+    if True in (PandUPF(Bin, 'u8', 37, 0) !=0).unique():
+        raise decodeRAW_HK_Error("TM Byte 37 not 0")
 
     #Byte 38-39 PIU Htr Status                          #From PAN_TM_PIU_HKN_TCS and PAN_TM_PIU_HK_TCS
     TM['Stat_Temp_On'] = PandUPF(Bin, 'u1' , 38, 0)         #PAN_TM_PIU_HKN_TCS_STAT / PAN_TM_PIU_HK_TCS_STAT
@@ -136,7 +139,7 @@ def decode(PROC_DIR):
         TM['WAC_CID'] = PandUPF(WACBin, 'u2', 44, 0)    #PAN_TM_WAC_IA_CID / PAN_TM_WAC_HK_CID / PAN_TM_WAC_DT_CID / PAN_TM_WAC_NK_CID
         if True in (PandUPF(WACBin, 'u1', 44, 2) !=1).unique(): #PAN_TM_WAC_IA_MK / PAN_TM_WAC_HK_MK / PAN_TM_WAC_DT_MK / PAN_TM_WAC_NK_MK
             #raise decodeRAW_HK_Error("TM Byte 44 bit 2 not 0 for WAC")
-            print("Warning likely mixed WAC and HRC Cam responses.")
+            logger.error("Warning likely mixed WAC and HRC Cam responses.")
         TM['WAC_WID'] = PandUPF(WACBin, 'u3', 44, 5)    #PAN_TM_WAC_IA_WID / PAN_TM_WAC_HK_WID / PAN_TM_WAC_DT_WID / PAN_TM_WAC_NK_WID
         TM['WAC_WTS'] = PandUPF(WACBin, 'u48', 51, 0)   #PAN_TM_WAC_IA_WTS / PAN_TM_WAC_HK_WTS / PAN_TM_WAC_DT_WTS / PAN_TM_WAC_NK_WTS
         TM['WAC_SUM'] = PandUPF(WACBin, 'u8', 59, 0)    #PAN_TM_WAC_IA_SUM / PAN_TM_WAC_HK_SUM / PAN_TM_WAC_NK_SUM
@@ -309,19 +312,28 @@ def decode(PROC_DIR):
         TM['HRC_Res_CA'] = PandUPF(HRCBin, 'u8', 44, 0)     #PAN_TM_HRC_RES_CA1
         if True in (PandUPF(HRCBin, 'u48', 45, 0) !=0).unique():
             #raise decodeRAW_HK_Error("TM Bytes 45-50 not 0 for HRC CMD Response")
-            print("Warning likely mixed WAC and HRC Cam responses.")
+            logger.warning("Likely mixed WAC and HRC Cam responses.")
     del HRCBin
 
     ## Write a new file with RAW data
     write_file = PROC_DIR / (PikFile[0].stem.split('_Unproc')[0] + "_RAW_HKTM.pickle")
     if write_file.exists():
         write_file.unlink()
-        print("Deleting file: ", write_file.stem)
+        logger.info("Deleting file: %s", write_file.name)
     with open(write_file, 'w') as f:
         TM.to_pickle(write_file)
-        print("PanCam RAW TM pickled.") 
+        logger.info("PanCam RAW TM pickled.") 
+
+    logger.info("---Processing RAW TM Files Completed")
 
 if __name__ == "__main__":
     DIR = Path(input("Type the path to the PROC folder where the processed files are stored: "))
+
+    logging.basicConfig(filename=(DIR / 'processing.log'),
+                        level=logging.INFO,
+                        format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+    logger.info('\n\n\n\n')
+    logger.info("Running decodeRAW_HK.py as main")
+    logger.info("Reading directory: %s", DIR)
 
     decode(DIR)

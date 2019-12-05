@@ -10,20 +10,30 @@ Created on Thu Oct 31 17:18:02 2019
 import pandas as pd
 from pathlib import Path
 from bitstruct import unpack_from as upf
+import logging
+logger = logging.getLogger(__name__)
 #import binascii  # Used if wanting to output ascii to terminal
 
-def TM_extract(TMfiles, PROC_DIR):
+import PC_Fns
+
+
+def TM_extract(ROV_DIR):
     """Searches for TM with Rover files and creates a binary array of each file found"""
    
-    print("---Processing Rover TM Files")    
+    logger.info("Processing Rover TM Files")    
     DF = pd.DataFrame()
     DRS = pd.DataFrame()
     DRT = pd.DataFrame()
     DG = pd.DataFrame()
 
+    TMfiles = PC_Fns.Find_Files(ROV_DIR, "STDRawOcds*.csv")
+    if not TMfiles:
+        logger.error("No files found - ABORTING")
+        return
+
     # Read CSV files and parse
     for file in TMfiles:
-        print("Reading ", file.name)
+        logger.info("Reading %s", file.name)
         DT = pd.read_csv(file, sep=';', header=0, index_col=False)
         DL = DT[ (DT['NAME'] == "AB.TM.TM_RMI000401") | (DT['NAME'] == "AB.TM_TM_RMI000402")].copy() 
         if not DL.empty:
@@ -69,35 +79,42 @@ def TM_extract(TMfiles, PROC_DIR):
             DK['DT'] = pd.to_datetime(DK['GROUND_REFERENCE_TIME'], format='%d/%m/%Y %H:%M:%S.%f')
             DRT = DRT.append(DK, ignore_index=True)
             
-    print("Number of PanCam TMs found: ", DF.shape[0])
-    print("Number of Rover Status Entries found: ", DRS.shape[0])
-    print("Number of Rover Temperature Entries found: ", DRT.shape[0])
+    logger.info("Number of PanCam TMs found: %d", DF.shape[0])
+    logger.info("Number of Rover Status Entries found: %d", DRS.shape[0])
+    logger.info("Number of Rover Temperature Entries found: %d", DRT.shape[0])
 
     if DF.shape[0] != 0:    
         write_dts = DF['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
-        DF.to_pickle(PROC_DIR / (write_dts + "Unproc_HKTM.pickle") )
-        print("PanCam HKTM pickled.")
+        DF.to_pickle(ROV_DIR / "PROC" / (write_dts + "Unproc_HKTM.pickle") )
+        logger.info("PanCam HKTM pickled.")
 
     if DRS.shape[0] != 0:
         write_dts = DRS['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
-        DRS.to_pickle(PROC_DIR / (write_dts + "RoverStatus.pickle") )
-        print("Rover Status TM pickled.")
+        DRS.to_pickle(ROV_DIR / "PROC" / (write_dts + "RoverStatus.pickle") )
+        logger.info("Rover Status TM pickled.")
 
     if DRT.shape[0] != 0:
         write_dts = DRT['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
-        DRT.to_pickle(PROC_DIR / (write_dts + "RoverTemps.pickle") )
-        print("Rover Temperatures TM pickled.")
+        DRT.to_pickle(ROV_DIR / "PROC" / (write_dts + "RoverTemps.pickle") )
+        logger.info("Rover Temperatures TM pickled.")
+
+    logger.info("Processing Rover TM Files Completed") 
     
 
 
-def TC_extract(TCfiles, PROC_DIR):
+def TC_extract(ROV_DIR):
     
-    print("---Processing Rover TC Files")
+    logger.info("Processing Rover TC Files")
     
     TC = pd.DataFrame()
+
+    TCfiles = PC_Fns.Find_Files(ROV_DIR, "STDChrono*.csv")
+    if not TCfiles:
+        logger.error("No files found - ABORTING")
     
     # Read CSV file and parse
     for file in TCfiles:
+        logger.info("Reading %s", file.name)
         dt = pd.read_csv(file, sep=';', encoding = "ISO-8859-1" , header=0, dtype=object, index_col=False)
         dp = dt[dt['DESCRIPTION'].str.contains("Pan Cam", na=False) & dt['NAME'].str.contains("CRM", na=False)].copy()
         dm = dp['VARIABLE_PART'].str.split(',', -1, expand=True)
@@ -108,18 +125,33 @@ def TC_extract(TCfiles, PROC_DIR):
             TC['ACTION'] = TC['DESCRIPTION'].map(lambda x: x.lstrip('Pan Cam'))
             TC['LEVEL'] = 1
         
-    print("Number of PanCam TCs found: ", TC.size)
+    logger.info("Number of PanCam TCs found: %d", TC.shape[0])    
     
     if TC.shape[0] !=0:
         write_dts = TC['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
-        TC.to_pickle(PROC_DIR / (write_dts  + "Unproc_TC.pickle") )
-        print("Rover TC pickled")        
+        TC.to_pickle(ROV_DIR / "PROC" / (write_dts  + "Unproc_TC.pickle") )
+        logger.info("Rover TC pickled") 
+
+    logger.info("Processing Rover TC Files Completed")       
     
     
         
 if __name__ == "__main__":
-    TMfiles = [r'C:\Users\ucasbwh\OneDrive - University College London\PanCam Documents\Rover Level Testing\Data\191107 - TVAC TP02 Testing\20191106_1734_ERJPMW_CRUISE_CHECKOUTS\20191106_1734_CRUISE_CHECKOUT-203\STDRawOcdsAnalysis.csv']
-    TCfiles = [r"C:\Users\ucasbwh\OneDrive - University College London\PanCam Documents\Rover Level Testing\Data\191107 - TVAC TP02 Testing\20191106_1734_ERJPMW_CRUISE_CHECKOUTS\20191106_1734_CRUISE_CHECKOUT_TMTC-203\STDChronoAnalysis.csv"]
-    Dir =      r"C:\Users\ucasbwh\OneDrive - University College London\PanCam Documents\Rover Level Testing\Data\191107 - TVAC TP02 Testing\20191106_1734_ERJPMW_CRUISE_CHECKOUTS\PROC"
-    TM_extract(TMfiles, Dir)
-    TC_extract(TCfiles, Dir)
+    DIR = Path(input("Type the path to thefolder where the Rover files are stored: "))
+
+    logging.basicConfig(filename=(DIR / 'processing.log'),
+                        level=logging.INFO,
+                        format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+    logger.info('\n\n\n\n')
+    logger.info("Running Rover.py as main")
+    logger.info("Reading directory: %s", DIR)
+    
+    PROC_DIR = DIR / "PROC"
+    if PROC_DIR.is_dir():
+        logger.info("Processing' Directory already exists")
+    else:
+        logger.info("Generating 'Processing' directory")
+        PROC_DIR.mkdir()
+
+    TM_extract(DIR)
+    TC_extract(DIR)

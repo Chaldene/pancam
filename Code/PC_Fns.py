@@ -1,13 +1,41 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Nov 15 10:24:38 2019
+# PC_Fns.py
+#
+# Barry Whiteside
+# Mullard Space Science Laboratory - UCL
+#
+# PanCam Data Processing Tools
 
-@author: ucasbwh
-"""
+from pathlib import Path
+from natsort import natsorted, ns
+from bitstruct import unpack_from as upf
+import pandas as pd
+import logging
+logger = logging.getLogger(__name__)
+
+def Find_Files(DIR, FILT, SingleFile=False):
+    """Finds all the files within DIR using the wildcard FILT. 
+    If SingleFile is True expects to return only one file."""
+    
+    logger.info("Find_Files Called")
+    FoundFiles = natsorted(DIR.rglob(FILT), alg=ns.PATH)
+    logger.debug(filename for filename in FoundFiles)
+    
+    num = len(FoundFiles)
+    if num == 0:
+        logger.error("No %s Files Found", FILT)
+        return []
+    else:
+        logger.info("Number of %s files found: %d", FILT, num)
+    
+    if (SingleFile == True) & (num > 1):
+        logger.warning("More than one %s found, only first used.", FILT)
+    return FoundFiles
+
 
 class LID_Browse_Error(Exception):
     """error for unexpected things"""
     pass
+
 
 def LID_Browse(RawHDR_Dict, Model):
     """returns a string to name the browse images
@@ -46,6 +74,11 @@ def LID_Browse(RawHDR_Dict, Model):
     
     ### Need to add ability to include start time in reasonable format
     
-    
-    
     return LID_str
+
+def PandUPF(Column, Len, OffBy, OffBi):
+    """Extracts a single RAW value from a binary pandas data column"""
+    if int(Len[1:]) > 63:
+        raise ValueError("PandUPF used for variable larger than 63 bits. Returned value is cast to an Int64")
+    Extract = Column.apply(lambda x: upf(Len, x, offset=8*OffBy+OffBi)[0]).astype('Int64')
+    return Extract
