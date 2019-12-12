@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Oct 31 15:28:47 2019
+"""Created on Thu Oct 31 15:28:47 2019.
 
 @author: ucasbwh
 """

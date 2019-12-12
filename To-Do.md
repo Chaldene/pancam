@@ -1,10 +1,12 @@
 # Prioties
--   Identify why there is data duplication in Rover TM '190809 - PAN_FIT_01'
+
 -   Look into the best use of the Pandas Int64 and how best to draw missing data. 
 -   Check HaImageProc verifies that the last image is complete
 -   Hide x-axis labels on multi-stack, particularly for overview as can see extra numbers.
 
 ## Nice to haves
+-   Decode Rover Variables, HRCWarm etc.
+-   Use PIU time rather than packet time 
 -   Generate HK Ess and Non-Ess Calibrated for the rest of the variables
 -   Replace Temperature calibrations with a dictionary
 -   Read in calibraitons from files rather than stored in software
@@ -38,3 +40,4 @@
 -   Plot these results.
 -   A general log processing output that has all the text statements I've created stored in a log file.
 -   Save all plots
+-   Identify why there is data duplication in Rover TM '191022 - Post Accoustic'
