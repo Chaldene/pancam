@@ -1,5 +1,6 @@
 {
-    "python.pythonPath": "C:\\Users\\ucasbwh\\AppData\\Local\\Continuum\\anaconda3\\envs\\PanCam Processing Tools\\python.exe",
+    "python.terminal.activateEnvironment": false,
+    "python.condaPath": "C:\\Users\\ucasbwh\\.conda\\envs\\Processor"
     "python.linting.pylintEnabled": true,
     "python.linting.enabled": true
 }

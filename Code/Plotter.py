@@ -324,7 +324,7 @@ def Rover_Temperatures(PROC_DIR, Interact=False):
     ax1.set_ylim([-0.1, 1.1])
     ax1.get_yaxis().set_visible(False)
     ax1.set_xlabel('Date Time')
-    ax1.xaxis.set_major_formatter(myFmt)
+    # ax1.xaxis.set_major_formatter(myFmt)
 
     fig.tight_layout()
     fig.savefig(HK_DIR / 'ROV_TEMPS.png')
@@ -376,7 +376,7 @@ def Rover_Power(PROC_DIR, Interact=False):
     ax1.set_ylim([-0.1, 1.1])
     ax1.get_yaxis().set_visible(False)
     ax1.set_xlabel('Date Time')
-    ax1.xaxis.set_major_formatter(myFmt)
+    # ax1.xaxis.set_major_formatter(myFmt)
 
     fig.tight_layout()
     fig.savefig(HK_DIR / 'ROV_PWR.png')
@@ -534,4 +534,5 @@ if __name__ == "__main__":
     HK_Temperatures(DIR, True)
     #Rover_Temperatures(DIR, True)
     #Rover_Power(DIR, True)
-    #HK_Overview(DIR, True)
+    HK_Overview(DIR, True)
+    HK_Voltages(DIR)

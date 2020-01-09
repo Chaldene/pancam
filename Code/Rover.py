@@ -3,17 +3,15 @@
 Created on Thu Oct 31 17:18:02 2019
 
 @author: ucasbwh
+Parses Rover .ha and .csv files by extracting PanCam data. 
 """
-
-### File for generating Rover TM csv in generic python format
-
 import pandas as pd
 from pathlib import Path
 from bitstruct import unpack_from as upf
 import logging
 logger = logging.getLogger(__name__)
-#import binascii  # Used if wanting to output ascii to terminal
 
+#Custom module written.
 import PC_Fns
 
 
@@ -35,6 +33,8 @@ def TM_extract(ROV_DIR):
     for file in TMfiles:
         logger.info("Reading %s", file.name)
         DT = pd.read_csv(file, sep=';', header=0, index_col=False)
+        
+        #Search for PanCam housekeeping
         DL = DT[ (DT['NAME'] == "AB.TM.TM_RMI000401") | (DT['NAME'] == "AB.TM_TM_RMI000402")].copy() 
         if not DL.empty:
             DL['RAW'] = DL.RAW_DATA.apply(lambda x: x[38:-4])
@@ -104,18 +104,20 @@ def TM_extract(ROV_DIR):
 
 def TC_extract(ROV_DIR):
     
-    logger.info("Processing Rover TC Files")
-    
+    logger.info("Processing Rover TC Files")    
     TC = pd.DataFrame()
 
+    #Find all Rover TC files within folder and subfolders
     TCfiles = PC_Fns.Find_Files(ROV_DIR, "STDChrono*.csv")
     if not TCfiles:
         logger.error("No files found - ABORTING")
+        return
     
     # Read CSV file and parse
     for file in TCfiles:
         logger.info("Reading %s", file.name)
         dt = pd.read_csv(file, sep=';', encoding = "ISO-8859-1" , header=0, dtype=object, index_col=False)
+        
         dp = dt[dt['DESCRIPTION'].str.contains("Pan Cam", na=False) & dt['NAME'].str.contains("CRM", na=False)].copy()
         dm = dp['VARIABLE_PART'].str.split(',', -1, expand=True)
         

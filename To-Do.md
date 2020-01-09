@@ -1,6 +1,7 @@
 # Prioties
 
 -   Look into the best use of the Pandas Int64 and how best to draw missing data. 
+-   Split data into activities so that it is easy to view HK etc. 
 -   Check HaImageProc verifies that the last image is complete
 -   Hide x-axis labels on multi-stack, particularly for overview as can see extra numbers.
 

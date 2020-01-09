@@ -18,6 +18,7 @@ def Find_Files(DIR, FILT, SingleFile=False):
     
     logger.info("Find_Files Called")
     FoundFiles = natsorted(DIR.rglob(FILT), alg=ns.PATH)
+#    FoundFiles = sorted(DIR.rglob(FILT), alg=ns.PATH)
     logger.debug(filename for filename in FoundFiles)
     
     num = len(FoundFiles)
