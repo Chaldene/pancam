@@ -9,6 +9,7 @@ binaries of the images
 """
 
 import PC_Fns
+import TestFunctions
 import math
 import bitstruct
 from collections import namedtuple
@@ -35,7 +36,8 @@ def HaImageProc(ROV_DIR):
     logger.info("Processing Rover .ha Files")
 
     # Define useful parameters
-    LDT_HDR = namedtuple('LDT_HDR', ['Unit_ID', 'SEQ'])
+    LDT_HDR = namedtuple('LDT_HDR', [
+                         'Unit_ID', 'SEQ_No', 'PART_ID', 'FILE_ID', 'FILE_SIZE', 'FILE_TYPE', 'SPARE'])
     SCI_PC = {}
     SCI_IDS = {}
     LDTO = 16  # Offset before TM structure appear
@@ -71,20 +73,26 @@ def HaImageProc(ROV_DIR):
                 # Each data line can contain 32 bytes of data
                 PKT_LINES = math.ceil(pkt_Len(PKT_HD)/32)
                 if PKT_HD[2][12:-1] == "AB.TM.MRSS0697":
-                    logger.info("New LDT part found")
 
                     # Read data as binary and decode LDT properties
                     TXT_Data = [next(curFile)[:-1] for x in range(PKT_LINES)]
                     PKT_Bin = bytes.fromhex(''.join(TXT_Data))
-                    unpacked = bitstruct.unpack('u16u16', PKT_Bin[16:20])
+                    unpacked = bitstruct.unpack(
+                        'u16u16u8u16u32u8u8', PKT_Bin[16:30])
                     Sci_ldt_hdr = LDT_HDR(*unpacked)
+                    logger.info("New LDT part found with file ID: %s",
+                                Sci_ldt_hdr.FILE_ID)
+
+                    # Test code viewing LDT structure for first part
+                    TestFunctions.LDTHeader(PKT_Bin)
 
                     # Check to see if ID already exists if not add to dict
                     if Sci_ldt_hdr.Unit_ID in SCI_IDS:
                         #raise HaReadError("Two packets with same ID")
                         logger.warning("2 packets with the same ID found")
                     else:
-                        SCI_IDS.update({Sci_ldt_hdr.Unit_ID: Sci_ldt_hdr.SEQ})
+                        SCI_IDS.update(
+                            {Sci_ldt_hdr.Unit_ID: Sci_ldt_hdr.SEQ_No})
 
                     # print(binascii.hexlify(PKT_Bin[21:23]))
                     FileID = bitstruct.unpack('u1u4u2u1u8', PKT_Bin[21:23])
@@ -109,7 +117,7 @@ def HaImageProc(ROV_DIR):
                             logger.warning("Next LDT Unit ID: %s",
                                            str(Sci_ldt_hdr.Unit_ID))
                             logger.warning("Next LDT Seq ID: %s",
-                                           str(Sci_ldt_hdr.SEQ))
+                                           str(Sci_ldt_hdr.SEQ_No))
 
                         # Get new length
                         SCI_PC.update({Sci_ldt_hdr.Unit_ID: True})
@@ -144,25 +152,27 @@ def HaImageProc(ROV_DIR):
                     TXT_Data = [next(curFile)[:-1] for x in range(PKT_LINES)]
                     PKT_TXT = ''.join(TXT_Data)
                     PKT_Bin = bytes.fromhex(''.join(TXT_Data))
-                    unpacked = bitstruct.unpack('u16u16', PKT_Bin[16:20])
+                    unpacked = bitstruct.unpack(
+                        'u16u16u8u16u32u8u8', PKT_Bin[16:30])
                     Sci_ldt_hdr = LDT_HDR(*unpacked)
 
                     # Check to see if ID already exists if not add to dict
                     if not Sci_ldt_hdr.Unit_ID in SCI_IDS:
                         logger.error("New Packet without first part")
-                        SCI_IDS.update({Sci_ldt_hdr.Unit_ID: Sci_ldt_hdr.SEQ})
+                        SCI_IDS.update(
+                            {Sci_ldt_hdr.Unit_ID: Sci_ldt_hdr.SEQ_No})
 
                     # Check if PanCam file
                     if SCI_PC.get(Sci_ldt_hdr.Unit_ID):
 
                         # Verify sequence is correct
-                        if SCI_IDS.get(Sci_ldt_hdr.Unit_ID)+1 != Sci_ldt_hdr.SEQ:
+                        if SCI_IDS.get(Sci_ldt_hdr.Unit_ID)+1 != Sci_ldt_hdr.SEQ_No:
                             logger.warning("LDT parts not sequential")
                             logger.warning("Expected: %d", SCI_IDS.get(
                                 Sci_ldt_hdr.Unit_ID)+1)
-                            logger.warning("Got: %d", Sci_ldt_hdr.SEQ)
+                            logger.warning("Got: %d", Sci_ldt_hdr.SEQ_No)
                             #raise HaReadError("LDT parts not sequential.")
-                        SCI_IDS = {Sci_ldt_hdr.Unit_ID: Sci_ldt_hdr.SEQ}
+                        SCI_IDS = {Sci_ldt_hdr.Unit_ID: Sci_ldt_hdr.SEQ_No}
 
                         # Write new data
                         with open(write_file, 'ab') as wf:
@@ -176,6 +186,12 @@ def HaImageProc(ROV_DIR):
                 PKT_HD = [next(curFile)]
 
     logger.info("Processing Rover .ha Files - Completed")
+
+
+def FildIDSearch(ROV_DIR, FileIDs):
+
+"""Searches through the Rover Directory for .ha files and finds 
+all the LDT files that match FileIDs"""
 
 
 if __name__ == "__main__":

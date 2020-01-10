@@ -47,9 +47,9 @@ logger.info("Running FileParser.py")
 # HaImageProc.HaImageProc(Top_DIR)
 
 # Process secondary files
-#decodeRAW_HK.decode(Proc_DIR)
-#ImageRAWtoBrowse.Img_RAW_Browse(Proc_DIR)
-#Cal_HK.cal_HK(Proc_DIR)
+# decodeRAW_HK.decode(Proc_DIR)
+# ImageRAWtoBrowse.Img_RAW_Browse(Proc_DIR)
+# Cal_HK.cal_HK(Proc_DIR)
 
 # Produce Plots
 Plotter.HK_Overview(Proc_DIR)

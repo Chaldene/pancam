@@ -53,7 +53,7 @@ def decode(PROC_DIR):
     #TM = DecodeParam_HKNE(TM, Bin)
 
     # Camera Responses
-    TM = DecodeParam_CamRes(TM, Bin)
+    WACBin, HRCBin = DecodeParam_CamRes(TM, Bin)
 
     if not WACBin.empty:
         # PAN_TM_WAC_IA_CID / PAN_TM_WAC_HK_CID / PAN_TM_WAC_DT_CID / PAN_TM_WAC_NK_CID
@@ -504,21 +504,28 @@ def DecodeParam_CamRes(TM, Bin):
     """Determines what cameras the HK originates from. Only changes camera once a new Camera is commanded"""
 
     # Determine if Cam changed
-    NulBin, WACBin, HRCBin = Determ_CamRes(TM, Bin)
-
+    #NulBin, WACBin, HRCBin = Determ_CamRes(TM, Bin)
+    NulBin= Bin[(PandUPF(Bin, 'u32', 44, 0)!=0) & (PandUPF(Bin, 'u32', 76, 0)!=0)]
     WACBin = NulBin[TM['Stat_PIU_Pw'].between(1, 2)]
     HRCBin = NulBin[TM['Stat_PIU_Pw'] == 3]
+
+    return WACBin, HRCBin
 
 
 def Determ_CamRes(TM, Bin):
     """Sort camera responses for each camera, only change cam if a new Cam response is received"""
 
     # Byte 44-63 Camera Responses                   #PAN_TM_PIU_HKN_CR[1:10] / PAN_TM_PIU_HK_CR[1:10]
-    CamRes = Bin.apply(lambda x: x[44:64])
-    print(CamRes)
-
+    CamResSeries = Bin.apply(lambda x: x[44:64])
+    CamRes = pd.DataFrame({'Bin': CamResSeries,
+                           'Str': CamResSeries.apply(lambda x: binascii.hexlify(x))})
     NulBin = CamRes[(PandUPF(CamRes, 'u32', 0, 0) != 0) & (
         PandUPF(Bin, 'u32', 48, 0) != 0)]  # Ignore empty CR1-4
+
+    WACBin = CamRes.Bin[(TM['Stat_PIU_Pw'].between(1, 2))]
+    HRCBin = CamRes.Bin[(TM['Stat_PIU_Pw']==3)]
+    
+    return NulBin, WACBin, HRCBin
 
     # Determine if the array has changed from the previous
 
