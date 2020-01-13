@@ -46,6 +46,8 @@ def HaImageProc(ROV_DIR):
     Sci_Len = (0,)
     written_bytes = 0
 
+    Buffer = {}
+
     ROVER_HA = PC_Fns.Find_Files(ROV_DIR, "*.ha")
     if not ROVER_HA:
         logger.error("No files found - ABORTING")
@@ -166,19 +168,35 @@ def HaImageProc(ROV_DIR):
                     if SCI_PC.get(Sci_ldt_hdr.Unit_ID):
 
                         # Verify sequence is correct
-                        if SCI_IDS.get(Sci_ldt_hdr.Unit_ID)+1 != Sci_ldt_hdr.SEQ_No:
+                        Expected_SEQ = SCI_IDS.get(Sci_ldt_hdr.Unit_ID)+1
+                        if Expected_SEQ == Sci_ldt_hdr.SEQ_No:
+                            written_bytes = writeBytesToFile(write_file, PKT_Bin[20:-2], written_bytes)
+                            SCI_IDS = {Sci_ldt_hdr.Unit_ID: Sci_ldt_hdr.SEQ_No} 
+                        
+                        else:                    
                             logger.warning("LDT parts not sequential")
-                            logger.warning("Expected: %d", SCI_IDS.get(
-                                Sci_ldt_hdr.Unit_ID)+1)
+                            logger.warning("Expected: %d", Expected_SEQ)
                             logger.warning("Got: %d", Sci_ldt_hdr.SEQ_No)
-                            #raise HaReadError("LDT parts not sequential.")
-                        SCI_IDS = {Sci_ldt_hdr.Unit_ID: Sci_ldt_hdr.SEQ_No}
 
-                        # Write new data
-                        with open(write_file, 'ab') as wf:
-                            wf.write(PKT_Bin[20:-2])
-                            written_bytes = written_bytes + len(PKT_Bin[20:-2])
+                            #First check if expected SEQ_No already exists in the buffer
+                            if Expected_SEQ in Buffer:
+                                #Write to file the value in the buffer found
+                                written_bytes = writeBytesToFile(write_file, Buffer[Expected_SEQ], written_bytes)
+                                del Buffer[Expected_SEQ]
+                                logger.warning("Wrote LDT part from buffer: %d", Expected_SEQ)
+                                SCI_IDS = {Sci_ldt_hdr.Unit_ID: Expected_SEQ} 
+                                Expected_SEQ = SCI_IDS.get(Sci_ldt_hdr.Unit_ID)+1
 
+                            #Then check if the current packet is as expected
+                            if Expected_SEQ == Sci_ldt_hdr.SEQ_No:
+                                written_bytes = writeBytesToFile(write_file, PKT_Bin[20:-2], written_bytes)
+                                logger.warning("Current LDT part now fits: %d", Expected_SEQ)
+                                SCI_IDS = {Sci_ldt_hdr.Unit_ID: Sci_ldt_hdr.SEQ_No} 
+
+                            #If not then to buffer
+                            else:
+                                Buffer.update({Sci_ldt_hdr.SEQ_No: PKT_Bin[20:-2]})                              
+                        
                 # Else skip the number of lines associated with the packet
                 else:
                     for x in range(PKT_LINES):
@@ -187,12 +205,12 @@ def HaImageProc(ROV_DIR):
 
     logger.info("Processing Rover .ha Files - Completed")
 
-
-def FildIDSearch(ROV_DIR, FileIDs):
-
-"""Searches through the Rover Directory for .ha files and finds 
-all the LDT files that match FileIDs"""
-
+def writeBytesToFile(write_file, Bytes, written_bytes):
+    """Funtion for writing to data file"""
+    with open(write_file, 'ab') as wf:
+        wf.write(Bytes)
+        written_bytes = written_bytes + len(Bytes)
+    return written_bytes
 
 if __name__ == "__main__":
     DIR = Path(
@@ -206,7 +224,7 @@ if __name__ == "__main__":
     logger.info("Reading directory: %s", DIR)
 
     PROC_DIR = DIR / "PROC"
-    if PROC_DIR.is_dir():
+    if PROC_DIR.is_dir(): 
         logger.info("Processing' Directory already exists")
     else:
         logger.info("Generating 'Processing' directory")

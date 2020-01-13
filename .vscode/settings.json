@@ -1,7 +1,0 @@
-{
-    "python.terminal.activateEnvironment": false,
-    "python.condaPath": "C:\\Users\\ucasbwh\\.conda\\envs\\Processor",
-    "python.linting.pylintEnabled": true,
-    "python.linting.enabled": true,
-    "python.pythonPath": "C:\\Users\\ucasbwh\\.conda\\envs\\Processor\\python.exe",
-}

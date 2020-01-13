@@ -7,7 +7,7 @@ This is the master script that calls all the other functions.
 Normally this script can be run and pointed at a useful folder. 
 """
 
-import Plotter
+#import Plotter
 import Cal_HK
 import decodeRAW_HK
 import ImageRAWtoBrowse
@@ -42,20 +42,20 @@ logger.info("Running FileParser.py")
 # SWIS Files
 
 # Process primary files found
-# Rover.TM_extract(Top_DIR)
-# Rover.TC_extract(Top_DIR)
-# HaImageProc.HaImageProc(Top_DIR)
+Rover.TM_extract(Top_DIR)
+Rover.TC_extract(Top_DIR)
+HaImageProc.HaImageProc(Top_DIR)
 
 # Process secondary files
-# decodeRAW_HK.decode(Proc_DIR)
-# ImageRAWtoBrowse.Img_RAW_Browse(Proc_DIR)
-# Cal_HK.cal_HK(Proc_DIR)
+decodeRAW_HK.decode(Proc_DIR)
+ImageRAWtoBrowse.Img_RAW_Browse(Proc_DIR)
+Cal_HK.cal_HK(Proc_DIR)
 
 # Produce Plots
-Plotter.HK_Overview(Proc_DIR)
-Plotter.HK_Voltages(Proc_DIR)
-Plotter.HK_Temperatures(Proc_DIR)
-Plotter.Rover_Power(Proc_DIR)
-Plotter.Rover_Temperatures(Proc_DIR)
+#Plotter.HK_Overview(Proc_DIR)
+#Plotter.HK_Voltages(Proc_DIR)
+#Plotter.HK_Temperatures(Proc_DIR)
+#Plotter.Rover_Power(Proc_DIR)
+#Plotter.Rover_Temperatures(Proc_DIR)
 
 logger.info("FileParser.py completed")
