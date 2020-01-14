@@ -7,7 +7,7 @@ This is the master script that calls all the other functions.
 Normally this script can be run and pointed at a useful folder. 
 """
 
-#import Plotter
+import Plotter
 import Cal_HK
 import decodeRAW_HK
 import ImageRAWtoBrowse
@@ -52,10 +52,10 @@ ImageRAWtoBrowse.Img_RAW_Browse(Proc_DIR)
 Cal_HK.cal_HK(Proc_DIR)
 
 # Produce Plots
-#Plotter.HK_Overview(Proc_DIR)
-#Plotter.HK_Voltages(Proc_DIR)
-#Plotter.HK_Temperatures(Proc_DIR)
-#Plotter.Rover_Power(Proc_DIR)
-#Plotter.Rover_Temperatures(Proc_DIR)
+Plotter.HK_Overview(Proc_DIR)
+Plotter.HK_Voltages(Proc_DIR)
+Plotter.HK_Temperatures(Proc_DIR)
+Plotter.Rover_Power(Proc_DIR)
+Plotter.Rover_Temperatures(Proc_DIR)
 
 logger.info("FileParser.py completed")

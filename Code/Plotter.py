@@ -433,7 +433,7 @@ def HK_Overview(PROC_DIR, Interact=False):
     RawPikFile = PC_Fns.Find_Files(
         PROC_DIR, "*RAW_HKTM.pickle", SingleFile=True)
     if not RawPikFile:
-        logger.info("No file found - ABORTING")
+        logger.info("No RAW_HKTM file found - ABORTING")
         return
 
     RAW = pd.read_pickle(RawPikFile[0])
@@ -443,10 +443,13 @@ def HK_Overview(PROC_DIR, Interact=False):
     TCPikFile = PC_Fns.Find_Files(
         PROC_DIR, "*Unproc_TC.pickle", SingleFile=True)
     if not TCPikFile:
-        logger.info("No file found - ABORTING")
-        return
-
-    TC = pd.read_pickle(TCPikFile[0])
+        logger.info("No TC file found - Leaving Blank")
+        TC = pd.DataFrame()
+        TCPlot = False
+    else:
+        TCPlot = True
+        
+    if TCPlot: TC = pd.read_pickle(TCPikFile[0])
 
     # RAW Plot and Heater
     gs = gridspec.GridSpec(4, 1, height_ratios=[1, 0.5, 0.5, 0.5])
@@ -457,18 +460,21 @@ def HK_Overview(PROC_DIR, Interact=False):
     ax2 = fig.add_subplot(gs[2], sharex=ax0)
     ax3 = fig.add_subplot(gs[3], sharex=ax0)
     # Action List
-    size = TC.shape[0]
-    TC['LEVEL'] = 1
-    markerline, stemline, baseline = ax0.stem(
-        TC['DT'], TC['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
-    plt.setp(markerline, mec="k", mfc="w", zorder=3)
-    markerline.set_ydata(np.zeros(size))
-    ax0.text(.99, .95, 'Action List',
-             horizontalalignment='right', transform=ax0.transAxes)
+    if TCPlot:
+        size = TC.shape[0]
+        TC['LEVEL'] = 1
+        markerline, stemline, baseline = ax0.stem(
+            TC['DT'], TC['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
+        plt.setp(markerline, mec="k", mfc="w", zorder=3)
+        markerline.set_ydata(np.zeros(size))
+        for i in range(0, size):
+            ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0, -2),
+                        textcoords="offset points", va="top", ha="right", rotation=90)
+    else:
+        ax0.get_yaxis().set_visible(False)
     ax0.grid(True)
-    for i in range(0, size):
-        ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0, -2),
-                     textcoords="offset points", va="top", ha="right", rotation=90)
+    ax0.text(.99, .95, 'Action List',
+        horizontalalignment='right', transform=ax0.transAxes)
 
     # Cam Power and Enable
     ax1.plot(RAW.DT, RAW.Stat_PIU_En.astype('int64'), label='ENA')
@@ -532,7 +538,7 @@ if __name__ == "__main__":
     logger.info("Reading directory: %s", DIR)
 
     HK_Temperatures(DIR, True)
-    #Rover_Temperatures(DIR, True)
-    #Rover_Power(DIR, True)
+    Rover_Temperatures(DIR, True)
+    Rover_Power(DIR, True)
     HK_Overview(DIR, True)
     HK_Voltages(DIR)
