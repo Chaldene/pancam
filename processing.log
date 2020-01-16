@@ -22,3 +22,15 @@
 2019-12-06 17:44:59,367 - Find_Files - INFO - Find_Files Called
 2019-12-06 17:44:59,396 - Find_Files - ERROR - No *RoverStatus.pickle Files Found
 2019-12-06 17:44:59,397 - Rover_Temperatures - ERROR - No file found - ABORTING
+2020-01-15 20:29:11,647 - <module> - INFO - 
+
+
+
+
+2020-01-15 20:29:11,648 - <module> - INFO - Running HaImageProc.py as main
+2020-01-15 20:29:11,648 - <module> - INFO - Reading directory: .
+2020-01-15 20:29:11,648 - <module> - INFO - Generating 'Processing' directory
+2020-01-15 20:29:11,648 - HaProc - INFO - Processing Rover .ha Files
+2020-01-15 20:29:11,649 - Find_Files - INFO - Find_Files Called
+2020-01-15 20:29:11,713 - Find_Files - ERROR - No *.ha Files Found
+2020-01-15 20:29:11,713 - HaProc - ERROR - No files found - ABORTING

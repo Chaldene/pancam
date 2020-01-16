@@ -2,7 +2,7 @@
 Created on Tue Nov 12 10:12:39 2019
 
 Function to go through a folder of Rover .ha files and produce the .raw
-binaries of the images
+binaries of the images and HK
 
 @author: ucasbwh
 
@@ -11,7 +11,6 @@ Adapt for writing HK
 """
 
 import PC_Fns
-import TestFunctions
 import math
 import bitstruct
 from datetime import datetime
@@ -19,6 +18,10 @@ from pathlib import Path
 import logging
 logger = logging.getLogger(__name__)
 import binascii  # Used if wanting to output ascii to terminal
+from collections import namedtuple
+import json
+import jsonpickle
+#jsonpickle.set_encoder_options('json', sort_keys=True, indent=4)
 
 # Global parameters
 # {LDT_Properties.Unit_ID: LDT_Properties.SEQ_No})
@@ -27,13 +30,14 @@ Buffer = {}
 LDT_IDs = [ "AB.TM.MRSS0697",
             "AB.TM.MRSS0698",
             "AB.TM.MRSS0699"]  
+HaImageProcVer = {'HaImageProcVer':0.2}
 
 class HaReadError(Exception):
     """error for unexpected things"""
     pass
 
 
-class LDT_Properties:
+class LDT_Properties(object):
     """Creates a LDT class for tracking those found"""
     def __init__(self, PKT_Bin):
         unpacked = bitstruct.unpack('u16u16u8u16u32u8u8', PKT_Bin[16:30])
@@ -61,19 +65,17 @@ class LDT_Properties:
 
         # Check if a science type 0x2
         if self.DataType < 2:
-            logger.info("Not a science packet, skipping")
-            self.Type = False
+            logger.info("Not a science packet")
+            self.HK = True
         else:
-            self.Type = True
+            self.HK = False
 
-        self.write = self.PanCam & self.Type
+        self.write = self.PanCam
         self.writtenLen = 0
 
     def setWriteFile(self, DIR, pkt_HD):
         # Determine FileName and check if exists
-        write_dt = datetime.strptime(pkt_HD[1][16:-1], '%d/%m/%Y %H:%M:%S.%f')
-        write_dts = write_dt.strftime('%y%m%d_%H%M%S_')
-        write_filename = write_dts + str(self.Unit_ID) + ".pci_raw.partial"
+        write_filename = "PanCam_" + str(self.FILE_ID) + ".pci_raw.partial"
         self.write_file = DIR / write_filename
         logger.info("Creating file: %s", self.write_file.name)
         if self.write_file.exists():
@@ -91,8 +93,49 @@ class LDT_Properties:
         # Check written equals expected and rename file
         if self.writtenLen == self.FILE_SIZE:
             logger.info("Packet Length as expected - renaming")
-            self.write_file.replace(self.write_file.with_suffix(""))
+            newFile = self.write_file.with_suffix("")
+            self.write_file.replace(newFile)
+            self.write_file = newFile
+            
+    def moveHK(self):
+        if self.DataType > 1:
+            return
+        elif self.DataType == 0:
+            # HKNE
+            newName = self.write_file.with_suffix(".haHKNE")
+        elif self.DataType == 1:
+            newName = self.write_file.with_suffix(".haHKES")
+        logger.info("Moving HK Files")
+        p = newName.absolute()
+        # Move up a directory
+        parent_dir = p.parents[1]
+        self.write_file.replace(parent_dir / p.name)
+        self.write_file = p / p.name
 
+    def createJSON(self):
+            if self.DataType < 2:
+                return
+            # Create dictionary of data to be written
+            LDTSource = {
+                'File ID'    : self.FILE_ID,
+                'Unit ID'    : self.Unit_ID,
+                'SEQ_No'     : self.SEQ_No,
+                'PART_ID'    : self.PART_ID,
+                'FILE_SIZE'  : self.FILE_SIZE,
+                'Identifier' : self.Identifier,
+                'DataType'   : self.DataType,
+                'Counter'    : self.Counter,
+                'writtenLen' : self.writtenLen
+            }
+            
+            # Write LDT properties to a json file
+            JSON_file = self.write_file.with_suffix(".json")
+            TopLevDic = {"Processing Info": HaImageProcVer, "LDT Information": LDTSource}
+            if JSON_file.exists():
+                JSON_file.unlink()
+                logger.info("Deleting file: %s", JSON_file.name)
+            with open(JSON_file, 'w') as f: 
+                json.dump(TopLevDic, f,  indent=4)
 
 class LDT_Intermediate:
     """Creates a quick class for the LDT intermediate parts"""
@@ -108,7 +151,16 @@ class LDT_End:
         self.Unit_ID = unpacked[0]
         self.SEQ_No = unpacked[1]
 
-def HaProc(ROV_DIR):
+# class LDTtoJSONEncoder(JSONEncoder):
+#     def default(self, object):
+#         if isinstance(object, LDT_Properties):
+#             return object.__dict__
+#         else:
+#             # call base class implementation which takes care of
+#             # raising exceptions for unsupported types
+#             return json.JSONEncoder.default(self, object)
+
+def HaScan(ROV_DIR):
     """Searches for .ha Rover files and creates raw binary files
     for each image found"""
     logger.info("Processing Rover .ha Files")
@@ -173,6 +225,7 @@ def HaPacketDecode(PKT_HD, PKT_ID, PKT_LINES, curFile, IMG_RAW_DIR):
     if PKT_ID == LDT_IDs[0]:
         LDT_Cur_Pkt = LDT_Properties(PKT_Bin)
         logger.info("New LDT part found with file ID: %s", LDT_Cur_Pkt.FILE_ID)
+        LDTHeader(PKT_Bin)
         
         # Check to see if ID already exists if not add to dict
         if LDT_Cur_Pkt.Unit_ID in Found_IDS:
@@ -192,7 +245,8 @@ def HaPacketDecode(PKT_HD, PKT_ID, PKT_LINES, curFile, IMG_RAW_DIR):
         if IntP.Unit_ID in Found_IDS:
             Cur_LDT = Found_IDS.get(IntP.Unit_ID)               
         else:
-            logger.error("New Packet without first part - adding to buffer")
+            logger.info("New Packet without first part - adding to buffer")
+            LDTHeader(PKT_Bin)
             Buffer.update({IntP.SEQ_No: PKT_Bin[20:-2]})
 
         #Check file should be written            
@@ -246,7 +300,10 @@ def HaPacketDecode(PKT_HD, PKT_ID, PKT_LINES, curFile, IMG_RAW_DIR):
             if Expected_SEQ == EndP.SEQ_No:
                 Cur_LDT.SEQ_No += 1
                 Cur_LDT.completePacket()
-                Found_IDS.pop(EndP.Unit_ID)                
+                Cur_LDT.moveHK()
+                Found_IDS.pop(EndP.Unit_ID)
+                Cur_LDT.createJSON()
+                               
             else:                    
                 logger.warning("END LDT not sequential")
                 logger.warning("Expected: %d", Expected_SEQ)
@@ -285,6 +342,17 @@ def writeBytesToFile(CurLDT, Bytes):
         CurLDT.writtenLen += len(Bytes)
     return
 
+def LDTHeader(PKT_Bin):
+    """Decodes and write to a file the LDT first packet parts."""
+    bits_unpacked = bitstruct.unpack('u16u16u8u16u32u8u8', PKT_Bin[16:30])
+    LDT_HDR = namedtuple('LDT_HDR', ['Unit_ID', 'SEQ_No', 'PART_ID', 'FILE_ID', 'FILE_SIZE', 'FILE_TYPE', 'SPARE'])
+    SCI_LDT_HDR = LDT_HDR(*bits_unpacked)
+    print(SCI_LDT_HDR)
+    return
+
+
+#def RestructureHK
+    
 
 if __name__ == "__main__":
     DIR = Path(
@@ -304,4 +372,4 @@ if __name__ == "__main__":
         logger.info("Generating 'Processing' directory")
         PROC_DIR.mkdir()
 
-    HaProc(DIR)
+    HaScan(DIR)

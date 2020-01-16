@@ -9,7 +9,7 @@ Created on Thu Nov 14 12:01:04 2019
 
 from pathlib import Path
 import numpy as np
-from PIL import Image
+import imageio
 import json
 import logging
 logger = logging.getLogger(__name__)
@@ -40,8 +40,7 @@ def Img_RAW_Browse(PROC_DIR):
             img_rawheader['RAW_Source'] = curFile.stem
                         
             ig = raw_data.reshape(1024,1024)
-            ig2 = ig*(2**8)/(2 **10-1)
-            img = Image.fromarray(ig*2**6, mode='I;16')
+            img = ig >> 2
             
             # Create directory for binary file
             BRW_DIR = PROC_DIR / "IMG_Browse"
@@ -50,30 +49,31 @@ def Img_RAW_Browse(PROC_DIR):
                 BRW_DIR.mkdir()
                 
             # Generate filename
-            write_filename = PC_Fns.LID_Browse(img_rawheader, 'FM')
-            file_dt = (curFile.stem.split("_"))
-            write_filename += file_dt[0] + "-" + file_dt[1] + "Z"
+            #write_filename = PC_Fns.LID_Browse(img_rawheader, 'FM')
+            #file_dt = (curFile.stem.split("_"))
+            #write_filename += file_dt[0] + "-" + file_dt[1] + "Z"
+            write_filename = curFile.stem
             
             # Create .tiff thumbnail
-            write_file = BRW_DIR / (write_filename + ".tiff")
+            write_file = BRW_DIR / (write_filename + ".png")
             if write_file.exists():
                 write_file.unlink()
                 logger.info("Deleting file: %s", write_file.stem)
                 
             if img_rawheader['Cam'] == 1:
-                Br_img = img = img.rotate(angle=-90)
+                Br_img = np.rot90(img, k=3)
                 img_rawheader['Browse_Rotation'] = -90
             elif img_rawheader['Cam'] == 2:
-                Br_img = img.rotate(angle=90)
+                Br_img = np.rot90(img, k=1)
                 img_rawheader['Browse_Rotation'] = +90
             elif img_rawheader['Cam'] == 3:
-                Br_img = img.transpose(Image.FLIP_LEFT_RIGHT) 
+                Br_img = np.fliplr(img) 
                 img_rawheader['Browse_Transpose'] = "Left_Right"
             else:
                 ImgRawBrError("Warning invalid CAM number")
-                
-            Br_img.save(write_file)
-            logger.info("Creating .tiff: %s", write_file.stem)
+
+            imageio.imwrite(write_file, Br_img)
+            logger.info("Creating .png: %s", write_file.stem)
             
             # Write dictionary to a json file (for simplicity)
             write_file = BRW_DIR / (write_filename + ".json")

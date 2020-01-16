@@ -1,13 +1,15 @@
 # Prioties
-
--   Look into the best use of the Pandas Int64 and how best to draw missing data. 
+-   Preview to have same JSON as RAW with added details
+-   Convert CUC to a useful time
 -   Split data into activities so that it is easy to view HK etc. 
--   Check HaImageProc verifies that the last image is complete
--   Even if missing Start of LDT write to file anyway
--   Check for end of LDT file
 -   Hide x-axis labels on multi-stack, particularly for overview as can see extra numbers.
 
+# Directory structure
+-   HK as a simple binary
+-   HK Plots also included
+
 ## Nice to haves
+-   Look into the best use of the Pandas Int64 and how best to draw missing data.    
 -   Decode Rover Variables, HRCWarm etc.
 -   Use PIU time rather than packet time 
 -   Generate HK Ess and Non-Ess Calibrated for the rest of the variables
@@ -44,3 +46,11 @@
 -   A general log processing output that has all the text statements I've created stored in a log file.
 -   Save all plots
 -   Identify why there is data duplication in Rover TM '191022 - Post Accoustic'
+-   Check HaImageProc verifies that the last image is complete
+-   Check for end of LDT file
+-   Even if missing Start of LDT write to file anyway
+-   Make browse images as 8-bit png
+-   Filenames to be LDT File IDs
+-   Two folders, IMG_Browse and IMG_RAW
+-   Have JSON from image as multi-line rather than serial.
+-   Fix haImageProcEdit

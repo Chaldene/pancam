@@ -11,7 +11,7 @@ import Plotter
 import Cal_HK
 import decodeRAW_HK
 import ImageRAWtoBrowse
-import HaImageProc
+import HaProc
 import Rover
 from pathlib import Path
 import logging
@@ -44,7 +44,7 @@ logger.info("Running FileParser.py")
 # Process primary files found
 Rover.TM_extract(Top_DIR)
 Rover.TC_extract(Top_DIR)
-HaImageProc.HaImageProc(Top_DIR)
+HaProc.HaScan(Top_DIR)
 
 # Process secondary files
 decodeRAW_HK.decode(Proc_DIR)
