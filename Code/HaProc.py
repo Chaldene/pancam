@@ -267,7 +267,8 @@ def HaPacketDecode(PKT_HD, PKT_ID, PKT_LINES, curFile, IMG_RAW_DIR):
 
                 #If not then add to buffer
                 else:
-                    Buffer.update({Cur_LDT.SEQ_No: PKT_Bin[20:-2]})
+                    Buffer.update({IntP.SEQ_No: PKT_Bin[20:-2]})
+                    logger.warning("Added LDT part to buffer: %d", IntP.SEQ_No)
             
         Found_IDS.update({IntP.Unit_ID: Cur_LDT})                              
 
