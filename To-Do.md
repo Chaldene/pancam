@@ -1,5 +1,4 @@
 # Prioties
--   Preview to have same JSON as RAW with added details
 -   Convert CUC to a useful time
 -   Split data into activities so that it is easy to view HK etc. 
 -   Hide x-axis labels on multi-stack, particularly for overview as can see extra numbers.
@@ -27,7 +26,6 @@
 -   Also look for PanCam service errors such as 5,2
 -   Automatically generated ICD from files
 -   More checks of the data integrity
-
 -   Setup PEP8 tools and ensure code is up to standard. 
 
 ## Completed
@@ -54,3 +52,4 @@
 -   Two folders, IMG_Browse and IMG_RAW
 -   Have JSON from image as multi-line rather than serial.
 -   Fix haImageProcEdit
+-   Preview to have same JSON as RAW with added details

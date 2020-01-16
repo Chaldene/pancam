@@ -36,53 +36,59 @@ def Img_RAW_Browse(PROC_DIR):
         with open(curFile, 'rb') as file:
             img_rawheader = decodeRAW_ImgHDR(file.read(48))        
             raw_data = np.fromfile(file, dtype='>u2')
-            
-            img_rawheader['RAW_Source'] = curFile.stem
-                        
+            BrowseProps = {'RAW_Source':curFile.name}
+            BrowseProps.update({'PNG Bit-Depth': "8"})
+
             ig = raw_data.reshape(1024,1024)
             img = ig >> 2
+
+            # Determine image rotation for preview            
+            if img_rawheader['Cam'] == 1:
+                Br_img = np.rot90(img, k=3)
+                BrowseProps.update({'Browse_Rotation': '-90'})
+            elif img_rawheader['Cam'] == 2:
+                Br_img = np.rot90(img, k=1)
+                BrowseProps.update({'Browse_Rotation': '+90'})
+            elif img_rawheader['Cam'] == 3:
+                Br_img = np.fliplr(img) 
+                BrowseProps.update({'Browse_Transpose': "Left_Right"})
+            else:
+                ImgRawBrError("Warning invalid CAM number")
             
-            # Create directory for binary file
+            # Create directory for Browse images
             BRW_DIR = PROC_DIR / "IMG_Browse"
             if not BRW_DIR.is_dir():
                 logger.info("Generating 'Processing' directory")
                 BRW_DIR.mkdir()
                 
-            # Generate filename
-            #write_filename = PC_Fns.LID_Browse(img_rawheader, 'FM')
-            #file_dt = (curFile.stem.split("_"))
-            #write_filename += file_dt[0] + "-" + file_dt[1] + "Z"
+            # Create 8-bit .png thumbnail
             write_filename = curFile.stem
-            
-            # Create .tiff thumbnail
             write_file = BRW_DIR / (write_filename + ".png")
             if write_file.exists():
                 write_file.unlink()
                 logger.info("Deleting file: %s", write_file.stem)
-                
-            if img_rawheader['Cam'] == 1:
-                Br_img = np.rot90(img, k=3)
-                img_rawheader['Browse_Rotation'] = -90
-            elif img_rawheader['Cam'] == 2:
-                Br_img = np.rot90(img, k=1)
-                img_rawheader['Browse_Rotation'] = +90
-            elif img_rawheader['Cam'] == 3:
-                Br_img = np.fliplr(img) 
-                img_rawheader['Browse_Transpose'] = "Left_Right"
-            else:
-                ImgRawBrError("Warning invalid CAM number")
 
             imageio.imwrite(write_file, Br_img)
             logger.info("Creating .png: %s", write_file.stem)
             
-            # Write dictionary to a json file (for simplicity)
+            # Read existing JSON file associated with RAW
+            RAWJsonFile = curFile.with_suffix(".JSON")
+            if not RAWJsonFile.exists():
+                ImgRawBrError("Warning RAW JSon does not exist", RAWJsonFile)
+            with open(RAWJsonFile, 'r') as read_file:
+                RAWJson = json.load(read_file)
+
+            # Append Browse Header information into dictionary for JSON file
+            RAWJson.update({"Image Header RAW": img_rawheader})
+            RAWJson['Processing Info'].update({"Browse Properties": BrowseProps})     
+
             write_file = BRW_DIR / (write_filename + ".json")
-            ancil = json.dumps(img_rawheader, separators=(',\n', ': '))
+            
             if write_file.exists():
                 write_file.unlink()
                 logger.info("Deleting file: %s", write_file.stem)
             with open(write_file, 'w') as f:
-                f.write(ancil)
+                json.dump(RAWJson, f,  indent=4)
     
     logger.info("Generating Image Browse Products from RAW Images Completed")
 

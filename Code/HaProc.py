@@ -20,17 +20,14 @@ logger = logging.getLogger(__name__)
 import binascii  # Used if wanting to output ascii to terminal
 from collections import namedtuple
 import json
-import jsonpickle
-#jsonpickle.set_encoder_options('json', sort_keys=True, indent=4)
 
 # Global parameters
-# {LDT_Properties.Unit_ID: LDT_Properties.SEQ_No})
+HaImageProcVer = {'HaImageProcVer':0.5}
 Found_IDS = {}
 Buffer = {}
 LDT_IDs = [ "AB.TM.MRSS0697",
             "AB.TM.MRSS0698",
             "AB.TM.MRSS0699"]  
-HaImageProcVer = {'HaImageProcVer':0.2}
 
 class HaReadError(Exception):
     """error for unexpected things"""
@@ -117,6 +114,7 @@ class LDT_Properties(object):
                 return
             # Create dictionary of data to be written
             LDTSource = {
+                'Source'     : 'Rover .ha files',
                 'File ID'    : self.FILE_ID,
                 'Unit ID'    : self.Unit_ID,
                 'SEQ_No'     : self.SEQ_No,
@@ -150,15 +148,6 @@ class LDT_End:
         unpacked = bitstruct.unpack('u16u16', PKT_Bin[16:20])
         self.Unit_ID = unpacked[0]
         self.SEQ_No = unpacked[1]
-
-# class LDTtoJSONEncoder(JSONEncoder):
-#     def default(self, object):
-#         if isinstance(object, LDT_Properties):
-#             return object.__dict__
-#         else:
-#             # call base class implementation which takes care of
-#             # raising exceptions for unsupported types
-#             return json.JSONEncoder.default(self, object)
 
 def HaScan(ROV_DIR):
     """Searches for .ha Rover files and creates raw binary files
