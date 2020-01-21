@@ -34,3 +34,15 @@
 2020-01-15 20:29:11,649 - Find_Files - INFO - Find_Files Called
 2020-01-15 20:29:11,713 - Find_Files - ERROR - No *.ha Files Found
 2020-01-15 20:29:11,713 - HaProc - ERROR - No files found - ABORTING
+2020-01-21 12:04:31,089 - <module> - INFO - 
+
+
+
+
+2020-01-21 12:04:31,089 - <module> - INFO - Running Plotter.py as main
+2020-01-21 12:04:31,089 - <module> - INFO - Reading directory: .
+2020-01-21 12:04:31,089 - HK_Voltages - INFO - Producing Voltage Plots
+2020-01-21 12:04:31,089 - MakeHKPlotsDir - INFO - 'HK Plots' Directory already exists
+2020-01-21 12:04:31,090 - Find_Files - INFO - Find_Files Called
+2020-01-21 12:04:31,145 - Find_Files - ERROR - No *RAW_HKTM.pickle Files Found
+2020-01-21 12:04:31,145 - HK_Voltages - ERROR - No file found - ABORTING

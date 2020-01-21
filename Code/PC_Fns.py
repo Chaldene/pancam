@@ -89,9 +89,8 @@ def PandUPF(Column, Len, OffBy, OffBi):
     return Extract
 
 
-def DecodeCUC(TM, Bin):
-    """Converts the CUC time in format of 4 bytes integer 2 bytes decimal to a pandas datetime"""
+def ReturnCUC_RAW(TM, Bin):
+    """Returns the 6 bytes of the PKT CUC time as a single integer"""
 
-    TM['DT'] = PandUPF(Bin, 'u32', 2, 0)
+    TM['Pkt_CUC'] = PandUPF(Bin, 'u48', 0, 16)
     return TM
-

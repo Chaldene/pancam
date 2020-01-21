@@ -6,6 +6,9 @@
 # PanCam Data Processing Tools
 
 import PC_Fns
+import datetime
+from astropy.time import TimeDelta, Time
+from astropy import units
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -37,11 +40,14 @@ def decode(PROC_DIR):
         Bin = RTM['RAW'].apply(lambda x: bytearray.fromhex(x))
     except TypeError:
         Bin = RTM['RAW']
-        print(Bin)
-
+        
     TM = pd.DataFrame()
 
-    TM = PC_Fns.DecodeCUC(TM, Bin)
+    # Repeated here for instances were not generated from binary
+    TM = PC_Fns.ReturnCUC_RAW(TM, Bin)
+
+    #Time stamp data from CUC
+    TM['DT'] = pd.to_datetime(CUCtoUTC_DT(RTM))
 
     TM, Bin = DecodeParam_HKHeader(TM, Bin)
     TM, Bin = DecodeParam_HKVoltTemps(TM, Bin)
@@ -551,6 +557,21 @@ def DecodeHRC_CamRes(TM, HRCBin):
         logger.warning("Likely mixed WAC and HRC Cam responses.")
     
     return TM
+
+def CUCtoUTC_DT(RAW):
+    """Function that takes the 4,2 CUC and converts it to a datetime object"""
+
+    # First calculate the fractional seconds
+    RAW['CUCfrac'] = RAW['Pkt_CUC'].apply(lambda x: (x & 0xFFFF)/0x10000)
+
+    CalcTime = RAW.apply(lambda row:
+                         (Time(2000, format='jyear')
+                          + TimeDelta((row['Pkt_CUC'] >> 16)*units.s)
+                          # To deal with 12-hour Rover offset
+                          - TimeDelta(12*60*60, format='sec')
+                          + TimeDelta(row['CUCfrac'], format='sec')).iso, axis=1)
+
+    return CalcTime
 
 
 

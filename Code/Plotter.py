@@ -448,8 +448,9 @@ def HK_Overview(PROC_DIR, Interact=False):
         TCPlot = False
     else:
         TCPlot = True
-        
-    if TCPlot: TC = pd.read_pickle(TCPikFile[0])
+
+    if TCPlot:
+        TC = pd.read_pickle(TCPikFile[0])
 
     # RAW Plot and Heater
     gs = gridspec.GridSpec(4, 1, height_ratios=[1, 0.5, 0.5, 0.5])
@@ -469,12 +470,12 @@ def HK_Overview(PROC_DIR, Interact=False):
         markerline.set_ydata(np.zeros(size))
         for i in range(0, size):
             ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0, -2),
-                        textcoords="offset points", va="top", ha="right", rotation=90)
+                         textcoords="offset points", va="top", ha="right", rotation=90)
     else:
         ax0.get_yaxis().set_visible(False)
     ax0.grid(True)
     ax0.text(.99, .95, 'Action List',
-        horizontalalignment='right', transform=ax0.transAxes)
+             horizontalalignment='right', transform=ax0.transAxes)
 
     # Cam Power and Enable
     ax1.plot(RAW.DT, RAW.Stat_PIU_En.astype('int64'), label='ENA')

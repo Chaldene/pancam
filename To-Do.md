@@ -2,10 +2,12 @@
 
 ## Prioties
 
-- Convert CUC to a useful time
 - Extract HK from .ha and plain binary files
+- Fix .ha extraction for problem files
+- Compare .ha generated output to csv output
 - Split data into activities so that it is easy to view HK etc.
 - Hide x-axis labels on multi-stack, particularly for overview as can see extra numbers.
+- Convert CUC to a useful time
 
 ### Directory structure
 
