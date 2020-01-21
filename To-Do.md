@@ -1,18 +1,11 @@
 # To-Do
 
 ## Prioties
-
-- Extract HK from .ha and plain binary files
 - Fix .ha extraction for problem files
 - Compare .ha generated output to csv output
 - Split data into activities so that it is easy to view HK etc.
 - Hide x-axis labels on multi-stack, particularly for overview as can see extra numbers.
-- Convert CUC to a useful time
-
-### Directory structure
-
-- HK as a simple binary
-- HK Plots also included
+- Way to track data type and processing history
 
 ## Nice to haves
 
@@ -62,3 +55,6 @@
 - Have JSON from image as multi-line rather than serial.
 - Fix haImageProcEdit
 - Preview to have same JSON as RAW with added details.
+- Extract HK from .ha and plain binary files
+- Convert CUC to a useful time
+- HK as a simple binary
