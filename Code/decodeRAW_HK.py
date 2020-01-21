@@ -33,10 +33,15 @@ def decode(PROC_DIR):
         return
 
     RTM = pd.read_pickle(PikFile[0])
-    Bin = RTM['RAW'].apply(lambda x: bytearray.fromhex(x))
+    try:
+        Bin = RTM['RAW'].apply(lambda x: bytearray.fromhex(x))
+    except TypeError:
+        Bin = RTM['RAW']
+        print(Bin)
 
     TM = pd.DataFrame()
-    TM['DT'] = RTM['DT']
+
+    TM = PC_Fns.DecodeCUC(TM, Bin)
 
     TM, Bin = DecodeParam_HKHeader(TM, Bin)
     TM, Bin = DecodeParam_HKVoltTemps(TM, Bin)
@@ -314,7 +319,7 @@ def DecodeParam_CamRes(TM, Bin):
 
     # Determine if Cam changed
     #NulBin, WACBin, HRCBin = Determ_CamRes(TM, Bin)
-    NulBin= Bin[(PandUPF(Bin, 'u32', 44, 0)!=0) & (PandUPF(Bin, 'u32', 76, 0)!=0)]
+    NulBin= Bin[(PandUPF(Bin, 'u32', 44, 0) == 0) & (PandUPF(Bin, 'u32', 48, 0) == 0)]
     WACBin = NulBin[TM['Stat_PIU_Pw'].between(1, 2)]
     HRCBin = NulBin[TM['Stat_PIU_Pw'] == 3]
 

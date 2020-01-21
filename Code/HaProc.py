@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 import binascii  # Used if wanting to output ascii to terminal
 from collections import namedtuple
 import json
+import numpy as np 
+from pandas import DataFrame
 
 # Global parameters
 HaImageProcVer = {'HaImageProcVer':0.5}
@@ -341,7 +343,53 @@ def LDTHeader(PKT_Bin):
     return
 
 
-#def RestructureHK
+def RestructureHK(ROV_DIR):
+    """Searches for .haHKNE and .haHKES generated from HaScan, produces well known pickle files"""
+    logger.info("Processing any .ha HK that has been created")
+
+    #Find Files
+    RAW_ES = PC_Fns.Find_Files(ROV_DIR, "*.haHKES")
+    if not RAW_ES:
+        logger.error("No .ha HK files found - ABORTING")
+        return
+
+    #Load files
+    #As known 
+    for file in RAW_ES:
+        with open(file, 'rb') as curFile:
+            logger.info("Reading %s", curFile.name)
+            #Read first line and perform basic check
+            dt = np.dtype({'RAW': RAW}, align=True)
+            df = DataFrame(np.fromfile('curFile', dt))
+
+    
+
+# def HaScan(ROV_DIR):
+#     """Searches for .ha Rover files and creates raw binary files
+#     for each image found"""
+#     logger.info("Processing Rover .ha Files")
+
+
+
+#     # Search through .ha files
+#     PKT_HD = [None] * 4
+
+#     for file in ROVER_HA:
+#         with open(file, 'r') as curFile:
+#             logger.info("Reading %s", file.name)
+#             # Read ha header and perform basic check
+#             HA_HEADER = [next(curFile) for x in range(5)]
+#             if HA_HEADER[4] != "<BEGIN_DATA_BLOCK>\n":
+#                 raise HaReadError("<BEGIN_DATA_BLOCK>: Line not found")
+
+#             # Read first packet header and determine packet type
+#             PKT_HD[0] = next(curFile)
+#             while PKT_HD[0] != "<END_DATA_BLOCK>\n":
+#                 PKT_HD[1:3] = [next(curFile) for x in range(3)] 
+                
+#                 if PKT_HD[3][0:8] != "<LENGTH>":
+#                     raise HaReadError("<LENGTH>: Line not found")
+                       
     
 
 if __name__ == "__main__":
@@ -363,3 +411,4 @@ if __name__ == "__main__":
         PROC_DIR.mkdir()
 
     HaScan(DIR)
+    RestructureHK(DIR)

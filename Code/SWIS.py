@@ -13,7 +13,6 @@ import logging
 import PC_Fns
 
 logger = logging.getLogger(__name__)
-logging.getLogger().addHandler(logging.StreamHandler())  # To stream to console
 
 
 def HK_extract(SWIS_DIR):
@@ -51,14 +50,7 @@ def HK_extract(SWIS_DIR):
 
 if __name__ == "__main__":
     DIR = Path(
-        input("Type the path to thefolder where the Rover files are stored: "))
-
-    logging.basicConfig(filename=(DIR / 'processing.log'),
-                        level=logging.INFO,
-                        format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
-    logger.info('\n\n\n\n')
-    logger.info("Running Rover.py as main")
-    logger.info("Reading directory: %s", DIR)
+        input("Type the path to the folder where the Rover files are stored: "))
 
     PROC_DIR = DIR / "PROC"
     if PROC_DIR.is_dir():
@@ -66,5 +58,12 @@ if __name__ == "__main__":
     else:
         logger.info("Generating 'Processing' directory")
         PROC_DIR.mkdir()
+
+    logging.basicConfig(filename=(PROC_DIR / 'processing.log'),
+                        level=logging.INFO,
+                        format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+    logger.info('\n\n\n\n')
+    logger.info("Running SIWS.py as main")
+    logger.info("Reading directory: %s", DIR)
 
     HK_extract(DIR)
