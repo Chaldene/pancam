@@ -145,3 +145,7 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.gitignore.io/api/python,windows,visualstudiocode
+.vscode/launch.json
+.vscode/settings.json
+Development/CUCTimeConverter.ipynb
+Code/haHKDev.ipynb

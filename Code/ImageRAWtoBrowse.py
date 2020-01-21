@@ -9,11 +9,13 @@ Created on Thu Nov 14 12:01:04 2019
 
 from pathlib import Path
 import numpy as np
-from PIL import Image
+import imageio
 import json
+import logging
+logger = logging.getLogger(__name__)
 
 from decodeRAW_ImgHDR import decodeRAW_ImgHDR
-from LID_Browse import LID_Browse
+import PC_Fns
 
 class ImgRawBrError(Exception):
     """error for unexpected things"""
@@ -21,82 +23,85 @@ class ImgRawBrError(Exception):
 
 def Img_RAW_Browse(PROC_DIR):
 
-    print("---Generating Image Browse Products from RAW Images")
+    logger.info("Generating Image Browse Products from RAW Images")
 
     ## Search for pci_raw files in the process directory
-    FILT_DIR = "IMG_RAW\*.pci_raw"
-    RAW_FILES = sorted(PROC_DIR.rglob(FILT_DIR))
-    print("Number of Rover RAW processed images found: " + str(len(RAW_FILES)))
-
-    if len(RAW_FILES) == 0:
-        print("No complete Rover RAW images found")
-        print("Searching for LabView EGSE files")    
-        FILT_DIR = "IMG_RAW\*.bin"
-        RAW_FILES = sorted(PROC_DIR.rglob(FILT_DIR))
-        print("Number of LabView binary images found: " + str(len(RAW_FILES)))
-
-    if len(RAW_FILES) == 0:
-        raise ImgRawBrError("No complete RAW images found")
+    RAW_FILES = PC_Fns.Find_Files(PROC_DIR, "IMG_RAW\*.pci_raw")
+    if not RAW_FILES:
+        logger.error("No files found - ABORTING")  
 
     ## Create for loop here
     for curFile in RAW_FILES:
-        
+        logger.info("Reading %s", curFile.name)
         with open(curFile, 'rb') as file:
             img_rawheader = decodeRAW_ImgHDR(file.read(48))        
             raw_data = np.fromfile(file, dtype='>u2')
-            
-            img_rawheader['RAW_Source'] = curFile.stem
-                        
+            BrowseProps = {'RAW_Source':curFile.name}
+            BrowseProps.update({'PNG Bit-Depth': "8"})
+
             ig = raw_data.reshape(1024,1024)
-            ig2 = ig*(2**8)/(2 **10-1)
-            img = Image.fromarray(ig*2**6, mode='I;16')
-            
-            # Create directory for binary file
-            BRW_DIR = PROC_DIR / "IMG_Browse"
-            if not BRW_DIR.is_dir():
-                print("Generating 'Processing' directory")
-                BRW_DIR.mkdir()
-                
-            # Generate filename
-            write_filename = LID_Browse(img_rawheader, 'FM')
-            file_dt = (curFile.stem.split("_"))
-            write_filename += file_dt[0] + "-" + file_dt[1] + "Z"
-            
-            # Create .tiff thumbnail
-            write_file = BRW_DIR / (write_filename + ".tiff")
-            if write_file.exists():
-                write_file.unlink()
-                print("Deleting file: ", write_file.stem)
-                
+            img = ig >> 2
+
+            # Determine image rotation for preview            
             if img_rawheader['Cam'] == 1:
-                Br_img = img = img.rotate(angle=-90)
-                img_rawheader['Browse_Rotation'] = -90
+                Br_img = np.rot90(img, k=3)
+                BrowseProps.update({'Browse_Rotation': '-90'})
             elif img_rawheader['Cam'] == 2:
-                Br_img = img.rotate(angle=90)
-                img_rawheader['Browse_Rotation'] = +90
+                Br_img = np.rot90(img, k=1)
+                BrowseProps.update({'Browse_Rotation': '+90'})
             elif img_rawheader['Cam'] == 3:
-                Br_img = img.transpose(Image.FLIP_LEFT_RIGHT) 
-                img_rawheader['Browse_Transpose'] = "Left_Right"
+                Br_img = np.fliplr(img) 
+                BrowseProps.update({'Browse_Transpose': "Left_Right"})
             else:
                 ImgRawBrError("Warning invalid CAM number")
-                
-            Br_img.save(write_file)
-            print("Creating .tiff: ", write_file.stem)
             
-            # Write dictionary to a json file (for simplicity)
-            write_file = BRW_DIR / (write_filename + ".json")
-            ancil = json.dumps(img_rawheader, separators=(',\n', ': '))
+            # Create directory for Browse images
+            BRW_DIR = PROC_DIR / "IMG_Browse"
+            if not BRW_DIR.is_dir():
+                logger.info("Generating 'Processing' directory")
+                BRW_DIR.mkdir()
+                
+            # Create 8-bit .png thumbnail
+            write_filename = curFile.stem
+            write_file = BRW_DIR / (write_filename + ".png")
             if write_file.exists():
                 write_file.unlink()
-                print("Deleting file: ", write_file.stem)
+                logger.info("Deleting file: %s", write_file.stem)
+
+            imageio.imwrite(write_file, Br_img)
+            logger.info("Creating .png: %s", write_file.stem)
+            
+            # Read existing JSON file associated with RAW
+            RAWJsonFile = curFile.with_suffix(".JSON")
+            if not RAWJsonFile.exists():
+                ImgRawBrError("Warning RAW JSon does not exist", RAWJsonFile)
+            with open(RAWJsonFile, 'r') as read_file:
+                RAWJson = json.load(read_file)
+
+            # Append Browse Header information into dictionary for JSON file
+            RAWJson.update({"Image Header RAW": img_rawheader})
+            RAWJson['Processing Info'].update({"Browse Properties": BrowseProps})     
+
+            write_file = BRW_DIR / (write_filename + ".json")
+            
+            if write_file.exists():
+                write_file.unlink()
+                logger.info("Deleting file: %s", write_file.stem)
             with open(write_file, 'w') as f:
-                f.write(ancil)
+                json.dump(RAWJson, f,  indent=4)
     
-    print("---Generating Image Browse Products from RAW Images - Completed")
+    logger.info("Generating Image Browse Products from RAW Images Completed")
 
 
     
 if __name__ == "__main__":
     DIR= Path(input("Type the path to the folder where the PROC folder is located: "))
+
+    logging.basicConfig(filename=(DIR / 'processing.log'),
+                        level=logging.INFO,
+                        format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+    logger.info('\n\n\n\n')
+    logger.info("Running ImageRAWtoBrowse.py as main")
+    logger.info("Reading directory: %s", DIR)
     
     Img_RAW_Browse(DIR)
