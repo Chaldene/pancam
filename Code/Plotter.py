@@ -6,7 +6,6 @@
 # PanCam Data Processing Tools
 
 
-import PC_Fns
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import matplotlib.dates as mdates
@@ -15,6 +14,9 @@ from pandas.plotting import register_matplotlib_converters
 import numpy as np
 from pathlib import Path
 import logging
+
+import PC_Fns
+
 logger = logging.getLogger(__name__)
 
 

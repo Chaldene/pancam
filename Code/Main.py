@@ -7,14 +7,16 @@ This is the master script that calls all the other functions.
 Normally this script can be run and pointed at a useful folder. 
 """
 
+from pathlib import Path
+import logging
+
 import Plotter
 import Cal_HK
 import decodeRAW_HK
 import ImageRAWtoBrowse
 import HaProc
 import Rover
-from pathlib import Path
-import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -45,6 +47,8 @@ logger.info("Running FileParser.py")
 Rover.TM_extract(Top_DIR)
 Rover.TC_extract(Top_DIR)
 HaProc.HaScan(Top_DIR)
+HaProc.RestructureHK(Proc_DIR)
+HaProc.compareHaCSV(Proc_DIR)
 
 # Process secondary files
 decodeRAW_HK.decode(Proc_DIR)

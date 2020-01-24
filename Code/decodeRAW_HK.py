@@ -5,16 +5,19 @@
 #
 # PanCam Data Processing Tools
 
-import PC_Fns
 import datetime
 from astropy.time import TimeDelta, Time
 from astropy import units
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from PC_Fns import PandUPF
+
 import binascii
 import logging
+
+import PC_Fns
+from PC_Fns import PandUPF
+
 logger = logging.getLogger(__name__)
 
 
@@ -28,7 +31,7 @@ def decode(PROC_DIR):
 
     logger.info("---Processing RAW TM Files")
 
-    # Search for PanCam unprocessed TM Files
+    # Search for PanCam unprocessed TM Files from ha source first
     PikFile = PC_Fns.Find_Files(
         PROC_DIR, "*Unproc_HKTM.pickle", SingleFile=True)
     if not PikFile:
@@ -586,8 +589,6 @@ def CUCtoUTC_DT(RAW):
                           + TimeDelta(row['CUCfrac'], format='sec')).iso, axis=1)
 
     return CalcTime
-
-
 
 if __name__ == "__main__":
     DIR = Path(

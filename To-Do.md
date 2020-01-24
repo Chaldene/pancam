@@ -1,8 +1,8 @@
 # To-Do
 
 ## Prioties
-- Check RestructureHK within HaProc
-- Compare .ha generated output to csv output
+
+- Create NAVCAM browse
 - Split data into activities so that it is easy to view HK etc.
 - Hide x-axis labels on multi-stack, particularly for overview as can see extra numbers.
 - Way to track data type and processing history
@@ -12,7 +12,6 @@
 
 - Look into the best use of the Pandas Int64 and how best to draw missing data.
 - Decode Rover Variables, HRCWarm etc.
-- Use PIU time rather than packet time
 - Generate HK Ess and Non-Ess Calibrated for the rest of the variables
 - Replace Temperature calibrations with a dictionary
 - Read in calibraitons from files rather than stored in software
@@ -29,6 +28,11 @@
 - Automatically generated ICD from files
 - More checks of the data integrity
 - Setup PEP8 tools and ensure code is up to standard.
+- Add liscense for project
+- Check all liscenses are valid
+- Update Readme
+- Make a list of required packages
+- Make reading csv Rover file output similar to that of .ha and other sources
 
 ## Completed
 
@@ -60,3 +64,6 @@
 - Convert CUC to a useful time
 - HK as a simple binary
 - Fix .ha extraction for problem files
+- Check RestructureHK within HaProc
+- Use PIU time rather than packet time
+- Compare .ha generated output to csv output
