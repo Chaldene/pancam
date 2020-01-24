@@ -46,6 +46,7 @@ logger.info("Running FileParser.py")
 # Process primary files found
 Rover.TM_extract(Top_DIR)
 Rover.TC_extract(Top_DIR)
+Rover.NavCamBrowse(Top_DIR)
 HaProc.HaScan(Top_DIR)
 HaProc.RestructureHK(Proc_DIR)
 HaProc.compareHaCSV(Proc_DIR)

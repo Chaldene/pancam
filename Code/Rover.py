@@ -10,6 +10,7 @@ import pandas as pd
 from pathlib import Path
 from bitstruct import unpack_from as upf
 import logging
+import imageio
 
 import PC_Fns
 
@@ -154,6 +155,24 @@ def TC_extract(ROV_DIR):
     logger.info("Processing Rover TC Files Completed")
 
 
+def NavCamBrowse(ROV_DIR):
+    """Searches for PGM files and creates an 8-bit .png to browse"""
+
+    logger.info("Searching for NavCam .pgm files to generate browse")
+    PGM_Files = PC_Fns.Find_Files(ROV_DIR, "*.pgm")
+
+    for curFile in PGM_Files:
+        image = imageio.imread(curFile)
+        write_file = curFile.with_suffix(".png")
+
+        # Check if file exists
+        if write_file.exists():
+            write_file.unlink()
+            logger.info("Deleting file: %s", write_file.name)
+        logger.info("Creating file: %s", write_file.name)
+        imageio.imwrite(write_file, image)
+
+
 if __name__ == "__main__":
     DIR = Path(
         input("Type the path to thefolder where the Rover files are stored: "))
@@ -174,3 +193,4 @@ if __name__ == "__main__":
 
     TM_extract(DIR)
     TC_extract(DIR)
+    NavCamBrowse(DIR)
