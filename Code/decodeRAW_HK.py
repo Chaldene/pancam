@@ -561,10 +561,24 @@ def DecodeHRC_CamRes(TM, HRCBin):
 def CUCtoUTC_DT(RAW):
     """Function that takes the 4,2 CUC and converts it to a datetime object"""
 
-    # First calculate the fractional seconds
-    RAW['CUCfrac'] = RAW['Pkt_CUC'].apply(lambda x: (x & 0xFFFF)/0x10000)
+    Sources = RAW['Source'].value_counts().index.tolist()
+    if len(Sources) > 1:
+        logger.error("More than one data source found within HK. Using the most common source")
+    
+    elif len(Sources) == 0:
+        logger.error("No HK source column found! ABORTING")
+        return
 
-    CalcTime = RAW.apply(lambda row:
+    MajSource = Sources[0]
+
+    if MajSource == 'SWIS':
+        CalcTime = pd.to_datetime(RAW['Unix_Time'], unit='ms')
+
+    else:
+        # First calculate the fractional seconds
+        RAW['CUCfrac'] = RAW['Pkt_CUC'].apply(lambda x: (x & 0xFFFF)/0x10000)
+
+        CalcTime = RAW.apply(lambda row:
                          (Time(2000, format='jyear')
                           + TimeDelta((row['Pkt_CUC'] >> 16)*units.s)
                           # To deal with 12-hour Rover offset

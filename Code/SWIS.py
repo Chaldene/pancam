@@ -34,8 +34,8 @@ def HK_extract(SWIS_DIR):
         DL['SPW_RAW'] = DT[1].apply(
             lambda x: x.replace('0x', '').replace(' ', ''))
         DL['RAW'] = DL.SPW_RAW.apply(lambda x: x[108-84:-2])
-        DL['Unix'] = DT[0].apply(lambda x: x[11:-12])
-        DL['DT'] = pd.to_datetime(DL['Unix'], unit='ms')
+        DL['Source'] = 'SWIS'
+        DL['Unix_Time'] = DT[0].apply(lambda x: x[11:-12])
 
         # Create individual folders and save here
         curName = curfile.stem

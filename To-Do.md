@@ -1,11 +1,12 @@
 # To-Do
 
 ## Prioties
-- Fix .ha extraction for problem files
+- Check RestructureHK within HaProc
 - Compare .ha generated output to csv output
 - Split data into activities so that it is easy to view HK etc.
 - Hide x-axis labels on multi-stack, particularly for overview as can see extra numbers.
 - Way to track data type and processing history
+- Within HK Decode, stop passing bin around and change functions to only return relevant arrays
 
 ## Nice to haves
 
@@ -58,3 +59,4 @@
 - Extract HK from .ha and plain binary files
 - Convert CUC to a useful time
 - HK as a simple binary
+- Fix .ha extraction for problem files
