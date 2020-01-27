@@ -48,6 +48,48 @@ def HK_extract(SWIS_DIR):
         DL.to_pickle(curDIR / (curName + "_Unproc_HKTM.pickle"))
 
 
+def HS_Extract(SWIS_DIR):
+    """Searches through the typescript output .txt file and recreates a simple H&S.txt file"""
+
+    logger.info("Processing SWIS H&S")
+
+    txtFiles = PC_Fns.Find_Files(SWIS_DIR, "*.txt")
+    HKFiles = PC_Fns.Find_Files(SWIS_DIR, "*HK.txt")
+    HSFiles = list(set(txtFiles) - set(HKFiles))
+
+    # Read text file for H&S
+    for curFile in HSFiles:
+
+        # Create individual folders and save here
+        curName = curFile.stem
+        curDIR = SWIS_DIR / "PROC" / (curName + "_HK")
+        if curDIR.is_dir():
+            logger.info("Instance Processing Directory already exists")
+        else:
+            logger.info("Generating Instance Processing Directory")
+            curDIR.mkdir()
+
+        # New file within new folder
+        writeFile = (curDIR / (curFile.stem + "_HS.txt"))
+        if writeFile.exists():
+            logger.info("HS.txt file already exists - deleting")
+            writeFile.unlink()
+        logger.info("Creating HS.txt file")
+        wf = open(writeFile, 'w')
+
+        # Scan through text log and save H&S lines
+        with open(curFile, 'r') as f:
+            logger.info("Reading %s", curFile.name)
+            line = f.readline()
+            while line != "":
+
+                if "Requested" in line:
+                    if "message with 45 bytes" in line:
+                        wf.write(line)
+                line = f.readline()
+            wf.close()
+
+
 if __name__ == "__main__":
     DIR = Path(
         input("Type the path to the folder where the Rover files are stored: "))
@@ -67,3 +109,4 @@ if __name__ == "__main__":
     logger.info("Reading directory: %s", DIR)
 
     HK_extract(DIR)
+    HS_Extract(DIR)
