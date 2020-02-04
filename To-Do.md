@@ -2,7 +2,7 @@
 
 ## Prioties
 
-- Add the rest of the HRC, WAC and FW plots
+- Add the rest of the HRC and WAC plots
 - SWIS read XML that generates data?
 - Split data into activities so that it is easy to view HK etc.
 - Hide x-axis labels on multi-stack, particularly for overview as can see extra numbers.
@@ -70,3 +70,4 @@
 - Compare .ha generated output to csv output
 - Create NAVCAM browse
 - Add image generation to Overview plot
+- FW plots added
