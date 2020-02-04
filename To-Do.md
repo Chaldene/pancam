@@ -2,7 +2,8 @@
 
 ## Prioties
 
-- Create NAVCAM browse
+- Add the rest of the HRC, WAC and FW plots
+- SWIS read XML that generates data?
 - Split data into activities so that it is easy to view HK etc.
 - Hide x-axis labels on multi-stack, particularly for overview as can see extra numbers.
 - Way to track data type and processing history
@@ -67,3 +68,5 @@
 - Check RestructureHK within HaProc
 - Use PIU time rather than packet time
 - Compare .ha generated output to csv output
+- Create NAVCAM browse
+- Add image generation to Overview plot

@@ -11,11 +11,14 @@ from pathlib import Path
 import logging
 
 import PC_Fns
+import decodeRAW_HK
+import Cal_HK
+import Plotter
 
 logger = logging.getLogger(__name__)
 
 
-def HK_extract(SWIS_DIR):
+def HK_Extract(SWIS_DIR):
     """Searches for HK files and creates a binary for each file found"""
 
     logger.info("Processing SWIS HK")
@@ -55,7 +58,8 @@ def HS_Extract(SWIS_DIR):
 
     txtFiles = PC_Fns.Find_Files(SWIS_DIR, "*.txt")
     HKFiles = PC_Fns.Find_Files(SWIS_DIR, "*HK.txt")
-    HSFiles = list(set(txtFiles) - set(HKFiles))
+    SciFiles = PC_Fns.Find_Files(SWIS_DIR, '*SC.txt')
+    HSFiles = list(set(txtFiles) - set(HKFiles) - set(SciFiles))
 
     # Read text file for H&S
     for curFile in HSFiles:
@@ -108,5 +112,14 @@ if __name__ == "__main__":
     logger.info("Running SIWS.py as main")
     logger.info("Reading directory: %s", DIR)
 
-    HK_extract(DIR)
+    HK_Extract(DIR)
     HS_Extract(DIR)
+    # Check_Sci(DIR)
+
+    Unproc = PC_Fns.Find_Files(PROC_DIR, '*Unproc_HKTM.pickle')
+    for curFile in Unproc:
+        curDir = curFile.parent
+        decodeRAW_HK.decode(curDir)
+        Cal_HK.cal_HK(curDir)
+        Plotter.HK_Overview(curDir)
+    # Write function that compares the predicte image to the actual image

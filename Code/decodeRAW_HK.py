@@ -328,9 +328,9 @@ def DecodeParam_CamRes(TM, Bin):
 
     # Determine if Cam changed
     #NulBin, WACBin, HRCBin = Determ_CamRes(TM, Bin)
-    NulBin= Bin[(PandUPF(Bin, 'u32', 44, 0) == 0) & (PandUPF(Bin, 'u32', 48, 0) == 0)]
-    WACBin = NulBin[TM['Stat_PIU_Pw'].between(1, 2)]
-    HRCBin = NulBin[TM['Stat_PIU_Pw'] == 3]
+    NulBin = Bin[(PandUPF(Bin, 'u32', 44, 0) == 0) & (PandUPF(Bin, 'u32', 48, 0) == 0)]
+    WACBin = Bin[TM['Stat_PIU_Pw'].between(1, 2)]
+    HRCBin = Bin[TM['Stat_PIU_Pw'] == 3]
 
     return WACBin, HRCBin
 
