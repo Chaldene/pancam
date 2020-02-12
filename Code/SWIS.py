@@ -94,6 +94,20 @@ def HS_Extract(SWIS_DIR):
             wf.close()
 
 
+def nsvf_parse(nsvf_file):
+    """Searches through the NSVF_DIR and generates any found telemetry.
+
+    Arguments:
+        nsvf_file {File Path} -- File Path of .txt file to search through for telemetry.
+    """
+
+    logger.info("Processing SWIS NSVF log")
+
+    if not nsvf_file.exists():
+        logger.error("nsvf_file %s does not exist", nsvf_file)
+        return
+
+
 if __name__ == "__main__":
     DIR = Path(
         input("Type the path to the folder where the Rover files are stored: "))

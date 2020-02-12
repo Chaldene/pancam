@@ -491,6 +491,6 @@ if __name__ == "__main__":
     logger.info("Running HaImageProc.py as main")
     logger.info("Reading directory: %s", PROC_DIR)
 
-    # HaScan(DIR)
-    # RestructureHK(PROC_DIR)
+    HaScan(DIR)
+    RestructureHK(PROC_DIR)
     compareHaCSV(PROC_DIR)
