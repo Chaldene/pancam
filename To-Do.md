@@ -2,6 +2,9 @@
 
 ## Prioties
 
+- Extract data from SWIS nsvf Router logs and run through analysis
+- Make H&S extract from SWIS TB compatible with H&S Checker written
+
 - Add the rest of the HRC and WAC plots
 - SWIS read XML that generates data?
 - Split data into activities so that it is easy to view HK etc.
@@ -70,4 +73,4 @@
 - Compare .ha generated output to csv output
 - Create NAVCAM browse
 - Add image generation to Overview plot
-- FW plots added
+- FW plots adde
