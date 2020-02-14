@@ -101,6 +101,14 @@ def nsvf_parse(packet_log: Path):
 
     Arguments:
         packet_log {File Path} -- File Path of .txt file to search through for telemetry.
+
+    Generates:
+        H+S.txt -- ASCII txt file of all PanCam health and status.
+        HK.txt  -- ASCII file of the PanCam HK telemetry
+        Sci.txt -- ASCII file of the PanCam Sci telemetry.
+        TC.txt  -- ASCII file of the PanCam TC responses.
+
+        hs.pickle -- Pandas pickle file of H+S in the standard format for this tool.
     """
 
     # Function Constants
@@ -120,19 +128,19 @@ def nsvf_parse(packet_log: Path):
         return
 
     # Create a PROC directory if does not already exist
-    Proc_DIR = packet_log.parent / 'PROC'
-    if not Proc_DIR.is_dir():
-        Proc_DIR.mkdir()
+    proc_dir = packet_log.parent / 'PROC'
+    if not proc_dir.is_dir():
+        proc_dir.mkdir()
 
     # Next prepare files to be written
     file = {}
     f_acc = {}
     f_wri = {}
 
-    file['hs'] = Proc_DIR / 'H+S.txt'
-    file['hk'] = Proc_DIR / 'HK.txt'
-    file['tc'] = Proc_DIR / 'TC.txt'
-    file['sc'] = Proc_DIR / 'Sci.txt'
+    file['hs'] = proc_dir / 'H+S.txt'
+    file['hk'] = proc_dir / 'HK.txt'
+    file['tc'] = proc_dir / 'TC.txt'
+    file['sc'] = proc_dir / 'Sci.txt'
 
     for key, value in file.items():
         if value.exists():
@@ -197,28 +205,34 @@ def nsvf_parse(packet_log: Path):
     for key, value in f_acc.items():
         value.close()
 
+    # Create a H&S Pickle File
+    hs_head = ['Time', 'RAW']
+    hs = pd.read_csv(file['hs'], sep=';', header=None, names=hs_head)
+    hs.to_pickle(proc_dir / "hs_raw.pickle")
+    logger.info("PanCam H+S pickled.")
+
     logger.info("--Parsing SWIS NSVF log completed.")
 
 
 if __name__ == "__main__":
-    DIR = Path(
+    dir = Path(
         input("Type the path to the folder where the Rover files are stored: "))
 
-    PROC_DIR = DIR / "PROC"
-    if PROC_DIR.is_dir():
+    proc_dir = dir / "PROC"
+    if proc_dir.is_dir():
         logger.info("Processing' Directory already exists")
     else:
         logger.info("Generating 'Processing' directory")
-        PROC_DIR.mkdir()
+        proc_dir.mkdir()
 
-    logging.basicConfig(filename=(PROC_DIR / 'processing.log'),
+    logging.basicConfig(filename=(proc_dir / 'processing.log'),
                         level=logging.INFO,
                         format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
     logger.info('\n\n\n\n')
     logger.info("Running SIWS.py as main")
-    logger.info("Reading directory: %s", DIR)
+    logger.info("Reading directory: %s", dir)
 
-    routeA = PC_Fns.Find_Files(DIR, 'Router_A_packet.log', SingleFile=True)[0]
+    routeA = PC_Fns.Find_Files(dir, 'Router_A_packet.log', SingleFile=True)[0]
     nsvf_parse(routeA)
 
     # HK_Extract(DIR)
