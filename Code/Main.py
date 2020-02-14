@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Created on Thu Oct 31 15:28:47 2019.
+"""
+main.py
 
-@author: ucasbwh
+Barry Whiteside
+Mullard Space Science Laboratory - UCL
 
-This is the master script that calls all the other functions.
-Normally this script can be run and pointed at a useful folder. 
+PanCam Data Processing Tools
+Created 31 Oct 2019
 """
 
 from pathlib import Path
@@ -16,22 +18,24 @@ import decodeRAW_HK
 import ImageRAWtoBrowse
 import HaProc
 import Rover
+import swis
+import hs
 
 logger = logging.getLogger(__name__)
 
 
 # Select Folder to Process
-Top_DIR = Path(
+top_dir = Path(
     input("Type the path to the folder where the RAW log files are stored: "))
 
 # Test if processed directory folder exists, if not create it.
-Proc_DIR = Top_DIR / 'PROC'
-if not Proc_DIR.is_dir():
+proc_dir = top_dir / 'PROC'
+if not proc_dir.is_dir():
     MakeDir = True
-    Proc_DIR.mkdir()
+    proc_dir.mkdir()
 
 # logging file will be stored in processing directory
-logging.basicConfig(filename=(Proc_DIR / 'processing.log'),
+logging.basicConfig(filename=(proc_dir / 'processing.log'),
                     level=logging.INFO,
                     format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
 logger.info('\n\n\n\n')
@@ -44,23 +48,29 @@ logger.info("Running FileParser.py")
 # SWIS Files
 
 # Process primary files found
-Rover.TM_extract(Top_DIR)
-Rover.TC_extract(Top_DIR)
-Rover.NavCamBrowse(Top_DIR)
-HaProc.HaScan(Top_DIR)
-HaProc.RestructureHK(Proc_DIR)
-HaProc.compareHaCSV(Proc_DIR)
+Rover.TM_extract(top_dir)
+Rover.TC_extract(top_dir)
+Rover.NavCamBrowse(top_dir)
+HaProc.HaScan(top_dir)
+HaProc.RestructureHK(proc_dir)
+HaProc.compareHaCSV(proc_dir)
+
+if swis.nsvf_parse(top_dir):
+    hs.decode(proc_dir)
+    hs.verify(proc_dir)
+    swis.sci_extract(proc_dir)
+    swis.sci_compare(proc_dir)
 
 # Process secondary files
-decodeRAW_HK.decode(Proc_DIR)
-ImageRAWtoBrowse.Img_RAW_Browse(Proc_DIR)
-Cal_HK.cal_HK(Proc_DIR)
+decodeRAW_HK.decode(proc_dir)
+ImageRAWtoBrowse.Img_RAW_Browse(proc_dir)
+Cal_HK.cal_HK(proc_dir)
 
 # Produce Plots
-Plotter.HK_Overview(Proc_DIR)
-Plotter.HK_Voltages(Proc_DIR)
-Plotter.HK_Temperatures(Proc_DIR)
-Plotter.Rover_Power(Proc_DIR)
-Plotter.Rover_Temperatures(Proc_DIR)
+Plotter.HK_Overview(proc_dir)
+Plotter.HK_Voltages(proc_dir)
+Plotter.HK_Temperatures(proc_dir)
+Plotter.Rover_Power(proc_dir)
+Plotter.Rover_Temperatures(proc_dir)
 
 logger.info("FileParser.py completed")

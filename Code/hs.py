@@ -1,10 +1,13 @@
-# hs.py
-#
-# Barry Whiteside
-# Mullard Space Science Laboratory - UCL
-#
-# PanCam Data Processing Tools
-# Created 14 Feb 2020
+# -*- coding: utf-8 -*-
+"""
+hs.py
+
+Barry Whiteside
+Mullard Space Science Laboratory - UCL
+
+PanCam Data Processing Tools
+Created 14 Feb 2020
+"""
 
 from pathlib import Path
 from bitstruct import unpack_from as upf
