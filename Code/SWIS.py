@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
-"""Created on Thu Dec 12 13:09 2019.
-
-@author: ucasbwh
 """
-# Converts outputs from the SWIS into readable format
-# Seperate each session into a new Folder for checking
+swis.py
+
+Barry Whiteside
+Mullard Space Science Laboratory - UCL
+
+PanCam Data Processing Tools
+Created 12 Dec 2019.
+"""
 
 import pandas as pd
 from pathlib import Path
@@ -24,72 +27,128 @@ logger = logging.getLogger(__name__)
 swisProcVer = {'swisProcVer': 1.0}
 
 
-def HK_Extract(SWIS_DIR):
-    """Searches for HK files and creates a binary for each file found"""
+def hk_extract(swis_dir: Path):
+    """Generates a Unproc_HKTM.pickle from the given SWIS source
+
+    Arguments:
+        swis_dir {Path} -- If using NSVF path is within the Proc directory. Otherwise the source path is used.
+
+    Generates:
+        *_Unproc_HKTM.pickle -- The pandas dataframe containing raw HK and time information.
+    """
+
+    # Searches for HK files and creates a binary for each file found
 
     logger.info("Processing SWIS HK")
 
-    HKfiles = PC_Fns.Find_Files(SWIS_DIR, "*HK.txt")
-    if not HKfiles:
+    # First identify any nsvf files
+    hk_files = PC_Fns.Find_Files(swis_dir, "*nsvfHK*.txt", SingleFile=True)
+    if hk_files:
+        nsvf = True
+    # Else look for standard SWIS hk files
+    else:
+        hk_files = PC_Fns.Find_Files(swis_dir, "*HK.txt")
+        nsvf = False
+
+    if not hk_files:
         logger.error("No files found - ABORTING")
         return
 
-    # Read text file for HK
-    for curfile in HKfiles:
-        DL = pd.DataFrame()
+    for curfile in hk_files:
+        dl = pd.DataFrame()
         logger.info("Reading %s", curfile.name)
-        DT = pd.read_table(curfile, sep=']', header=None)
+        cur_name = curfile.stem
 
-        DL['SPW_RAW'] = DT[1].apply(
-            lambda x: x.replace('0x', '').replace(' ', ''))
-        DL['RAW'] = DL.SPW_RAW.apply(lambda x: x[108-84:-2])
-        DL['Source'] = 'SWIS'
-        DL['Unix_Time'] = DT[0].apply(lambda x: x[11:-12])
+        if nsvf:
+            logger.info("Type is nsvf")
+            dtab = pd.read_table(curfile, sep=' : ',
+                                 header=None, engine='python')
+            dl['SPW_RAW'] = dtab[1].apply(lambda x: x.replace(' ', ''))
+            dl['RAW'] = dl.SPW_RAW.apply(lambda x: x[24:-7])
+            dl['Source'] = 'SWIS'
 
-        # Create individual folders and save here
-        curName = curfile.stem
-        curDIR = SWIS_DIR / "PROC" / curName
-        if curDIR.is_dir():
-            logger.info("Instance Processing Directory already exists")
+            # Extract epoch from filename
+            epoch = int(curfile.stem.split('_')[1][4:])
+
+            # Calculate elapsed time
+            dtab['ElapLi'] = dtab[0].apply(
+                lambda x: x.split(' ')[0][1:-1].split(':'))
+
+            # Ensure elapsed list is expected length
+            verify = dtab['ElapLi'].str.len() != 4
+            err_df = dtab[verify]
+            if err_df.shape[0] != 0:
+                logger.error("Some elpased times are not in correct format")
+                logger.error(err_df)
+
+            dtab['Elapsed'] = dtab['ElapLi'].apply(
+                lambda x: float(x[0] + '.' + ''.join(x[1:])))
+
+            dl['Unix_Time'] = dtab['Elapsed'] + epoch
+            cur_dir = curfile.parent
+
         else:
-            logger.info("Generating Instance Processing Directory")
-            curDIR.mkdir()
-        DL.to_pickle(curDIR / (curName + "_Unproc_HKTM.pickle"))
+            logger.info("Type is standard SWIS")
+            dtab = pd.read_table(curfile, sep=']', header=None)
+            dl['SPW_RAW'] = dtab[1].apply(
+                lambda x: x.replace('0x', '').replace(' ', ''))
+            dl['RAW'] = dl.SPW_RAW.apply(lambda x: x[108-84:-2])
+            dl['Source'] = 'SWIS'
+            dl['Unix_Time'] = dtab[0].apply(lambda x: x[11:-12])
+
+            # Create individual folders and save here
+            cur_dir = swis_dir / "PROC" / cur_name
+            if cur_dir.is_dir():
+                logger.info("Instance Processing Directory already exists")
+            else:
+                logger.info("Generating Instance Processing Directory")
+                cur_dir.mkdir()
+
+        dl.to_pickle(cur_dir / (cur_name + "_Unproc_HKTM.pickle"))
 
 
-def HS_Extract(SWIS_DIR):
-    """Searches through the typescript output .txt file and recreates a simple H&S.txt file"""
+def hs_extract(swis_dir: Path):
+    """Extracts the H&S from the SWIS log and puts in a new file
+
+    Arguments:
+        swis_dir {Path} -- Dir containing .txt files with simulation data
+
+    Generates:
+        _HS.txt -- Simply contains the extracted relevant H&S lines from the log.
+    """
+
+    # Searches through the typescript output .txt file and recreates a simple H&S.txt file
 
     logger.info("Processing SWIS H&S")
 
-    txtFiles = PC_Fns.Find_Files(SWIS_DIR, "*.txt")
-    HKFiles = PC_Fns.Find_Files(SWIS_DIR, "*HK.txt")
-    SciFiles = PC_Fns.Find_Files(SWIS_DIR, '*SC.txt')
-    HSFiles = list(set(txtFiles) - set(HKFiles) - set(SciFiles))
+    files_txt = PC_Fns.Find_Files(swis_dir, "*.txt")
+    files_HK = PC_Fns.Find_Files(swis_dir, "*HK*.txt")
+    files_sci = PC_Fns.Find_Files(swis_dir, '*SC.txt')
+    files_hs = list(set(files_txt) - set(files_HK) - set(files_sci))
 
     # Read text file for H&S
-    for curFile in HSFiles:
+    for curfile in files_hs:
 
         # Create individual folders and save here
-        curName = curFile.stem
-        curDIR = SWIS_DIR / "PROC" / (curName + "_HK")
-        if curDIR.is_dir():
+        cur_name = curfile.stem
+        cur_dir = swis_dir / "PROC" / (cur_name + "_HK")
+        if cur_dir.is_dir():
             logger.info("Instance Processing Directory already exists")
         else:
             logger.info("Generating Instance Processing Directory")
-            curDIR.mkdir()
+            cur_dir.mkdir()
 
         # New file within new folder
-        writeFile = (curDIR / (curFile.stem + "_HS.txt"))
-        if writeFile.exists():
+        write_file = (cur_dir / (curfile.stem + "_HS.txt"))
+        if write_file.exists():
             logger.info("HS.txt file already exists - deleting")
-            writeFile.unlink()
+            write_file.unlink()
         logger.info("Creating HS.txt file")
-        wf = open(writeFile, 'w')
+        wf = open(write_file, 'w')
 
         # Scan through text log and save H&S lines
-        with open(curFile, 'r') as f:
-            logger.info("Reading %s", curFile.name)
+        with open(curfile, 'r') as f:
+            logger.info("Reading %s", curfile.name)
             line = f.readline()
             while line != "":
 
@@ -100,18 +159,18 @@ def HS_Extract(SWIS_DIR):
             wf.close()
 
 
-def nsvf_parse(dir: Path):
+def nsvf_parse(swis_dir: Path):
     """Searches through the NSVF generated packet_log and generates new files from any found PanCam telemetry.
 
     Arguments:
-        dir {Path} -- Path of directory to file to search for Router_A_packet.log.
+        swis_dir {Path} -- Path of directory to file to search for Router_A_packet.log.
 
     Returns:
         Boolean -- True if process runs else False
 
     Generates:
         H+S.txt -- ASCII txt file of all PanCam health and status.
-        HK.txt  -- ASCII file of the PanCam HK telemetry
+        nsvfHK.txt  -- ASCII file of the PanCam HK telemetry
         Sci.txt -- ASCII file of the PanCam Sci telemetry.
         TC.txt  -- ASCII file of the PanCam TC responses.
 
@@ -131,7 +190,7 @@ def nsvf_parse(dir: Path):
 
     logger.info("Searching for Router_A_packet.log file")
     packet_log = PC_Fns.Find_Files(
-        dir, "Router_A_packet.log", SingleFile=True)
+        swis_dir, "Router_A_packet.log", SingleFile=True)
 
     if packet_log == []:
         return False
@@ -149,7 +208,7 @@ def nsvf_parse(dir: Path):
     f_wri = {}
 
     file['hs'] = proc_dir / 'H+S.txt'
-    file['hk'] = proc_dir / 'HK.txt'
+    file['hk'] = proc_dir / 'nsvfHK.txt'
     file['tc'] = proc_dir / 'TC.txt'
     file['sc'] = proc_dir / 'Sci.txt'
 
@@ -222,9 +281,60 @@ def nsvf_parse(dir: Path):
     hs.to_pickle(proc_dir / "hs_raw.pickle")
     logger.info("PanCam H+S pickled.")
 
+    # Rename HK file with Unix time
+    hk_time = hk_nsvf_epoch(swis_dir)
+    hk_unix = proc_dir / ("nsvfHK_Unix" + hk_time + ".txt")
+    if hk_unix.exists():
+        logger.info("Target file exists -- deleting")
+        hk_unix.unlink()
+    logger.info("Renaming HK file to %s", hk_unix.name)
+    file['hk'].rename(hk_unix)
+
     logger.info("--Parsing SWIS NSVF log completed.")
 
     return True
+
+
+def hk_nsvf_epoch(swis_dir: Path):
+    """Determines the elsapsed time of the first nsvf hk packet and returns the Unix time.
+
+    Arguments:
+        swis_dir {swis_dir} -- Parent to the PROC dir where the nsvf logs are.
+
+    Returns:
+        epoch_str {str} -- The UNIX time of the first HK packet in seconds.
+    """
+
+    logger.info("Renaming HK file with Unix Epoch from logger file")
+
+    nsvf_hk = PC_Fns.Find_Files(swis_dir, "nsvfHK.txt", SingleFile=True)[0]
+    log_file = PC_Fns.Find_Files(swis_dir, "logbook.log", SingleFile=True)[0]
+
+    # Determine relative time elapsed for first HK packet
+    logger.info("Extracting Elapsed time from first HK")
+    with open(nsvf_hk, 'r') as hk:
+        reader = csv.reader(hk, delimiter=' ')
+        hk_first = next(reader)
+        hk_first_time = hk_first[0][1:-1].split(':')
+        elapsed = hk_first_time[0] + '.' + hk_first_time[1]
+
+    # Search through logfile for the same elapsed time and get Unix time
+    epoch_str = None
+    with open(log_file, 'r') as log:
+        reader = csv.reader(log, delimiter=' ')
+        for row in reader:
+            # Some rows are just blank LF
+            try:
+                if elapsed in row[0]:
+                    epoch_str = row[3][6:].split('.')[0]
+                    break
+            except:
+                None
+
+    if epoch_str == None:
+        logger.error("No corresponding UNIX time found")
+
+    return epoch_str
 
 
 def sci_extract(proc_dir: Path):
@@ -277,7 +387,7 @@ def sci_extract(proc_dir: Path):
             binary_format = bytes.fromhex(''.join(data))
             f[cur_img].write(binary_format)
             # Limit to writing 7 packets to each binary file
-            if cur_pkt == 7:
+            if cur_pkt == pkts:
                 cur_img += 1
                 cur_pkt = 1
             else:

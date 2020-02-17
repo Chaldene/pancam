@@ -39,7 +39,7 @@ logging.basicConfig(filename=(proc_dir / 'processing.log'),
                     level=logging.INFO,
                     format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
 logger.info('\n\n\n\n')
-logger.info("Running FileParser.py")
+logger.info("main.py")
 
 # Still to-do
 #LV_TM = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
@@ -56,6 +56,7 @@ HaProc.RestructureHK(proc_dir)
 HaProc.compareHaCSV(proc_dir)
 
 if swis.nsvf_parse(top_dir):
+    swis.hk_extract(proc_dir)
     hs.decode(proc_dir)
     hs.verify(proc_dir)
     swis.sci_extract(proc_dir)
@@ -73,4 +74,4 @@ Plotter.HK_Temperatures(proc_dir)
 Plotter.Rover_Power(proc_dir)
 Plotter.Rover_Temperatures(proc_dir)
 
-logger.info("FileParser.py completed")
+logger.info("main.py completed")
