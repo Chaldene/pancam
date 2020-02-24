@@ -43,13 +43,23 @@ def decode(PROC_DIR):
         Bin = RTM['RAW'].apply(lambda x: bytearray.fromhex(x))
     except TypeError:
         Bin = RTM['RAW']
-        
+
     TM = pd.DataFrame()
+    verify = pd.DataFrame()
+    err_df = pd.DataFrame()
+
+    # Check for any blank HK
+    verify['Blank'] = Bin.apply(len) == 0
+    err_df = Bin[verify['Blank']]
+    if not err_df.empty:
+        for index in err_df.index.tolist():
+            logging.error("Blank HK Entry Detected at line: %s", index)
+            Bin = Bin.drop(index)
 
     # Repeated here for instances were not generated from binary
     TM = PC_Fns.ReturnCUC_RAW(TM, Bin)
 
-    #Time stamp data from CUC
+    # Time stamp data from CUC
     TM['DT'] = pd.to_datetime(CUCtoUTC_DT(RTM))
 
     TM, Bin = DecodeParam_HKHeader(TM, Bin)
@@ -236,7 +246,7 @@ def DecodeParam_HKErrors(TM, Bin):
 def DropTM(TM_ErrorFrame, TM, Bin):
     """Function to remove error entries. The TM_ErrorFrame must be
     a subset of the TM dataframe. TM and Bin are pandas dataframes
-    of the same size. 
+    of the same size.
 
     The function returns the reduced TM and Bin"""
 
@@ -327,8 +337,9 @@ def DecodeParam_CamRes(TM, Bin):
     """Determines what cameras the HK originates from. Only changes camera once a new Camera is commanded"""
 
     # Determine if Cam changed
-    #NulBin, WACBin, HRCBin = Determ_CamRes(TM, Bin)
-    NulBin = Bin[(PandUPF(Bin, 'u32', 44, 0) == 0) & (PandUPF(Bin, 'u32', 48, 0) == 0)]
+    # NulBin, WACBin, HRCBin = Determ_CamRes(TM, Bin)
+    NulBin = Bin[(PandUPF(Bin, 'u32', 44, 0) == 0) &
+                 (PandUPF(Bin, 'u32', 48, 0) == 0)]
     WACBin = Bin[TM['Stat_PIU_Pw'].between(1, 2)]
     HRCBin = Bin[TM['Stat_PIU_Pw'] == 3]
 
@@ -339,15 +350,15 @@ def Determ_CamRes(TM, Bin):
     """Sort camera responses for each camera, only change cam if a new Cam response is received"""
 
     # Byte 44-63 Camera Responses                   #PAN_TM_PIU_HKN_CR[1:10] / PAN_TM_PIU_HK_CR[1:10]
-    CamResSeries = Bin.apply(lambda x: x[44:64])
+    CamResSeries = Bin.apply(lambda x: x[44: 64])
     CamRes = pd.DataFrame({'Bin': CamResSeries,
                            'Str': CamResSeries.apply(lambda x: binascii.hexlify(x))})
     NulBin = CamRes[(PandUPF(CamRes, 'u32', 0, 0) != 0) & (
         PandUPF(Bin, 'u32', 48, 0) != 0)]  # Ignore empty CR1-4
 
     WACBin = CamRes.Bin[(TM['Stat_PIU_Pw'].between(1, 2))]
-    HRCBin = CamRes.Bin[(TM['Stat_PIU_Pw']==3)]
-    
+    HRCBin = CamRes.Bin[(TM['Stat_PIU_Pw'] == 3)]
+
     return NulBin, WACBin, HRCBin
 
     # Determine if the array has changed from the previous
@@ -358,6 +369,7 @@ def Determ_CamRes(TM, Bin):
 
     # Then if WAC + Power are different then
 
+
 def DecodeWAC_CamRes(TM, WACBin):
     """Function that accepts the WACBin and decodes the Camera Response and appends them to the TM dataframe"""
 
@@ -365,7 +377,7 @@ def DecodeWAC_CamRes(TM, WACBin):
     TM['WAC_CID'] = PandUPF(WACBin, 'u2', 44, 0)
     # PAN_TM_WAC_IA_MK / PAN_TM_WAC_HK_MK / PAN_TM_WAC_DT_MK / PAN_TM_WAC_NK_MK
     if True in (PandUPF(WACBin, 'u1', 44, 2) != 1).unique():
-        #raise decodeRAW_HK_Error("TM Byte 44 bit 2 not 0 for WAC")
+        # raise decodeRAW_HK_Error("TM Byte 44 bit 2 not 0 for WAC")
         logger.error("Warning likely mixed WAC and HRC Cam responses.")
     # PAN_TM_WAC_IA_WID / PAN_TM_WAC_HK_WID / PAN_TM_WAC_DT_WID / PAN_TM_WAC_NK_WID
     TM['WAC_WID'] = PandUPF(WACBin, 'u3', 44, 5)
@@ -437,14 +449,15 @@ def DecodeWAC_CamRes(TM, WACBin):
 
     return TM
 
+
 def DecodeHRC_CamRes(TM, HRCBin):
     """Function to decode the HRC camera response passed as a bytearray from HRCBin and then added to the TM datafrmae."""
 
-    #PAN_TM_HRC_HK_CA / PAN_TM_HRC_RB1_CA / PAN_TM_HRC_RB2_CA / PAN_TM_HRC_RB3_CA / PAN_TM_HRC_RB4_CA / PAN_TM_HRC_HMD_CA / PAN_TM_HRC_RES_CA2
+    # PAN_TM_HRC_HK_CA / PAN_TM_HRC_RB1_CA / PAN_TM_HRC_RB2_CA / PAN_TM_HRC_RB3_CA / PAN_TM_HRC_RB4_CA / PAN_TM_HRC_HMD_CA / PAN_TM_HRC_RES_CA2
     TM['HRC_ACK'] = PandUPF(HRCBin, 'u8', 51, 0)
     Res = PandUPF(HRCBin, 'u32', 52, 0) + PandUPF(HRCBin,
-                                                    'u32', 56, 0) + PandUPF(HRCBin, 'u32', 60, 0)
-    #PAN_TM_HRC_HK_RES1 / PAN_TM_HRC_RB1_RES1 / PAN_TM_HRC_RB2_RES4 / PAN_TM_HRC_RB3_RES2 / PAN_TM_HRC_RB4_RES2 / PAN_TM_HRC_HMD_RES3 / PAN_TM_HRC_RES_RES2
+                                                  'u32', 56, 0) + PandUPF(HRCBin, 'u32', 60, 0)
+    # PAN_TM_HRC_HK_RES1 / PAN_TM_HRC_RB1_RES1 / PAN_TM_HRC_RB2_RES4 / PAN_TM_HRC_RB3_RES2 / PAN_TM_HRC_RB4_RES2 / PAN_TM_HRC_HMD_RES3 / PAN_TM_HRC_RES_RES2
     if True in (Res != 0):
         logging.error("TM Bytes 52-63 not 0 for HRC HK")
     del Res
@@ -556,18 +569,20 @@ def DecodeHRC_CamRes(TM, HRCBin):
     # Command Response Packet
     TM['HRC_Res_CA'] = PandUPF(HRCBin, 'u8', 44, 0)  # PAN_TM_HRC_RES_CA1
     if True in (PandUPF(HRCBin, 'u48', 45, 0) != 0).unique():
-        #raise decodeRAW_HK_Error("TM Bytes 45-50 not 0 for HRC CMD Response")
+        # raise decodeRAW_HK_Error("TM Bytes 45-50 not 0 for HRC CMD Response")
         logger.warning("Likely mixed WAC and HRC Cam responses.")
-    
+
     return TM
+
 
 def CUCtoUTC_DT(RAW):
     """Function that takes the 4,2 CUC and converts it to a datetime object"""
 
     Sources = RAW['Source'].value_counts().index.tolist()
     if len(Sources) > 1:
-        logger.error("More than one data source found within HK. Using the most common source")
-    
+        logger.error(
+            "More than one data source found within HK. Using the most common source")
+
     elif len(Sources) == 0:
         logger.error("No HK source column found! ABORTING")
         return
@@ -582,13 +597,14 @@ def CUCtoUTC_DT(RAW):
         RAW['CUCfrac'] = RAW['Pkt_CUC'].apply(lambda x: (x & 0xFFFF)/0x10000)
 
         CalcTime = RAW.apply(lambda row:
-                         (Time(2000, format='jyear')
-                          + TimeDelta((row['Pkt_CUC'] >> 16)*units.s)
-                          # To deal with 12-hour Rover offset
-                          - TimeDelta(12*60*60, format='sec')
-                          + TimeDelta(row['CUCfrac'], format='sec')).iso, axis=1)
+                             (Time(2000, format='jyear')
+                              + TimeDelta((row['Pkt_CUC'] >> 16)*units.s)
+                              # To deal with 12-hour Rover offset
+                              - TimeDelta(12*60*60, format='sec')
+                              + TimeDelta(row['CUCfrac'], format='sec')).iso, axis=1)
 
     return CalcTime
+
 
 if __name__ == "__main__":
     DIR = Path(

@@ -3,8 +3,9 @@
 ## Prioties
 
 * Extract data from SWIS nsvf Router logs and run through analysis
-  * swis.py: Generate hk in raw pickle format
   * swis.py: Rebuild TCs from SpW replies
+  * swis.py: Correct UNIX time calculation as reporting year is 1970
+  * swis.py: Adapt Sci compare for SWIS generated images.
 * Make H&S extract from SWIS TB compatible with H&S Checker written
 
 * Add the rest of the HRC and WAC plots
@@ -77,3 +78,4 @@
 * Add image generation to Overview plot
 * FW plots adde
 * swis.py: Generate raw science image from spw tms
+* swis.py: Generate hk in raw pickle format

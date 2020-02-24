@@ -33,8 +33,11 @@ def hk_extract(swis_dir: Path):
     Arguments:
         swis_dir {Path} -- If using NSVF path is within the Proc directory. Otherwise the source path is used.
 
+    Returns:
+        Boolean -- Returns true if files found and function completed.
+
     Generates:
-        *_Unproc_HKTM.pickle -- The pandas dataframe containing raw HK and time information.
+        *_Unproc_HKTM.pickle -- The pandas dataframe containing raw HK and time information within a folder for each instance.
     """
 
     # Searches for HK files and creates a binary for each file found
@@ -52,7 +55,7 @@ def hk_extract(swis_dir: Path):
 
     if not hk_files:
         logger.error("No files found - ABORTING")
-        return
+        return False
 
     for curfile in hk_files:
         dl = pd.DataFrame()
@@ -106,6 +109,8 @@ def hk_extract(swis_dir: Path):
 
         dl.to_pickle(cur_dir / (cur_name + "_Unproc_HKTM.pickle"))
 
+    return True
+
 
 def hs_extract(swis_dir: Path):
     """Extracts the H&S from the SWIS log and puts in a new file
@@ -115,6 +120,7 @@ def hs_extract(swis_dir: Path):
 
     Generates:
         _HS.txt -- Simply contains the extracted relevant H&S lines from the log.
+        _
     """
 
     # Searches through the typescript output .txt file and recreates a simple H&S.txt file
@@ -122,9 +128,11 @@ def hs_extract(swis_dir: Path):
     logger.info("Processing SWIS H&S")
 
     files_txt = PC_Fns.Find_Files(swis_dir, "*.txt")
-    files_HK = PC_Fns.Find_Files(swis_dir, "*HK*.txt")
-    files_sci = PC_Fns.Find_Files(swis_dir, '*SC.txt')
-    files_hs = list(set(files_txt) - set(files_HK) - set(files_sci))
+    files_HK = PC_Fns.Find_Files(swis_dir, "*_HK*.txt")
+    files_sci = PC_Fns.Find_Files(swis_dir, '*_SC.txt')
+    files_typ = PC_Fns.Find_Files(swis_dir, "*_typescript.txt")
+    files_hs = list(set(files_txt) - set(files_HK) -
+                    set(files_sci) - set(files_typ))
 
     # Read text file for H&S
     for curfile in files_hs:
@@ -139,7 +147,7 @@ def hs_extract(swis_dir: Path):
             cur_dir.mkdir()
 
         # New file within new folder
-        write_file = (cur_dir / (curfile.stem + "_HS.txt"))
+        write_file = (cur_dir / (curfile.stem + "_HS.log"))
         if write_file.exists():
             logger.info("HS.txt file already exists - deleting")
             write_file.unlink()
@@ -151,12 +159,26 @@ def hs_extract(swis_dir: Path):
             logger.info("Reading %s", curfile.name)
             line = f.readline()
             while line != "":
-
-                if "Requested" in line:
+                if "HS response" in line:
                     if "message with 45 bytes" in line:
-                        wf.write(line)
+                        line_red = line.replace("Timestamp: ", "")
+                        line_red = line_red.replace(
+                            " - [Informative]HS response message with 45 bytes and content ", "; ")
+                        line_red = line_red.replace("-0x", " ")
+                        line_red = line_red.replace("0x", "")
+                        line_red = line_red.replace("\n", "").replace("\r", "")
+                        split_line = line_red.split(" ")
+                        new_line = "".join([entry.zfill(2)
+                                            for entry in split_line]) + "\n"
+                        wf.write(new_line)
                 line = f.readline()
             wf.close()
+
+        # Convert hs.log to pickle file
+        hs_head = ['Time', 'RAW']
+        hs = pd.read_csv(write_file, sep=';', header=None, names=hs_head)
+        hs.to_pickle(cur_dir / "hs_raw.pickle")
+        logger.info("PanCam H+S pickled.")
 
 
 def nsvf_parse(swis_dir: Path):
@@ -482,7 +504,7 @@ def sci_compare(proc_dir: Path):
 
 if __name__ == "__main__":
     dir = Path(
-        input("Type the path to the folder where the Rover files are stored: "))
+        input("Type the path to the folder where the SWIS files are stored: "))
 
     proc_dir = dir / "PROC"
     if proc_dir.is_dir():
@@ -498,17 +520,7 @@ if __name__ == "__main__":
     logger.info("Running SIWS.py as main")
     logger.info("Reading directory: %s", dir)
 
-    routeA = PC_Fns.Find_Files(dir, 'Router_A_packet.log', SingleFile=True)[0]
-    nsvf_parse(routeA)
+    # routeA = PC_Fns.Find_Files(dir, 'Router_A_packet.log', SingleFile=True)[0]
+    # nsvf_parse(routeA)
 
-    # HK_Extract(DIR)
-    # HS_Extract(DIR)
-    # # Check_Sci(DIR)
-
-    # Unproc = PC_Fns.Find_Files(PROC_DIR, '*Unproc_HKTM.pickle')
-    # for curFile in Unproc:
-    #     curDir = curFile.parent
-    #     decodeRAW_HK.decode(curDir)
-    #     Cal_HK.cal_HK(curDir)
-    #     Plotter.HK_Overview(curDir)
-    # Write function that compares the predicte image to the actual image
+    hs_extract(dir)

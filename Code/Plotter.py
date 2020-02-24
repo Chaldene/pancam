@@ -154,6 +154,9 @@ def HK_Voltages(PROC_DIR, Interact=False):
     if Interact:
         plt.show(block=True)
 
+    plt.close(fig)
+    plt.close(fig2)
+
     logger.info("Producing Voltage Plots Completed")
 
 
@@ -274,6 +277,9 @@ def HK_Temperatures(PROC_DIR, Interact=False):
     if Interact:
         plt.show(block=True)
 
+    plt.close(fig)
+    plt.close(fig2)
+
     logger.info("Producing Temperature Plots Completed")
 
 
@@ -334,6 +340,8 @@ def Rover_Temperatures(PROC_DIR, Interact=False):
     if Interact:
         plt.show()
 
+    plt.close(fig)
+
     logger.info("Producing Rover Temperature Plot Completed")
 
 
@@ -386,6 +394,8 @@ def Rover_Power(PROC_DIR, Interact=False):
     if Interact:
         plt.show(block=False)
 
+    plt.close(fig)
+
     # Rover Status and Power Extract
     ACT = ROV[(ROV.PWR_ST > 0) | (ROV.HTR_ST > 0)]
     if not ACT.empty:
@@ -420,6 +430,8 @@ def Rover_Power(PROC_DIR, Interact=False):
 
     if Interact:
         plt.show()
+
+    plt.close(fig)
 
     logger.info("Producing Rover Power Plot Completed")
 
@@ -523,8 +535,10 @@ def HK_Overview(PROC_DIR, Interact=False):
 
     ax4.plot(RAW.DT, RAW.IMG_No)
     ax4.get_yaxis().set_visible(False)
+    ax4.set_ylim([-0.1, 1.1])
     ax4.grid(True)
-    ax4.text(.99, .9, 'Img #', color='0.25', fontweight='bold', horizontalalignment='right', transform=ax4.transAxes)
+    ax4.text(.99, .9, 'Img #', color='0.25', fontweight='bold',
+             horizontalalignment='right', transform=ax4.transAxes)
     ax4.set_xlabel('Date Time')
 
     fig.tight_layout()
@@ -532,6 +546,8 @@ def HK_Overview(PROC_DIR, Interact=False):
 
     if Interact:
         plt.show(block=True)
+
+    plt.close(fig)
 
     logger.info("Producing Overview Plot Completed")
 
@@ -588,56 +604,65 @@ def HRC_CS(PROC_DIR, Interact=False):
         size = TC.shape[0]
         TC['LEVEL'] = 1
 
-        markerline, stemline, baseline = ax0.stem(TC['DT'], TC['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
+        markerline, stemline, baseline = ax0.stem(
+            TC['DT'], TC['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
         plt.setp(markerline, mec="k", mfc="w", zorder=3)
         markerline.set_ydata(np.zeros(size))
-        ax0.text(.99,.9,'Action List', horizontalalignment='right', transform=ax0.transAxes)
+        ax0.text(.99, .9, 'Action List', horizontalalignment='right',
+                 transform=ax0.transAxes)
         ax0.grid(True)
         for i in range(0, size):
-            ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0,-2),
-                textcoords="offset points", va="top", ha="right", rotation=90)
+            ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0, -2),
+                         textcoords="offset points", va="top", ha="right", rotation=90)
         ax0.set_xticklabels([], visible=False)
-    
-    #remove y axis and spines
+
+    # remove y axis and spines
     ax0.get_yaxis().set_visible(False)
 
-    ## Encoder Value
+    # Encoder Value
     ax1.plot(RAW['DT'], RAW['HRC_ENC'], '.')
-    ax1.text(.99,.8,'Enc Value', horizontalalignment='right', transform=ax1.transAxes)
+    ax1.text(.99, .8, 'Enc Value', horizontalalignment='right',
+             transform=ax1.transAxes)
     ax1.grid(True)
     ax1.set_xticklabels([], visible=False)
 
-    ## Enc and MM Flag
+    # Enc and MM Flag
     ax2.plot(RAW['DT'], RAW['HRC_EPF'], label='Enc')
     ax2.plot(RAW['DT'], RAW['HRC_MMF'], '.', label='MM')
-    ax2.text(.99,.8,'ENC & MM', horizontalalignment='right', transform=ax2.transAxes)
+    ax2.text(.99, .8, 'ENC & MM', horizontalalignment='right',
+             transform=ax2.transAxes)
     ax2.grid(True)
-    ax2.set_ylim([-0.1,1.1])
+    ax2.set_ylim([-0.1, 1.1])
     ax2.yaxis.tick_right()
     ax2.yaxis.set_label_position('right')
     ax2.set_xticklabels([], visible=False)
-    ax2.legend(loc='center right', bbox_to_anchor= (1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
+    ax2.legend(loc='center right', bbox_to_anchor=(
+        1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
     ax2.get_yaxis().set_visible(False)
 
-    ## AF and AI Flag
+    # AF and AI Flag
     ax3.plot(RAW['DT'], RAW['HRC_AFF'], label='AF')
     ax3.plot(RAW['DT'], RAW['HRC_AIF'], label='AI')
-    ax3.text(.99,.8,'AF & AI', horizontalalignment='right', transform=ax3.transAxes)
+    ax3.text(.99, .8, 'AF & AI', horizontalalignment='right',
+             transform=ax3.transAxes)
     ax3.grid(True)
-    ax3.set_ylim([-0.1,1.1])
+    ax3.set_ylim([-0.1, 1.1])
     ax3.set_xticklabels([], visible=False)
-    ax3.legend(loc='center right', bbox_to_anchor= (1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
+    ax3.legend(loc='center right', bbox_to_anchor=(
+        1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
     ax3.get_yaxis().set_visible(False)
 
-    ## Current Sharpness
+    # Current Sharpness
     ax4.plot(RAW['DT'], RAW['HRC_CS'])
-    ax4.text(.99,.8,'Sharpness', horizontalalignment='right', transform=ax4.transAxes)
+    ax4.text(.99, .8, 'Sharpness', horizontalalignment='right',
+             transform=ax4.transAxes)
     ax4.grid(True)
     ax4.set_xticklabels([], visible=False)
 
-    ## Image Counter
+    # Image Counter
     ax5.plot(RAW['DT'], RAW['HRC_IFC'], '.')
-    ax5.text(.99,.8,'IMG Count', horizontalalignment='right', transform=ax5.transAxes)
+    ax5.text(.99, .8, 'IMG Count', horizontalalignment='right',
+             transform=ax5.transAxes)
     ax5.grid(True)
     ax5.yaxis.tick_right()
     plt.setp(ax5.get_yticklabels(), visible=False)
@@ -646,12 +671,13 @@ def HRC_CS(PROC_DIR, Interact=False):
 
     # Sensor Temp
     ax6.plot(RAW['DT'], RAW['HRC_TP'])
-    ax6.text(.99,.8,'RAW Sensor Temp', horizontalalignment='right', transform=ax6.transAxes)
+    ax6.text(.99, .8, 'RAW Sensor Temp',
+             horizontalalignment='right', transform=ax6.transAxes)
     ax6.grid(True)
-            
-    #Re-adjust x-axis so that 
+
+    # Re-adjust x-axis so that
     xlimits = ax0.get_xlim()
-    new_xlimits = (xlimits[0],(xlimits[1] - xlimits[0])*1.1+xlimits[0])
+    new_xlimits = (xlimits[0], (xlimits[1] - xlimits[0])*1.1+xlimits[0])
     ax0.set_xlim(new_xlimits)
 
     fig.tight_layout()
@@ -659,6 +685,8 @@ def HRC_CS(PROC_DIR, Interact=False):
 
     if Interact:
         plt.show(block=True)
+
+    plt.close(fig)
 
     logger.info("Producing HRC CS Plot Completed")
 
@@ -711,59 +739,67 @@ def FW(PROC_DIR, Interact=False):
         size = TC.shape[0]
         TC['LEVEL'] = 1
 
-        markerline, stemline, baseline = ax0.stem(TC['DT'], TC['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
+        markerline, stemline, baseline = ax0.stem(
+            TC['DT'], TC['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
         plt.setp(markerline, mec="k", mfc="w", zorder=3)
         markerline.set_ydata(np.zeros(size))
-        ax0.text(.99,.9,'Action List', horizontalalignment='right', transform=ax0.transAxes)
+        ax0.text(.99, .9, 'Action List', horizontalalignment='right',
+                 transform=ax0.transAxes)
         ax0.grid(True)
         for i in range(0, size):
-            ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0,-2),
-                textcoords="offset points", va="top", ha="right", rotation=90)
+            ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0, -2),
+                         textcoords="offset points", va="top", ha="right", rotation=90)
         ax0.set_xticklabels([], visible=False)
-    
-    #remove y axis and spines
+
+    # remove y axis and spines
     ax0.get_yaxis().set_visible(False)
 
-    ## FW Running Flag
+    # FW Running Flag
     ax1.plot(RAW['DT'], RAW['Stat_FWL_Op'], label='FWL')
     ax1.plot(RAW['DT'], RAW['Stat_FWR_Op'], label='FWR')
-    ax1.text(.99,.8,'Running', horizontalalignment='right', transform=ax1.transAxes)
+    ax1.text(.99, .8, 'Running', horizontalalignment='right',
+             transform=ax1.transAxes)
     ax1.grid(True)
     ax1.set_ylim([-0.1, 1.1])
-    ax1.legend(loc='center right', bbox_to_anchor=(1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
+    ax1.legend(loc='center right', bbox_to_anchor=(
+        1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
     ax1.set_xticklabels([], visible=False)
     ax1.get_yaxis().set_visible(False)
 
-    ## FW Home Flag
+    # FW Home Flag
     ax2.plot(RAW['DT'], RAW['Stat_FWL_Ho'], label='FWL')
     ax2.plot(RAW['DT'], RAW['Stat_FWR_Ho'], label='FWR')
-    ax2.text(.99,.8,'Home', horizontalalignment='right', transform=ax2.transAxes)
+    ax2.text(.99, .8, 'Home', horizontalalignment='right',
+             transform=ax2.transAxes)
     ax2.grid(True)
-    ax2.set_ylim([-0.1,1.1])
+    ax2.set_ylim([-0.1, 1.1])
     ax2.yaxis.tick_right()
     ax2.set_xticklabels([], visible=False)
     ax2.get_yaxis().set_visible(False)
 
-    ## FW Index Flag
+    # FW Index Flag
     ax3.plot(RAW['DT'], RAW['Stat_FWL_Id'], label='FWL')
     ax3.plot(RAW['DT'], RAW['Stat_FWR_Id'], label='FWR')
-    ax3.text(.99,.8,'Index', horizontalalignment='right', transform=ax3.transAxes)
+    ax3.text(.99, .8, 'Index', horizontalalignment='right',
+             transform=ax3.transAxes)
     ax3.grid(True)
-    ax3.set_ylim([-0.1,1.1])
+    ax3.set_ylim([-0.1, 1.1])
     ax3.set_xticklabels([], visible=False)
     ax3.get_yaxis().set_visible(False)
 
-    ## FW Position
+    # FW Position
     ax4.plot(RAW['DT'], RAW['Stat_FWL_Po'], label='FWL')
     ax4.plot(RAW['DT'], RAW['Stat_FWR_Po'], label='FWR')
-    ax4.text(.99,.8,'Position', horizontalalignment='right', transform=ax4.transAxes)
+    ax4.text(.99, .8, 'Position', horizontalalignment='right',
+             transform=ax4.transAxes)
     ax4.grid(True)
     ax4.set_xticklabels([], visible=False)
 
-    ## Absolute Steps
+    # Absolute Steps
     ax5.plot(RAW['DT'], RAW['FWL_ABS'], label='FWL')
     ax5.plot(RAW['DT'], RAW['FWR_ABS'], label='FWR')
-    ax5.text(.99,.8,'Absolute Steps', horizontalalignment='right', transform=ax5.transAxes)
+    ax5.text(.99, .8, 'Absolute Steps',
+             horizontalalignment='right', transform=ax5.transAxes)
     ax5.grid(True)
     ax5.yaxis.tick_right()
     ax5.yaxis.set_label_position('right')
@@ -772,12 +808,13 @@ def FW(PROC_DIR, Interact=False):
     # Relative Steps
     ax6.plot(RAW['DT'], RAW['FWL_REL'], label='FWL')
     ax6.plot(RAW['DT'], RAW['FWR_REL'], label='FWR')
-    ax6.text(.99,.8,'Relative Steps', horizontalalignment='right', transform=ax6.transAxes)
+    ax6.text(.99, .8, 'Relative Steps',
+             horizontalalignment='right', transform=ax6.transAxes)
     ax6.grid(True)
-            
-    #Re-adjust x-axis so that 
+
+    # Re-adjust x-axis so that
     xlimits = ax0.get_xlim()
-    new_xlimits = (xlimits[0],(xlimits[1] - xlimits[0])*1.1+xlimits[0])
+    new_xlimits = (xlimits[0], (xlimits[1] - xlimits[0])*1.1+xlimits[0])
     ax0.set_xlim(new_xlimits)
 
     fig.tight_layout()
@@ -785,6 +822,8 @@ def FW(PROC_DIR, Interact=False):
 
     if Interact:
         plt.show(block=True)
+
+    plt.close(fig)
 
     logger.info("Producing FW Status Plot Completed")
 
@@ -800,10 +839,10 @@ if __name__ == "__main__":
     logger.info("Running Plotter.py as main")
     logger.info("Reading directory: %s", DIR)
 
-    #HK_Temperatures(DIR)
-    #Rover_Temperatures(DIR)
-    #Rover_Power(DIR)
+    # HK_Temperatures(DIR)
+    # Rover_Temperatures(DIR)
+    # Rover_Power(DIR)
     #HK_Overview(DIR, True)
-    #HK_Voltages(DIR)
+    # HK_Voltages(DIR)
     #HRC_CS(DIR, True)
     FW(DIR, Interact=True)

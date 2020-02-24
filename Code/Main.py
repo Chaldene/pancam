@@ -20,6 +20,7 @@ import HaProc
 import Rover
 import swis
 import hs
+import PC_Fns
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +38,7 @@ if not proc_dir.is_dir():
 # logging file will be stored in processing directory
 logging.basicConfig(filename=(proc_dir / 'processing.log'),
                     level=logging.INFO,
-                    format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+                    format='%(asctime)s - %(module)s.%(funcName)s - %(levelname)s - %(message)s')
 logger.info('\n\n\n\n')
 logger.info("main.py")
 
@@ -45,15 +46,31 @@ logger.info("main.py")
 #LV_TM = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
 #LV_TC = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
 #LV_PSU = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
-# SWIS Files
 
 # Process primary files found
-Rover.TM_extract(top_dir)
-Rover.TC_extract(top_dir)
-Rover.NavCamBrowse(top_dir)
-HaProc.HaScan(top_dir)
-HaProc.RestructureHK(proc_dir)
-HaProc.compareHaCSV(proc_dir)
+# Rover.TM_extract(top_dir)
+# Rover.TC_extract(top_dir)
+# Rover.NavCamBrowse(top_dir)
+# HaProc.HaScan(top_dir)
+# HaProc.RestructureHK(proc_dir)
+# HaProc.compareHaCSV(proc_dir)
+
+# SWIS Files
+if swis.hk_extract(top_dir):
+    # Several instance files generated
+    unproc = PC_Fns.Find_Files(top_dir, '*Unproc_HKTM.pickle')
+    swis.hs_extract(top_dir)
+    for cur_file in unproc:
+        cur_dir = cur_file.parent
+        hs.decode(cur_dir)
+        hs.verify(cur_dir)
+        decodeRAW_HK.decode(cur_dir)
+        Cal_HK.cal_HK(cur_dir)
+        Plotter.HK_Overview(cur_dir)
+        Plotter.HK_Voltages(cur_dir)
+        Plotter.HK_Temperatures(cur_dir)
+
+        # Check_Sci(DIR)
 
 if swis.nsvf_parse(top_dir):
     swis.hk_extract(proc_dir)
@@ -61,6 +78,7 @@ if swis.nsvf_parse(top_dir):
     hs.verify(proc_dir)
     swis.sci_extract(proc_dir)
     swis.sci_compare(proc_dir)
+
 
 # Process secondary files
 decodeRAW_HK.decode(proc_dir)

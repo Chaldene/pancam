@@ -89,25 +89,26 @@ def verify(proc_dir: Path):
     err_df = hs[verify['HK_Addr']]
     if err_df.shape[0] != 0:
         logger.error(
-            "HS HK Address not as expected %d occurances", err_df.shape[0])
-        logger.info(err_df)
+            "HS HK Address not as expected %d occurances.", err_df.shape[0])
+        logger.info("\n %s \n", err_df)
 
     # Verify the HK Length is either 72 or 88 bytes
     verify['HK_Len'] = ~hs['HK_Len'].isin(pc_hk_lens)
     err_df = hs[verify['HK_Len']]
     if err_df.shape[0] != 0:
-        logger.error("HS HK unexpected length %d occurances", err_df.shape[0])
-        logger.info(err_df)
+        logger.error("HS HK unexpected length %d occurances.",
+                     err_df.shape[0])
+        logger.info("\n %s \n", err_df)
 
     # Verify HK counter is always increasing
     verify['HK_Cnt'] = hs['HK_Cnt'].diff() < 0
     err_df = hs[verify['HK_Cnt']]
     if err_df.shape[0] != 0:
-        logger.error("HS HK Count not increasing, %d occurances",
+        logger.error("HS HK Count not increasing, %d occurances.",
                      err_df.shape[0])
         for row in err_df.index.values:
             logger.info("Occurance")
-            logger.info(hs.iloc[row-1:row+2])
+            logger.info("\n %s \n", hs.iloc[row-1:row+2])
 
     # Verify Sci Address is always 0xC0 00 00 00
     # Check first value is as expected
@@ -115,15 +116,16 @@ def verify(proc_dir: Path):
     err_df = hs[verify['Sci_Addr']]
     if err_df.shape[0] != 0:
         logger.error(
-            "HS Sci Address not as expected %d occurances", err_df.shape[0])
-        logger.info(err_df)
+            "HS Sci Address not as expected %d occurances.", err_df.shape[0])
+        logger.info("\n %s \n", err_df)
 
     # Verify the Sci Length is always 2,097,200 bytes
     verify['Sci_Len'] = ~hs['Sci_Len'].isin(pc_sci_len)
     err_df = hs[verify['Sci_Len']]
     if err_df.shape[0] != 0:
-        logger.error("HS Sci unexpected length %d occurances", err_df.shape[0])
-        logger.info(err_df)
+        logger.error("HS Sci unexpected length %d occurances.",
+                     err_df.shape[0])
+        logger.info("\n %s \n", err_df)
 
     # Verify the LDT Ctrl is always <7
     verify['LDT'] = ~(hs['LDT'] < 8)
@@ -131,7 +133,7 @@ def verify(proc_dir: Path):
     if err_df.shape[0] != 0:
         logger.error("HS LDT not in expected range of 0 to 7, %d occurances",
                      err_df.shape[0])
-        logger.info(err_df)
+        logger.info("\n %s \n", err_df)
 
     # Check that the Sci counter is always increasing
     verify['Sci_Cnt'] = hs['Sci_Cnt'].diff() < 0
@@ -141,7 +143,7 @@ def verify(proc_dir: Path):
                      err_df.shape[0])
         for row in err_df.index.values:
             logger.info("Occurance")
-            logger.info(hs.iloc[row-1:row+2])
+            logger.info("\n %s \n", hs.iloc[row-1:row+2])
 
     logger.info("--HS Verify Completed.")
 

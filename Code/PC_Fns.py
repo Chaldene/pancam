@@ -25,7 +25,7 @@ def Find_Files(DIR, FILT, SingleFile=False):
 
     num = len(FoundFiles)
     if num == 0:
-        logger.error("No %s Files Found", FILT)
+        logger.warning("No %s Files Found", FILT)
         return []
     else:
         logger.info("Number of %s files found: %d", FILT, num)
