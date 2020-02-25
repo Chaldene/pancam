@@ -39,10 +39,13 @@ def decode(PROC_DIR):
         return
 
     RTM = pd.read_pickle(PikFile[0])
+
     try:
         Bin = RTM['RAW'].apply(lambda x: bytearray.fromhex(x))
     except TypeError:
         Bin = RTM['RAW']
+
+    RTM = PC_Fns.ReturnCUC_RAW(RTM, Bin)
 
     TM = pd.DataFrame()
     verify = pd.DataFrame()
@@ -55,9 +58,6 @@ def decode(PROC_DIR):
         for index in err_df.index.tolist():
             logging.error("Blank HK Entry Detected at line: %s", index)
             Bin = Bin.drop(index)
-
-    # Repeated here for instances were not generated from binary
-    TM = PC_Fns.ReturnCUC_RAW(TM, Bin)
 
     # Time stamp data from CUC
     TM['DT'] = pd.to_datetime(CUCtoUTC_DT(RTM))
@@ -77,7 +77,7 @@ def decode(PROC_DIR):
     TM = DecodeParam_HKNE(TM, Bin)
 
     # Camera Responses
-    WACBin, HRCBin = DecodeParam_CamRes(TM, Bin)
+    WACBin, HRCBin = Determ_CamRes(TM, Bin)
 
     if not WACBin.empty:
         TM = DecodeWAC_CamRes(TM, WACBin)
@@ -89,7 +89,7 @@ def decode(PROC_DIR):
 
     # Write a new file with RAW data
     write_file = PROC_DIR / \
-        (PikFile[0].stem.split('_Unproc')[0] + "_RAW_HKTM.pickle")
+        (PikFile[0].stem.split('Unproc')[0] + "RAW_HKTM.pickle")
     if write_file.exists():
         write_file.unlink()
         logger.info("Deleting file: %s", write_file.name)
@@ -330,44 +330,32 @@ def DecodeParam_HKNE(TM, Bin):
 
     return TM
 
-# Got to here writing these functions.
-
-
-def DecodeParam_CamRes(TM, Bin):
-    """Determines what cameras the HK originates from. Only changes camera once a new Camera is commanded"""
-
-    # Determine if Cam changed
-    # NulBin, WACBin, HRCBin = Determ_CamRes(TM, Bin)
-    NulBin = Bin[(PandUPF(Bin, 'u32', 44, 0) == 0) &
-                 (PandUPF(Bin, 'u32', 48, 0) == 0)]
-    WACBin = Bin[TM['Stat_PIU_Pw'].between(1, 2)]
-    HRCBin = Bin[TM['Stat_PIU_Pw'] == 3]
-
-    return WACBin, HRCBin
-
 
 def Determ_CamRes(TM, Bin):
     """Sort camera responses for each camera, only change cam if a new Cam response is received"""
 
     # Byte 44-63 Camera Responses                   #PAN_TM_PIU_HKN_CR[1:10] / PAN_TM_PIU_HK_CR[1:10]
     CamResSeries = Bin.apply(lambda x: x[44: 64])
-    CamRes = pd.DataFrame({'Bin': CamResSeries,
-                           'Str': CamResSeries.apply(lambda x: binascii.hexlify(x))})
-    NulBin = CamRes[(PandUPF(CamRes, 'u32', 0, 0) != 0) & (
-        PandUPF(Bin, 'u32', 48, 0) != 0)]  # Ignore empty CR1-4
+    # Determine if Cam Response has changed
+    camres_chg = CamResSeries != CamResSeries.shift(1)
+    # Ignore first entry
+    camres_chg[0] = False
 
-    WACBin = CamRes.Bin[(TM['Stat_PIU_Pw'].between(1, 2))]
-    HRCBin = CamRes.Bin[(TM['Stat_PIU_Pw'] == 3)]
+    WACBin = Bin[camres_chg & (TM['Stat_PIU_Pw'].between(1, 2))]
+    HRCBin = Bin[camres_chg & (TM['Stat_PIU_Pw'] == 3)]
 
-    return NulBin, WACBin, HRCBin
+    # Verify NulBin is empty
+    NulBin = Bin[camres_chg & (TM['Stat_PIU_Pw'] == 0)]
+    if not NulBin.shape[0] == 0:
+        logger.error("NulBin not empty!!")
 
-    # Determine if the array has changed from the previous
+    # Verify No Overlap between WACBin and HRCBin
+    union = WACBin.to_frame().join(HRCBin.to_frame(), lsuffix='WAC',
+                                   rsuffix='HRC', how='inner')
+    if union.shape[0] != 0:
+        logger.error("Common entries for WACBin and HRCBin")
 
-    # Subtrace NulBin from CamRes
-
-    # Make a change column
-
-    # Then if WAC + Power are different then
+    return WACBin, HRCBin
 
 
 def DecodeWAC_CamRes(TM, WACBin):
@@ -377,7 +365,7 @@ def DecodeWAC_CamRes(TM, WACBin):
     TM['WAC_CID'] = PandUPF(WACBin, 'u2', 44, 0)
     # PAN_TM_WAC_IA_MK / PAN_TM_WAC_HK_MK / PAN_TM_WAC_DT_MK / PAN_TM_WAC_NK_MK
     if True in (PandUPF(WACBin, 'u1', 44, 2) != 1).unique():
-        # raise decodeRAW_HK_Error("TM Byte 44 bit 2 not 0 for WAC")
+        raise decodeRAW_HK_Error("TM Byte 44 bit 2 not 0 for WAC")
         logger.error("Warning likely mixed WAC and HRC Cam responses.")
     # PAN_TM_WAC_IA_WID / PAN_TM_WAC_HK_WID / PAN_TM_WAC_DT_WID / PAN_TM_WAC_NK_WID
     TM['WAC_WID'] = PandUPF(WACBin, 'u3', 44, 5)
@@ -477,8 +465,8 @@ def DecodeHRC_CamRes(TM, HRCBin):
         TM['HRC_GA'] = PandUPF(HHK, 'u2', 50, 0)  # PAN_TM_HRC_HK_GA
         TM['HRC_ESF'] = PandUPF(HHK, 'u1', 50, 2)  # PAN_TM_HRC_HK_ES
         TM['HRC_EIF'] = PandUPF(HHK, 'u1', 50, 3)  # PAN_TM_HRC_HK_EI
-        if True in (PandUPF(HHK, 'u1', 50, 4) != 0).unique():  # PAN_TM_HRC_HK_RES2
-            raise decodeRAW_HK_Error("TM Byte 50 bit 4 not 0 for HRC HK")
+        # if True in (PandUPF(HHK, 'u1', 50, 4) != 0).unique():  # PAN_TM_HRC_HK_RES2
+        #     raise decodeRAW_HK_Error("TM Byte 50 bit 4 not 0 for HRC HK")
         TM['HRC_ERR_EN'] = PandUPF(HHK, 'u1', 50, 5)  # PAN_TM_HRC_HK_ERENC
         TM['HRC_ERR_AI'] = PandUPF(HHK, 'u1', 50, 6)  # PAN_TM_HRC_HK_ERAI
         TM['HRC_ERR_AF'] = PandUPF(HHK, 'u1', 50, 7)  # PAN_TM_HRC_HK_ERAF
@@ -569,7 +557,7 @@ def DecodeHRC_CamRes(TM, HRCBin):
     # Command Response Packet
     TM['HRC_Res_CA'] = PandUPF(HRCBin, 'u8', 44, 0)  # PAN_TM_HRC_RES_CA1
     if True in (PandUPF(HRCBin, 'u48', 45, 0) != 0).unique():
-        # raise decodeRAW_HK_Error("TM Bytes 45-50 not 0 for HRC CMD Response")
+        raise decodeRAW_HK_Error("TM Bytes 45-50 not 0 for HRC CMD Response")
         logger.warning("Likely mixed WAC and HRC Cam responses.")
 
     return TM
