@@ -2,6 +2,9 @@
 
 ## Prioties
 
+* Finish LabView processing:
+  * Make PSU Log
+  * Make TC Extract
 * Extract data from SWIS nsvf Router logs and run through analysis
   * swis.py: Rebuild TCs from SpW replies
   * swis.py: Correct UNIX time calculation as reporting year is 1970
@@ -9,10 +12,8 @@
 * Make H&S extract from SWIS TB compatible with H&S Checker written
 
 * Add the rest of the HRC and WAC plots
-* SWIS read XML that generates data?
 * Split data into activities so that it is easy to view HK etc.
 * Hide x-axis labels on multi-stack, particularly for overview as can see extra numbers.
-* Way to track data type and processing history
 * Within HK Decode, stop passing bin around and change functions to only return relevant arrays
 
 ## Nice to haves
@@ -79,3 +80,5 @@
 * FW plots adde
 * swis.py: Generate raw science image from spw tms
 * swis.py: Generate hk in raw pickle format
+* Img Cnt plot to add y-axis
+* Way to track data type and processing history

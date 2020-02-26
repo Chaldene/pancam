@@ -20,11 +20,14 @@ from PC_Fns import PandUPF
 logger = logging.getLogger(__name__)
 
 
-def decode(proc_dir: Path):
+def decode(proc_dir: Path, spw_header: bool = False):
     """Searches the proc_dir for hs_raw.pickle and decodes PanCam parameters generating a new pickle file
 
     Arguments:
-        proc_dir {Path} -- Folder path to the hs_raw.pickle file
+        proc_dir {Path} -- Folder path to the hs_raw.pickle file.
+
+    Keyword Arguments:
+        spw_header {bool} -- Set to true if RAW data includes spacewire header. (default: {False})
 
     Generates:
         hs.pickle -- H+S pandas dataframe with decoding parameters columns and raw.
@@ -37,14 +40,21 @@ def decode(proc_dir: Path):
 
     raw = hs['RAW'].apply(lambda x: bytearray.fromhex(x))
 
+    if spw_header:
+        spw_offset = 12
+        logging.info("Spacewire header offset added to H&S %d", spw_offset)
+    else:
+        logging.info("No spacewire header offset used.")
+        spw_offset = 0
+
     # HS Decode
-    hs['HK_Addr'] = PandUPF(raw, 'u32', 12, 0)
-    hs['HK_Len'] = PandUPF(raw, 'u16', 16, 0)
-    hs['HK_Cnt'] = PandUPF(raw, 'u16', 18, 0)
-    hs['Sci_Addr'] = PandUPF(raw, 'u32', 20, 0)
-    hs['Sci_Len'] = PandUPF(raw, 'u24', 24, 0)
-    hs['LDT'] = PandUPF(raw, 'u8', 27, 0)
-    hs['Sci_Cnt'] = PandUPF(raw, 'u16', 28, 0)
+    hs['HK_Addr'] = PandUPF(raw, 'u32',  0+spw_offset, 0)
+    hs['HK_Len'] = PandUPF(raw, 'u16',  4+spw_offset, 0)
+    hs['HK_Cnt'] = PandUPF(raw, 'u16',  6+spw_offset, 0)
+    hs['Sci_Addr'] = PandUPF(raw, 'u32',  8+spw_offset, 0)
+    hs['Sci_Len'] = PandUPF(raw, 'u24', 12+spw_offset, 0)
+    hs['LDT'] = PandUPF(raw, 'u8', 15+spw_offset, 0)
+    hs['Sci_Cnt'] = PandUPF(raw, 'u16', 16+spw_offset, 0)
 
     logger.info("Writing H+S decoded to pickle file")
     hs.to_pickle(proc_dir / "hs.pickle")
@@ -71,7 +81,7 @@ def verify(proc_dir: Path):
     pc_hk_addr = 0x80000000
     pc_hk_lens = [0, 72, 88]
     pc_sci_addr = 0xC0000000
-    pc_sci_len = [0x200030]
+    pc_sci_len = [0x0, 0x200030]
 
     # Searches folder for hs.pickle and then verifies hs data is as expected
     logger.info("Running H+S verify")

@@ -70,7 +70,7 @@ def HK_Voltages(PROC_DIR, Interact=False):
     RawPikFile = PC_Fns.Find_Files(
         PROC_DIR, "*RAW_HKTM.pickle", SingleFile=True)
     if not RawPikFile:
-        logger.error("No file found - ABORTING")
+        logger.warning("No file found - ABORTING")
         return
 
     RAW = pd.read_pickle(RawPikFile[0])
@@ -109,7 +109,7 @@ def HK_Voltages(PROC_DIR, Interact=False):
     CalPikFile = PC_Fns.Find_Files(
         PROC_DIR, "*Cal_HKTM.pickle", SingleFile=True)
     if not CalPikFile:
-        logger.error("No file found - ABORTING")
+        logger.warning("No file found - ABORTING")
         return
 
     Cal = pd.read_pickle(CalPikFile[0])
@@ -171,7 +171,7 @@ def HK_Temperatures(PROC_DIR, Interact=False):
     RawPikFile = PC_Fns.Find_Files(
         PROC_DIR, "*RAW_HKTM.pickle", SingleFile=True)
     if not RawPikFile:
-        logger.error("No file found - ABORTING")
+        logger.warning("No file found - ABORTING")
         return
 
     RAW = pd.read_pickle(RawPikFile[0])
@@ -244,7 +244,7 @@ def HK_Temperatures(PROC_DIR, Interact=False):
     CalPikFile = PC_Fns.Find_Files(
         PROC_DIR, "*Cal_HKTM.pickle", SingleFile=True)
     if not CalPikFile:
-        logger.error("No file found - ABORTING")
+        logger.warning("No file found - ABORTING")
         return
 
     Cal = pd.read_pickle(CalPikFile[0])
@@ -294,7 +294,7 @@ def Rover_Temperatures(PROC_DIR, Interact=False):
     RawPikFile = PC_Fns.Find_Files(
         PROC_DIR, "*RoverStatus.pickle", SingleFile=True)
     if not RawPikFile:
-        logger.error("No file found - ABORTING")
+        logger.warning("No file found - ABORTING")
         return
 
     ROV = pd.read_pickle(RawPikFile[0])
@@ -303,7 +303,7 @@ def Rover_Temperatures(PROC_DIR, Interact=False):
     RawPikFile = PC_Fns.Find_Files(
         PROC_DIR, "*RoverTemps.pickle", SingleFile=True)
     if not RawPikFile:
-        logger.error("No file found - ABORTING")
+        logger.warning("No file found - ABORTING")
         return
 
     TMP = pd.read_pickle(RawPikFile[0])
@@ -356,7 +356,7 @@ def Rover_Power(PROC_DIR, Interact=False):
     RawPikFile = PC_Fns.Find_Files(
         PROC_DIR, "*RoverStatus.pickle", SingleFile=True)
     if not RawPikFile:
-        logger.error("No file found - ABORTING")
+        logger.warning("No file found - ABORTING")
         return
 
     ROV = pd.read_pickle(RawPikFile[0])
@@ -534,8 +534,8 @@ def HK_Overview(PROC_DIR, Interact=False):
     # ax3.xaxis.set_major_formatter(myFmt)
 
     ax4.plot(RAW.DT, RAW.IMG_No)
-    ax4.get_yaxis().set_visible(False)
-    ax4.set_ylim([-0.1, 1.1])
+    if ax4.get_ylim()[1] < 1:
+        ax4.set_ylim([-0.1, 1.1])
     ax4.grid(True)
     ax4.text(.99, .9, 'Img #', color='0.25', fontweight='bold',
              horizontalalignment='right', transform=ax4.transAxes)
@@ -563,7 +563,7 @@ def HRC_CS(PROC_DIR, Interact=False):
     RawPikFile = PC_Fns.Find_Files(
         PROC_DIR, "*RAW_HKTM.pickle", SingleFile=True)
     if not RawPikFile:
-        logger.error("No file found - ABORTING")
+        logger.warning("No file found - ABORTING")
         return
 
     RAW = pd.read_pickle(RawPikFile[0])
@@ -702,7 +702,7 @@ def FW(PROC_DIR, Interact=False):
     RawPikFile = PC_Fns.Find_Files(
         PROC_DIR, "*RAW_HKTM.pickle", SingleFile=True)
     if not RawPikFile:
-        logger.error("No file found - ABORTING")
+        logger.warning("No file found - ABORTING")
         return
 
     RAW = pd.read_pickle(RawPikFile[0])
@@ -842,7 +842,7 @@ if __name__ == "__main__":
     # HK_Temperatures(DIR)
     # Rover_Temperatures(DIR)
     # Rover_Power(DIR)
-    #HK_Overview(DIR, True)
+    HK_Overview(DIR, True)
     # HK_Voltages(DIR)
     #HRC_CS(DIR, True)
-    FW(DIR, Interact=True)
+    #FW(DIR, Interact=True)

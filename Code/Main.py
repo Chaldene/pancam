@@ -20,6 +20,7 @@ import HaProc
 import Rover
 import swis
 import hs
+import labview
 import PC_Fns
 
 logger = logging.getLogger(__name__)
@@ -38,12 +39,20 @@ if not proc_dir.is_dir():
 # logging file will be stored in processing directory
 logging.basicConfig(filename=(proc_dir / 'processing.log'),
                     level=logging.INFO,
-                    format='%(asctime)s - %(module)s.%(funcName)s - %(levelname)s - %(message)s')
+                    format='%(asctime)s - %(levelname)s - %(module)s.%(funcName)s - %(message)s')
 logger.info('\n\n\n\n')
 logger.info("main.py")
 
-# Still to-do
-#LV_TM = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
+# LabView Files
+arc_logs = True
+if labview.hk_extract(top_dir, archive=arc_logs):
+    labview.hs_extract(top_dir, archive=arc_logs)
+    hs.decode(proc_dir)
+    hs.verify(proc_dir)
+    labview.sci_extract(top_dir, archive=arc_logs)
+    labview.bin_move(top_dir, archive=arc_logs)
+    if arc_logs:
+        labview.create_archive(top_dir)
 #LV_TC = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
 #LV_PSU = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
 
@@ -56,7 +65,7 @@ logger.info("main.py")
 # HaProc.compareHaCSV(proc_dir)
 
 # SWIS Files
-if swis.hk_extract(top_dir):
+elif swis.hk_extract(top_dir):
     # Several instance files generated
     unproc = PC_Fns.Find_Files(top_dir, '*Unproc_HKTM.pickle')
     swis.hs_extract(top_dir)
@@ -72,7 +81,7 @@ if swis.hk_extract(top_dir):
 
         # Check_Sci(DIR)
 
-if swis.nsvf_parse(top_dir):
+elif swis.nsvf_parse(top_dir):
     swis.hk_extract(proc_dir)
     hs.decode(proc_dir)
     hs.verify(proc_dir)

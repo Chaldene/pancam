@@ -120,7 +120,7 @@ def hs_extract(swis_dir: Path):
 
     Generates:
         _HS.txt -- Simply contains the extracted relevant H&S lines from the log.
-        _
+        hs_raw.pickle -- Pickle file in ['Time', 'RAW'] format for hs module.
     """
 
     # Searches through the typescript output .txt file and recreates a simple H&S.txt file
@@ -380,8 +380,6 @@ def sci_extract(proc_dir: Path):
     num_expt = hs.sci_cnt(proc_dir)
     if num_imgs != num_expt:
         logger.error("Missing Sci Parts Detected!")
-        logger.error("Expected: %d", num_expt)
-        logger.error("Got: %d in %d packets", num_imgs, num_pkts)
 
     # Create directory for binary image files
     img_raw_dir = proc_dir / "IMG_RAW"
