@@ -62,7 +62,7 @@ def all_plots(proc_dir: Path):
     FW(proc_dir)
 
     Rover_Temperatures(proc_dir)
-    Rover_Power(DIR)
+    Rover_Power(proc_dir)
 
     HRC_CS(proc_dir)
 
