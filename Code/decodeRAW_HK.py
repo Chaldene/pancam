@@ -5,7 +5,7 @@
 #
 # PanCam Data Processing Tools
 
-import datetime
+from datetime import datetime
 from astropy.time import TimeDelta, Time
 from astropy import units
 import pandas as pd
@@ -577,19 +577,35 @@ def CUCtoUTC_DT(RAW):
 
     MajSource = Sources[0]
 
+    # First calculate the fractional seconds
+    RAW['CUCfrac'] = RAW['Pkt_CUC'].apply(lambda x: (x & 0xFFFF)/0x10000)
+
     if MajSource == 'SWIS':
         CalcTime = pd.to_datetime(RAW['Unix_Time'], unit='ms')
 
-    else:
-        # First calculate the fractional seconds
-        RAW['CUCfrac'] = RAW['Pkt_CUC'].apply(lambda x: (x & 0xFFFF)/0x10000)
+    elif MajSource == 'LabView':
+        RAW['DT'] = pd.to_datetime(RAW['Time'], format='%Y-%m-%d\t%H:%M:%S.%f')
+        RAW['Year'] = RAW['DT'].dt.year
+        RAW['Month'] = RAW['DT'].dt.month
 
+        # LabView provides the CUC time as the # seconds from the first day
+        # of the month, minus an extra day.
+        CalcTime = RAW.apply(lambda row:
+                             (Time(datetime(row['Year'], row['Month'], 1, 0, 0, 0))
+                              - TimeDelta(1, format='jd')
+                              + TimeDelta((row['Pkt_CUC'] >> 16)*units.s)
+                              + TimeDelta(row['CUCfrac'], format='sec')
+                              ).iso, axis=1)
+
+    else:
+        # Rover uses time since Mid-day of the year 2000 minues 12 hours
         CalcTime = RAW.apply(lambda row:
                              (Time(2000, format='jyear')
                               + TimeDelta((row['Pkt_CUC'] >> 16)*units.s)
                               # To deal with 12-hour Rover offset
                               - TimeDelta(12*60*60, format='sec')
-                              + TimeDelta(row['CUCfrac'], format='sec')).iso, axis=1)
+                              + TimeDelta(row['CUCfrac'], format='sec')
+                              ).iso, axis=1)
 
     return CalcTime
 

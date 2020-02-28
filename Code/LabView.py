@@ -406,26 +406,89 @@ def psu_extract(lv_dir: Path, archive: bool = False):
                               usecols=skip,
                               skiprows=1)
 
-        if not file_df.empty:
-            file_df['DT'] = pd.to_datetime(file_df['Date Time'],
-                                           format='%d/%m/%Y %H:%M:%S.%f')
-            file_df['Power'] = file_df['Voltage'] * file_df['Current']
-            file_df['Htr. Power'] = file_df['Htr. Voltage'] * \
-                file_df['Htr. Current']
-            psu_df = psu_df.append(file_df, ignore_index=True)
+        if file_df.empty:
+            continue
+
+        file_df['DT'] = pd.to_datetime(file_df['Date Time'],
+                                       format='%d/%m/%Y %H:%M:%S.%f')
+        file_df['Power'] = file_df['Voltage'] * file_df['Current']
+        file_df['Htr. Power'] = file_df['Htr. Voltage'] * \
+            file_df['Htr. Current']
+        psu_df = psu_df.append(file_df, ignore_index=True)
 
         if archive:
             curfile.rename(arc_dir / curfile.name)
 
-    if not psu_df.empty:
-        psu_df.drop(index=0, inplace=True)
-        psu_df.to_pickle(proc_dir / "psu.pickle")
-        logger.info("PanCam PSU pickled.")
+    if psu_df.empty:
+        logger.info("PanCam PSU Empty. -- Finished")
 
-    else:
-        logger.info("PanCam PSU Empty.")
-
+    psu_df.drop(index=0, inplace=True)
+    psu_df.to_pickle(proc_dir / "psu.pickle")
+    logger.info("PanCam PSU pickled.")
     logger.info("--PSU Extract Completed")
+
+
+def tc_extract(lv_dir: Path, archive: bool = False):
+    logger.info("Extracting Labview TC commands.")
+
+    files_tc = PC_Fns.Find_Files(lv_dir, "RMAP_CMD_*.txt")
+
+    if not files_tc:
+        return
+
+    # Proc dir
+    proc_dir = lv_dir / "PROC"
+
+    if archive:
+        # Create directory for archive
+        arc_dir = lv_dir / "ARCHIVE" / "PSU_Log"
+        if not arc_dir.is_dir():
+            logger.info("Generating 'ARCHIVE' directory")
+            arc_dir.mkdir(parents=True)
+
+    # Read txt or TC values
+    tc_hdr_strings = ['Date', 'Time', 'Description']
+    tc_hdr_cmd = list(range(0, 11))
+    tc_hdr = tc_hdr_strings + tc_hdr_cmd
+    tc_col = tc_hdr_cmd
+
+    tc = pd.DataFrame()
+
+    for curfile in files_tc:
+        logger.info("Reading %s", curfile.name)
+        file_df = pd.read_csv(curfile, sep='\t', names=tc_hdr, dtype=object)
+
+        if archive:
+            curfile.rename(arc_dir / curfile.name)
+
+        if file_df.empty:
+            continue
+
+        # Remove last blank entry
+        if file_df['Description'].iloc[-1] == '  ':
+            file_df = file_df[:-1]
+
+        # Decode hex
+        file_df[tc_col] = file_df[tc_col].fillna('-1')
+        file_df[tc_col] = file_df[tc_col].applymap(lambda x: int(x, base=16))
+        file_df[tc_col] = file_df[tc_col].replace('-1', np.nan)
+
+        # Calculate time
+        file_df['DT'] = file_df['Date'] + file_df['Time']
+        file_df['DT'] = pd.to_datetime(
+            file_df['DT'], format='%Y-%m-%d%H:%M:%S.%f ')
+
+        file_df['BID'] = ((file_df[0]*256+file_df[1]) & 0x7F8).values >> 3
+        tc = tc.append(file_df, ignore_index=True)
+
+    if tc.empty:
+        logger.info("PanCam TC Empty. -- Finished")
+        return
+
+    tc['ACTION'] = tc['Description'].map(lambda x: x[12:])
+    tc.to_pickle(proc_dir / "Unproc_TC.pickle")
+    logger.info("PanCam TC pickled.")
+    logger.info("--TC Extract Completed")
 
 
 def create_json(img_file: Path):
@@ -511,10 +574,10 @@ if __name__ == "__main__":
     logger.info("Running labview.py as main")
     logger.info("Reading directory: %s", dir)
 
-    #hs_extract(dir, archive=True)
-    #hk_extract(dir, archive=True)
+    # hs_extract(dir, archive=True)
+    # hk_extract(dir, archive=True)
     # hs.decode(proc_dir)
     # hs.verify(proc_dir)
-    #sci_extract(dir, archive=True)
+    # sci_extract(dir, archive=True)
     bin_move(dir, archive=True)
     # create_archive(dir)

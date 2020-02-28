@@ -78,6 +78,7 @@ else:
         labview.hs_extract(top_dir, archive=arc_logs)
         hs.decode(proc_dir)
         hs.verify(proc_dir)
+        labview.tc_extract(top_dir)
         labview.sci_extract(top_dir, archive=arc_logs)
         labview.bin_move(top_dir, archive=arc_logs)
         labview.psu_extract(top_dir, archive=arc_logs)

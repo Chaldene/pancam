@@ -152,7 +152,7 @@ def HK_Voltages(PROC_DIR, Interact=False):
 
     ax2.plot(RAW.DT, RAW.Volt_1V5.astype('int64'), 'g-', label='1V5 RAW')
     ax2.set_ylabel('1V5 RAW [ENG]')
-    ax2.set_xlabel('Data Time')
+    ax2.set_xlabel('Date Time')
 
     format_axes(fig, integers=True)
     ax2.tick_params(labelbottom=True)
@@ -198,7 +198,7 @@ def HK_Voltages(PROC_DIR, Interact=False):
     ax5.plot([Cal['DT'].iloc[0], Cal['DT'].iloc[-1]],
              Lim_1V5_High*2, 'darkgreen', linestyle='dashed')
     ax5.set_ylabel('1V5 [V]')
-    ax5.set_xlabel('Data Time')
+    ax5.set_xlabel('Date Time')
 
     format_axes(fig2)
     ax5.tick_params(labelbottom=True)
@@ -277,7 +277,7 @@ def HK_Temperatures(PROC_DIR, Interact=False):
         1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
     ax3.set_ylim([-0.1, 1.1])
     ax3.get_yaxis().set_visible(False)
-    ax3.set_xlabel('Data Time')
+    ax3.set_xlabel('Date Time')
 
     format_axes(fig, integers=False)
     ax3.tick_params(labelbottom=True)
@@ -315,6 +315,7 @@ def HK_Temperatures(PROC_DIR, Interact=False):
 
     ax4.plot(Cal.DT, Cal.Temp_LDO, '-k', label='LDO')
     ax4.set_ylabel('LDO Temp [$^\circ$C]')
+    ax4.set_xlabel('Date Time')
     # ax4.xaxis.set_major_formatter(myFmt)
 
     format_axes(fig2)
@@ -813,6 +814,7 @@ def FW(PROC_DIR, Interact=False):
     ax6.plot(RAW['DT'], RAW['FWL_REL'], label='FWL')
     ax6.plot(RAW['DT'], RAW['FWR_REL'], label='FWR')
     add_text(ax6, 'Relative Steps')
+    ax6.set_xlabel('Date Time')
 
     # Re-adjust x-axis so that
     xlimits = ax0.get_xlim()
