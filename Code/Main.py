@@ -55,29 +55,8 @@ logger.addHandler(ch)
 logger.info('\n\n\n\n')
 logger.info("main.py")
 
-# LabView Files
-arc_logs = True
-if labview.hk_extract(top_dir, archive=arc_logs):
-    labview.hs_extract(top_dir, archive=arc_logs)
-    hs.decode(proc_dir)
-    hs.verify(proc_dir)
-    labview.sci_extract(top_dir, archive=arc_logs)
-    labview.bin_move(top_dir, archive=arc_logs)
-    if arc_logs:
-        labview.create_archive(top_dir)
-# LV_TC = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
-# LV_PSU = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
-
-# Process primary files found
-# Rover.TM_extract(top_dir)
-# Rover.TC_extract(top_dir)
-# Rover.NavCamBrowse(top_dir)
-# HaProc.HaScan(top_dir)
-# HaProc.RestructureHK(proc_dir)
-# HaProc.compareHaCSV(proc_dir)
-
-# SWIS Files
-elif swis.hk_extract(top_dir):
+# First check if SWIS as multiple folders
+if swis.hk_extract(top_dir):
     # Several instance files generated
     unproc = PC_Fns.Find_Files(top_dir, '*Unproc_HKTM.pickle')
     swis.hs_extract(top_dir)
@@ -88,32 +67,46 @@ elif swis.hk_extract(top_dir):
         hs.verify(cur_dir)
         decodeRAW_HK.decode(cur_dir)
         Cal_HK.cal_HK(cur_dir)
-        Plotter.HK_Overview(cur_dir)
-        Plotter.HK_Voltages(cur_dir)
-        Plotter.HK_Temperatures(cur_dir)
-        Plotter.FW(cur_dir)
+        Plotter.all_plots(cur_dir)
 
         # Check_Sci(DIR)
 
-elif swis.nsvf_parse(top_dir):
-    swis.hk_extract(proc_dir)
-    hs.decode(proc_dir)
-    hs.verify(proc_dir)
-    swis.sci_extract(proc_dir)
-    swis.sci_compare(proc_dir)
+else:
+    # LabView Files
+    arc_logs = True
+    if labview.hk_extract(top_dir, archive=arc_logs):
+        labview.hs_extract(top_dir, archive=arc_logs)
+        hs.decode(proc_dir)
+        hs.verify(proc_dir)
+        labview.sci_extract(top_dir, archive=arc_logs)
+        labview.bin_move(top_dir, archive=arc_logs)
+        labview.psu_extract(top_dir, archive=arc_logs)
+        if arc_logs:
+            labview.create_archive(top_dir)
+    # LV_TC = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
 
+    # Rover files
+    # Process primary files found
+    # Rover.TM_extract(top_dir)
+    # Rover.TC_extract(top_dir)
+    # Rover.NavCamBrowse(top_dir)
+    # HaProc.HaScan(top_dir)
+    # HaProc.RestructureHK(proc_dir)
+    # HaProc.compareHaCSV(proc_dir)
 
-# Process secondary files
-decodeRAW_HK.decode(proc_dir)
-ImageRAWtoBrowse.Img_RAW_Browse(proc_dir)
-Cal_HK.cal_HK(proc_dir)
+    elif swis.nsvf_parse(top_dir):
+        swis.hk_extract(proc_dir)
+        hs.decode(proc_dir)
+        hs.verify(proc_dir)
+        swis.sci_extract(proc_dir)
+        swis.sci_compare(proc_dir)
 
-# Produce Plots
-Plotter.HK_Overview(proc_dir)
-Plotter.HK_Voltages(proc_dir)
-Plotter.HK_Temperatures(proc_dir)
-Plotter.FW(proc_dir)
-Plotter.Rover_Power(proc_dir)
-Plotter.Rover_Temperatures(proc_dir)
+    # Process secondary files
+    decodeRAW_HK.decode(proc_dir)
+    ImageRAWtoBrowse.Img_RAW_Browse(proc_dir)
+    Cal_HK.cal_HK(proc_dir)
+
+    # Produce Plots
+    Plotter.all_plots(proc_dir)
 
 logger.info("main.py completed")

@@ -369,6 +369,65 @@ def bin_move(lv_dir: Path, archive: bool = False):
     logger.info("--Moving saved science images completed.")
 
 
+def psu_extract(lv_dir: Path, archive: bool = False):
+
+    logger.info("Extracting PSU measurements.")
+
+    files_psu = PC_Fns.Find_Files(lv_dir, "PSU_Log_*.txt")
+
+    if not files_psu:
+        return
+
+    # Proc dir
+    proc_dir = lv_dir / "PROC"
+
+    if archive:
+        # Create directory for archive
+        arc_dir = lv_dir / "ARCHIVE" / "PSU_Log"
+        if not arc_dir.is_dir():
+            logger.info("Generating 'ARCHIVE' directory")
+            arc_dir.mkdir(parents=True)
+
+    # Read text file for PSU values
+    hdr = ['Date Time', 'Blank', 'Voltage', 'Current',
+           'Power', 'Htr. Voltage', 'Htr. Current']
+    hdr_types = {'Date Time': object}
+    hdr_types.setdefault("list", 'float64')
+    skip = [0, 2, 3, 4, 5, 6]
+
+    psu_df = pd.DataFrame()
+
+    for curfile in files_psu:
+        logger.info("Reading %s", curfile.name)
+        file_df = pd.read_csv(curfile,
+                              sep='\t',
+                              names=hdr,
+                              dtype=hdr_types,
+                              usecols=skip,
+                              skiprows=1)
+
+        if not file_df.empty:
+            file_df['DT'] = pd.to_datetime(file_df['Date Time'],
+                                           format='%d/%m/%Y %H:%M:%S.%f')
+            file_df['Power'] = file_df['Voltage'] * file_df['Current']
+            file_df['Htr. Power'] = file_df['Htr. Voltage'] * \
+                file_df['Htr. Current']
+            psu_df = psu_df.append(file_df, ignore_index=True)
+
+        if archive:
+            curfile.rename(arc_dir / curfile.name)
+
+    if not psu_df.empty:
+        psu_df.drop(index=0, inplace=True)
+        psu_df.to_pickle(proc_dir / "psu.pickle")
+        logger.info("PanCam PSU pickled.")
+
+    else:
+        logger.info("PanCam PSU Empty.")
+
+    logger.info("--PSU Extract Completed")
+
+
 def create_json(img_file: Path):
     """Creates a json file to accompany .pci_raw image.
 

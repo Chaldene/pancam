@@ -3,17 +3,20 @@
 ## Prioties
 
 * Finish LabView processing:
-  * Make PSU Log
   * Make TC Extract
+* Set errors between 0 and 1 for a clear view
+* Ensure SWIS checks science images are as expected
+* Make reading csv Rover file output similar to that of .ha and other sources
 * Extract data from SWIS nsvf Router logs and run through analysis
   * swis.py: Rebuild TCs from SpW replies
   * swis.py: Correct UNIX time calculation as reporting year is 1970
   * swis.py: Adapt Sci compare for SWIS generated images.
-* Make H&S extract from SWIS TB compatible with H&S Checker written
-
+* Make a list of required packages
 * Add the rest of the HRC and WAC plots
 * Split data into activities so that it is easy to view HK etc.
 * Within HK Decode, stop passing bin around and change functions to only return relevant arrays
+* Check that all items from TC and TM plotter have been recreated in here.
+* Make easier to read verification of HK
 
 ## Nice to haves
 
@@ -23,10 +26,7 @@
 * Replace Temperature calibrations with a dictionary
 * Read in calibraitons from files rather than stored in software
 * Look into converting into archive database
-* Is it possible to heavily compress raw data
-* Set errors between 0 and 1 for a clear view
 * Plot points rather than lines
-* Scroll bar for viewing
 * Create a calculation array that stores useful temps, voltages, HRC etc.
 * Look at creating a nice interface for it all
 * Break into powered chunks that can be easily navigated
@@ -35,8 +35,6 @@
 * Add liscense for project
 * Check all liscenses are valid
 * Update Readme
-* Make a list of required packages
-* Make reading csv Rover file output similar to that of .ha and other sources
 
 ## Completed
 
@@ -81,3 +79,6 @@
 * Guareenteed way to distinguish between WAC and HRC CRs with just TM
 * Logging to also stream to console if errors but otherwise ignore
 * Hide x-axis labels on multi-stack, particularly for overview as can see extra numbers.
+* Make H&S extract from SWIS TB compatible with H&S Checker written
+* Is it possible to heavily compress raw data
+* Make PSU Log

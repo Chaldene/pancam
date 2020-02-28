@@ -64,6 +64,8 @@ def all_plots(proc_dir: Path):
     Rover_Temperatures(proc_dir)
     Rover_Power(proc_dir)
 
+    psu(proc_dir)
+
     HRC_CS(proc_dir)
 
 
@@ -831,6 +833,92 @@ def FW(PROC_DIR, Interact=False):
     logger.info("Producing FW Status Plot Completed")
 
 
+def psu(proc_dir, Interact=False):
+
+    logger.info("Producing PSU Plot")
+
+    hk_dir = MakeHKPlotsDir(proc_dir)
+
+    psupikfile = PC_Fns.Find_Files(proc_dir, "psu.pickle", SingleFile=True)
+
+    if not psupikfile:
+        logger.warning("No file found - ABORTING")
+        return
+
+    data = pd.read_pickle(psupikfile[0])
+
+    fig = plt.figure(figsize=(14.0, 9.0))
+    gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1], figure=fig)
+    ax0 = fig.add_subplot(gs[0])
+    ax1 = ax0.twinx()
+    ax2 = fig.add_subplot(gs[1], sharex=ax0)
+
+    ax0.plot(data['DT'], data['Voltage'], 'C0-', label='Instr.')
+    ax0.plot(data['DT'], data['Htr. Voltage'], 'C0--', label='HTR')
+    ax0.legend(loc='upper right')
+    ax0.set_ylabel('Voltage - Zoom [V]')
+    ax0.set_ylim(26, 30.0)
+
+    ax1.plot(data['DT'], data['Current'], 'C2-', label='Instr.')
+    ax1.plot(data['DT'], data['Htr. Current'], 'C2--', label='HTR')
+    ax1.set_ylabel('Current [A]')
+    ax1.set_ylim(-0.01, 0.35)
+    ax1.spines['right'].set_color('C2')
+    ax1.tick_params(axis='y', colors='C2')
+    ax1.yaxis.label.set_color('C2')
+    ax1.grid(color='lightgreen')
+
+    ax2.plot(data['DT'], data['Voltage'], 'C0-', label='Instr.')
+    ax2.plot(data['DT'], data['Htr. Voltage'], 'C0--', label='HTR')
+    ax2.set_ylabel('Voltage [V]')
+    ax2.set_xlabel('Date Time')
+
+    format_axes(fig)
+    ax0.grid(False)
+    ax2.tick_params(labelbottom=True)
+
+    fig.tight_layout()
+    fig.savefig(hk_dir / 'PSU_Cur.png')
+
+    if Interact:
+        plt.show(block=False)
+
+    fig2 = plt.figure(figsize=(14.0, 9.0))
+    gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1], figure=fig2)
+    ax3 = fig2.add_subplot(gs[0])
+    ax4 = ax3.twinx()
+    ax5 = fig2.add_subplot(gs[1], sharex=ax3)
+
+    ax3.plot(data['DT'], data['Voltage'], 'C0-', label='Instr.')
+    ax3.plot(data['DT'], data['Htr. Voltage'], 'C0--', label='HTR')
+    ax3.legend(loc='upper right')
+    ax3.set_ylabel('Voltage - Zoom [V]')
+    ax3.set_ylim(26, 30.0)
+
+    ax4.plot(data['DT'], data['Power'], 'C1-', label='Instr.')
+    ax4.plot(data['DT'], data['Htr. Power'], 'C1--', label='HTR')
+    ax4.set_ylabel('Power [W]')
+    ax4.spines['right'].set_color('C1')
+    ax4.tick_params(axis='y', colors='C1')
+    ax4.yaxis.label.set_color('C1')
+    ax4.grid(color='wheat')
+
+    ax5.plot(data['DT'], data['Voltage'], 'C0-', label='Instr.')
+    ax5.plot(data['DT'], data['Htr. Voltage'], 'C0--', label='HTR')
+    ax5.set_ylabel('Voltage [V]')
+    ax5.set_xlabel('Date Time')
+
+    format_axes(fig2)
+    ax3.grid(False)
+    ax5.tick_params(labelbottom=True)
+
+    fig2.tight_layout()
+    fig2.savefig(hk_dir / 'PSU_Pwr.png')
+
+    if Interact:
+        plt.show(block=True)
+
+
 if __name__ == "__main__":
     DIR = Path(
         input("Type the path to the PROC folder where the processed files are stored: "))
@@ -848,4 +936,5 @@ if __name__ == "__main__":
     #HK_Overview(DIR, True)
     #HK_Voltages(DIR, True)
     #HRC_CS(DIR, True)
-    FW(DIR, Interact=True)
+    #FW(DIR, Interact=True)
+    psu(DIR, Interact=True)
