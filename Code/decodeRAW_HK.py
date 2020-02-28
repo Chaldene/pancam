@@ -35,7 +35,7 @@ def decode(PROC_DIR):
     PikFile = PC_Fns.Find_Files(
         PROC_DIR, "*Unproc_HKTM.pickle", SingleFile=True)
     if not PikFile:
-        logger.error("No files found - ABORTING")
+        logger.warning("No files found - ABORTING")
         return
 
     RTM = pd.read_pickle(PikFile[0])

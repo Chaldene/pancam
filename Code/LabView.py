@@ -16,6 +16,7 @@ import filecmp
 from shutil import copyfile
 import json
 import shutil
+import numpy as np
 
 import PC_Fns
 import hs
@@ -173,6 +174,27 @@ def sci_extract(lv_dir: Path, archive: bool = False):
         logger.error("Missing Sci Parts Detected!")
         logger.error("Expected: %d", num_expt)
         logger.error("Got: %d packets", num_pkts)
+        logger.info("Looking for sequential short chunks")
+        # Search for all files with a size 762030
+        small_chunks = [files_sci.index(
+            chunk) for chunk in files_sci if chunk.stat().st_size == 762030]
+        # Search for any sequential small chunks
+        repeat_chunks = [small_chunks[i+1]
+                         for i, x in enumerate(np.diff(small_chunks) == 1) if x]
+        if repeat_chunks:
+            logger.error("Repeat chunks found. Renaming and excluding them")
+            wrong_files = [files_sci[i] for i in repeat_chunks]
+            for wrong_item in wrong_files:
+                logger.info("Renaming to .ignore %s", wrong_item.name)
+                wrong_item.rename(wrong_item.with_suffix('.txt.ignore'))
+                files_sci.remove(wrong_item)
+
+            num_pkts = sum(1 for item in files_sci)
+            if num_pkts != num_expt:
+                logger.critical(
+                    "Still unexpected number of packets. Now %d", num_pkts)
+            else:
+                logger.error("Number of packets now as expected, %d", num_pkts)
 
     # Create directory for binary image files
     img_spw_dir = lv_dir / "PROC" / "IMG_SPW"

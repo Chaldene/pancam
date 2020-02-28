@@ -23,8 +23,15 @@ import hs
 import labview
 import PC_Fns
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
+# create console handler logger
+ch = logging.StreamHandler()
+ch.setLevel(logging.ERROR)
+ch_formatter = logging.Formatter(
+    '%(module)s.%(funcName)s - %(levelname)s - %(message)s')
+ch.setFormatter(ch_formatter)
 
 # Select Folder to Process
 top_dir = Path(
@@ -36,10 +43,15 @@ if not proc_dir.is_dir():
     MakeDir = True
     proc_dir.mkdir()
 
-# logging file will be stored in processing directory
-logging.basicConfig(filename=(proc_dir / 'processing.log'),
-                    level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(module)s.%(funcName)s - %(message)s')
+# create file handler logger
+fh = logging.FileHandler(proc_dir / 'processing.log')
+fh.setLevel(logging.INFO)
+fh_formatter = logging.Formatter(
+    '%(asctime)s - %(levelname)s - %(module)s.%(funcName)s - %(message)s')
+fh.setFormatter(fh_formatter)
+logger.addHandler(fh)
+logger.addHandler(ch)
+
 logger.info('\n\n\n\n')
 logger.info("main.py")
 
@@ -53,8 +65,8 @@ if labview.hk_extract(top_dir, archive=arc_logs):
     labview.bin_move(top_dir, archive=arc_logs)
     if arc_logs:
         labview.create_archive(top_dir)
-#LV_TC = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
-#LV_PSU = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
+# LV_TC = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
+# LV_PSU = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
 
 # Process primary files found
 # Rover.TM_extract(top_dir)
@@ -70,8 +82,9 @@ elif swis.hk_extract(top_dir):
     unproc = PC_Fns.Find_Files(top_dir, '*Unproc_HKTM.pickle')
     swis.hs_extract(top_dir)
     for cur_file in unproc:
+        logger.error("Analysing %s", cur_file.name)
         cur_dir = cur_file.parent
-        hs.decode(cur_dir)
+        hs.decode(cur_dir, True)
         hs.verify(cur_dir)
         decodeRAW_HK.decode(cur_dir)
         Cal_HK.cal_HK(cur_dir)

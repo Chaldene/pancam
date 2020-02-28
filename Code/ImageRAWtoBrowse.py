@@ -29,7 +29,8 @@ def Img_RAW_Browse(PROC_DIR):
     # Search for pci_raw files in the process directory
     RAW_FILES = PC_Fns.Find_Files(PROC_DIR, "IMG_RAW\*.pci_raw")
     if not RAW_FILES:
-        logger.error("No files found - ABORTING")
+        logger.warning("No files found - ABORTING")
+        return
 
     # Create for loop here
     for curFile in RAW_FILES:

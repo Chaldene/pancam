@@ -54,7 +54,7 @@ def hk_extract(swis_dir: Path):
         nsvf = False
 
     if not hk_files:
-        logger.error("No files found - ABORTING")
+        logger.warning("No files found - ABORTING")
         return False
 
     for curfile in hk_files:

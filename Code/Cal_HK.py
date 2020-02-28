@@ -28,7 +28,7 @@ def cal_HK(PROC_DIR):
     # Search for PanCam Processed Files
     PikFile = PC_Fns.Find_Files(PROC_DIR, "*RAW_HKTM.pickle")
     if not PikFile:
-        logger.error("No files found - ABORTING")
+        logger.warning("No files found - ABORTING")
         return
 
     # Read RAW TM pickle file
