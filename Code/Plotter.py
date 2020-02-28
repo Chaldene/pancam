@@ -9,6 +9,7 @@
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 import matplotlib.dates as mdates
+import matplotlib
 import pandas as pd
 from pandas.plotting import register_matplotlib_converters
 import numpy as np
@@ -39,6 +40,33 @@ class plotter_Error(Exception):
     pass
 
 
+def all_plots(proc_dir: Path):
+    """Generates one of each defined plots.
+
+    Arguments:
+        proc_dir {Path} -- Dir containing generated .pickle files.
+
+    Generates:
+        HK Plots {Folder} -- Located in proc_dir containing the following if available:
+            FW.png           -- Plot of Filter Wheel Status
+            HK_OVER.png      -- Overview of PanCam HK
+            INT_TEMP_CAL.png -- Plot of calibrated temperatures
+            INT_TEMP_RAW.png -- Plot of RAW temperatures and heater status
+            VOLT_CAL.png     -- Plot of the calibrated voltages and limits
+            VOLT_RAW.png     -- Plot of the raw voltages
+    """
+
+    HK_Overview(proc_dir)
+    HK_Voltages(proc_dir)
+    HK_Temperatures(proc_dir)
+    FW(proc_dir)
+
+    Rover_Temperatures(proc_dir)
+    Rover_Power(DIR)
+
+    HRC_CS(proc_dir)
+
+
 def MakeHKPlotsDir(PROC_DIR):
     """Checks to see if the 'HK Plots' directory has been generated, if not creates it"""
     HK_DIR = PROC_DIR / HK_Plot_Location
@@ -59,6 +87,39 @@ def zero_to_nan(values):
     return List, List_Low, List_High
 
 
+def format_axes(fig, integers=False):
+    """Shows the grid, hides the xlabel and sets the y scale to integers for each subplot within a figure.
+
+    Arguments:
+        fig {matplotlib.fig} -- A matplotlib figure object.
+
+    Keyword Arguments:
+        integers {bool} -- If set to True, the y-axis ticks are forced to integers. (default: {False})
+    """
+
+    for i, ax in enumerate(fig.axes):
+        ax.grid(True)
+        ax.tick_params(labelbottom=False)
+        if integers:
+            ax.yaxis.set_major_locator(
+                matplotlib.ticker.MaxNLocator(integer=True))
+
+
+def add_text(axes: matplotlib.axes, text: str):
+    """Adds axes text to the subplot
+
+    Arguments:
+        axes {matplotlib.axes} -- matplotlib.axes object for text to be added.
+        text {str} -- String containing text to be added.
+    """
+
+    axes.text(.99, .9, text,
+              color='0.25',
+              fontweight='bold',
+              horizontalalignment='right',
+              transform=axes.transAxes)
+
+
 def HK_Voltages(PROC_DIR, Interact=False):
     """"Produces a calibrated and uncalibrated voltage plots from pickle files"""
 
@@ -75,29 +136,24 @@ def HK_Voltages(PROC_DIR, Interact=False):
 
     RAW = pd.read_pickle(RawPikFile[0])
 
-    gs = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 1])
     fig = plt.figure(figsize=(14.0, 9.0))
+    gs = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 1], figure=fig)
     ax0 = fig.add_subplot(gs[0])
     ax1 = fig.add_subplot(gs[1], sharex=ax0)
     ax2 = fig.add_subplot(gs[2], sharex=ax0)
 
     ax0.plot(RAW.DT, RAW.Volt_Ref.astype('int64'), 'r-', label='VRef RAW')
-    ax0.set_xlabel('')
     ax0.set_ylabel('VRef RAW [ENG]')
-    ax0.grid(True)
-    ax0.set_xticklabels([], visible=False)
 
     ax1.plot(RAW.DT, RAW.Volt_6V0.astype('int64'), 'b-', label='6V RAW')
-    ax1.set_xlabel('')
     ax1.set_ylabel('6V RAW [ENG]')
-    ax1.grid(True)
-    ax1.set_xticklabels([], visible=False)
 
     ax2.plot(RAW.DT, RAW.Volt_1V5.astype('int64'), 'g-', label='1V5 RAW')
     ax2.set_ylabel('1V5 RAW [ENG]')
     ax2.set_xlabel('Data Time')
-    ax2.grid(True)
-    # ax2.xaxis.set_major_formatter(myFmt)
+
+    format_axes(fig, integers=True)
+    ax2.tick_params(labelbottom=True)
 
     fig.tight_layout()
     fig.savefig(HK_DIR / 'VOLT_RAW.png')
@@ -114,8 +170,8 @@ def HK_Voltages(PROC_DIR, Interact=False):
 
     Cal = pd.read_pickle(CalPikFile[0])
 
-    gs2 = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 1])
     fig2 = plt.figure(figsize=(14.0, 9.0))
+    gs2 = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 1], figure=fig2)
     ax3 = fig2.add_subplot(gs2[0])
     ax4 = fig2.add_subplot(gs2[1], sharex=ax3)
     ax5 = fig2.add_subplot(gs2[2], sharex=ax3)
@@ -126,8 +182,6 @@ def HK_Voltages(PROC_DIR, Interact=False):
     ax3.plot([Cal['DT'].iloc[0], Cal['DT'].iloc[-1]],
              Lim_VREF_High*2, 'darkred', linestyle='dashed')
     ax3.set_ylabel('VRef [V]')
-    ax3.grid(True)
-    ax3.set_xticklabels([], visible=False)
 
     ax4.plot(Cal.DT, Cal.Volt_6V0, 'b-', label='6V0')
     ax4.plot([Cal['DT'].iloc[0], Cal['DT'].iloc[-1]],
@@ -135,8 +189,6 @@ def HK_Voltages(PROC_DIR, Interact=False):
     ax4.plot([Cal['DT'].iloc[0], Cal['DT'].iloc[-1]],
              Lim_6V0_High*2, 'darkblue', linestyle='dashed')
     ax4.set_ylabel('6V [V]')
-    ax4.grid(True)
-    ax4.set_xticklabels([], visible=False)
 
     ax5.plot(Cal.DT, Cal.Volt_1V5, 'g-', label='1V5')
     ax5.plot([Cal['DT'].iloc[0], Cal['DT'].iloc[-1]],
@@ -145,8 +197,9 @@ def HK_Voltages(PROC_DIR, Interact=False):
              Lim_1V5_High*2, 'darkgreen', linestyle='dashed')
     ax5.set_ylabel('1V5 [V]')
     ax5.set_xlabel('Data Time')
-    ax5.grid(True)
-    # ax5.xaxis.set_major_formatter(myFmt)
+
+    format_axes(fig2)
+    ax5.tick_params(labelbottom=True)
 
     fig2.tight_layout()
     fig2.savefig(HK_DIR / 'VOLT_CAL.png')
@@ -176,21 +229,22 @@ def HK_Temperatures(PROC_DIR, Interact=False):
 
     RAW = pd.read_pickle(RawPikFile[0])
 
-    # RAW Plot and Heater
-    gs = gridspec.GridSpec(4, 1, height_ratios=[2, 1, 0.5, 0.5])
-    gs.update(hspace=0.0)
     fig = plt.figure(figsize=(14.0, 9.0))
+    gs = gridspec.GridSpec(4, 1, height_ratios=[2, 1, 0.5, 0.5], figure=fig)
+    gs.update(hspace=0.0)
     ax0 = fig.add_subplot(gs[0])
     ax1 = fig.add_subplot(gs[1], sharex=ax0)
     ax2 = fig.add_subplot(gs[2], sharex=ax0)
     ax3 = fig.add_subplot(gs[3], sharex=ax0)
 
+    # RAW Plot and Heater Set-Point
     ax0.plot(RAW.DT, RAW.Temp_LFW.astype('int64'),  label='LFW')
     ax0.plot(RAW.DT, RAW.Temp_RFW.astype('int64'),  label='RFW')
     ax0.plot(RAW.DT, RAW.Temp_HRC.astype('int64'),  label='HRC')
     ax0.plot(RAW.DT, RAW.Temp_LWAC.astype('int64'), label='LWAC')
     ax0.plot(RAW.DT, RAW.Temp_RWAC.astype('int64'), label='RWAC')
     ax0.plot(RAW.DT, RAW.Temp_HRCA.astype('int64'), label='ACT')
+
     # Heater set-point and 15 values shaded either side
     HSP, HSP_L, HSP_H = zero_to_nan(RAW.Stat_Temp_Se.astype('int64'))
     ax0_HSP = ax0.plot(RAW.DT, HSP, '--', color='k', label='HTR Set Point')
@@ -199,30 +253,21 @@ def HK_Temperatures(PROC_DIR, Interact=False):
 
     ax0.legend(loc='lower center', bbox_to_anchor=(
         0.5, 1.0), ncol=4, borderaxespad=0, frameon=False)
-    ax0.text(.99, .95, 'Internal Temps', color='0.25', fontweight='bold',
-             horizontalalignment='right', transform=ax0.transAxes)
+    add_text(ax0, 'Internal Temps')
     ax0.set_ylabel('RAW [ENG]')
-    ax0.grid(True)
-    ax0.set_xticklabels([], visible=False)
 
+    # LDO Temperature
     ax1.plot(RAW.DT, RAW.Temp_LDO.astype('int64'), '-k', label='LDO')
-    ax1.text(.99, .9, 'LDO Temp', color='0.25', fontweight='bold',
-             horizontalalignment='right', transform=ax1.transAxes)
+    add_text(ax1, 'LDO Temp')
+    ax1.set_ylabel('LDO RAW [ENG]')
     ax1.yaxis.tick_right()
     ax1.yaxis.set_label_position('right')
-    ax1.set_xlabel('')
-    ax1.set_ylabel('LDO RAW [ENG]')
-    ax1.grid(True)
-    ax1.set_xticklabels([], visible=False)
 
     ax2.plot(RAW.DT, RAW.Stat_Temp_He.astype('int64'), label='HTR')
-    ax2.set_ylim([-0.5, 3.5])
-    ax2.grid(True)
-    ax2.text(.99, .8, 'HTR', color='0.25', fontweight='bold',
-             horizontalalignment='right', transform=ax2.transAxes)
+    ax2.set_ylim([-0.5, 3.2])
     ax2.set_yticks([0, 1, 2, 3])
     ax2.set_yticklabels(['None', 'WACL', 'WACR', 'HRC'])
-    ax2.set_xticklabels([], visible=False)
+    add_text(ax2, 'HTR')
 
     ax3.plot(RAW.DT, RAW.Stat_Temp_On.astype('int64'), label='HTR On')
     ax3.plot(RAW.DT, RAW.Stat_Temp_Mo.astype('int64'), label='AUTO')
@@ -231,8 +276,9 @@ def HK_Temperatures(PROC_DIR, Interact=False):
     ax3.set_ylim([-0.1, 1.1])
     ax3.get_yaxis().set_visible(False)
     ax3.set_xlabel('Data Time')
-    ax3.grid(True)
-    # ax3.xaxis.set_major_formatter(myFmt)
+
+    format_axes(fig, integers=False)
+    ax3.tick_params(labelbottom=True)
 
     fig.tight_layout()
     fig.savefig(HK_DIR / 'INT_TEMP_RAW.png')
@@ -249,8 +295,9 @@ def HK_Temperatures(PROC_DIR, Interact=False):
 
     Cal = pd.read_pickle(CalPikFile[0])
 
-    gs2 = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
+    # Calibrated Temperatures
     fig2 = plt.figure(figsize=(14.0, 9.0))
+    gs2 = gridspec.GridSpec(2, 1, height_ratios=[3, 1], figure=fig2)
     ax3 = fig2.add_subplot(gs2[0])
     ax4 = fig2.add_subplot(gs2[1], sharex=ax3)
 
@@ -260,16 +307,16 @@ def HK_Temperatures(PROC_DIR, Interact=False):
     ax3.plot(Cal.DT, Cal.Temp_LWAC, label='LWAC')
     ax3.plot(Cal.DT, Cal.Temp_RWAC, label='RWAC')
     ax3.plot(Cal.DT, Cal.Temp_HRCA, label='ACT')
-    ax3.grid(True)
     ax3.set_ylabel('Temp [$^\circ$C]')
     ax3.legend(loc='lower center', bbox_to_anchor=(
         0.5, 1.0), ncol=5, borderaxespad=0, frameon=False)
-    ax3.set_xticklabels([], visible=False)
 
     ax4.plot(Cal.DT, Cal.Temp_LDO, '-k', label='LDO')
-    ax4.grid(True)
     ax4.set_ylabel('LDO Temp [$^\circ$C]')
     # ax4.xaxis.set_major_formatter(myFmt)
+
+    format_axes(fig2)
+    ax4.tick_params(labelbottom=True)
 
     fig2.tight_layout()
     fig2.savefig(HK_DIR / 'INT_TEMP_CAL.png')
@@ -309,8 +356,8 @@ def Rover_Temperatures(PROC_DIR, Interact=False):
     TMP = pd.read_pickle(RawPikFile[0])
 
     # Rover Temperatures
-    gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
     fig = plt.figure(figsize=(14.0, 9.0))
+    gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1], figure=fig)
     ax0 = fig.add_subplot(gs[0])
     ax1 = fig.add_subplot(gs[1], sharex=ax0)
 
@@ -318,21 +365,19 @@ def Rover_Temperatures(PROC_DIR, Interact=False):
     ax0.plot(TMP.DT, TMP.DCDC_T.astype('int64'), label='DCDC')
     ax0.legend(loc='upper right', frameon=False)
     ax0.set_ylabel('Rover Monitored \n Temperature [$^\circ$C]')
-    ax0.grid(True)
-    ax0.set_xticklabels([], visible=False)
 
     ax1.plot(ROV.DT, ROV.HTR_ST.astype('int64'), label='Heater Status')
     ax1.text(.99, .9, 'Rover Heater Status', color='0.25', fontweight='bold',
              horizontalalignment='right', transform=ax1.transAxes)
     ax1.yaxis.tick_right()
     ax1.yaxis.set_label_position('right')
-    ax1.set_xlabel('')
     ax1.set_ylabel('LDO RAW [ENG]')
-    ax1.grid(True)
     ax1.set_ylim([-0.1, 1.1])
     ax1.get_yaxis().set_visible(False)
     ax1.set_xlabel('Date Time')
-    # ax1.xaxis.set_major_formatter(myFmt)
+
+    format_axes(fig, integers=True)
+    ax1.tick_params(labelbottom=True)
 
     fig.tight_layout()
     fig.savefig(HK_DIR / 'ROV_TEMPS.png')
@@ -362,8 +407,8 @@ def Rover_Power(PROC_DIR, Interact=False):
     ROV = pd.read_pickle(RawPikFile[0])
 
     # Rover Current and Status Plot
-    gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
     fig = plt.figure(figsize=(14.0, 9.0))
+    gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1], figure=fig)
     ax0 = fig.add_subplot(gs[0])
     ax1 = fig.add_subplot(gs[1], sharex=ax0)
 
@@ -371,22 +416,19 @@ def Rover_Power(PROC_DIR, Interact=False):
     ax0.plot(ROV.DT, ROV.HTR_Curr, label='HTR')
     ax0.legend(loc='upper right')
     ax0.set_ylabel('Current [A]')
-    ax0.grid(True)
-    ax0.set_xticklabels([], visible=False)
 
     ax1.plot(ROV.DT, ROV.PWR_ST, label='Instr.')
     ax1.plot(ROV.DT, ROV.HTR_ST, label='HTR')
-    ax1.text(.99, .9, 'Status', color='0.25', fontweight='bold',
-             horizontalalignment='right', transform=ax1.transAxes)
+    add_text(ax1, 'Status')
     ax1.yaxis.tick_right()
     ax1.yaxis.set_label_position('right')
-    ax1.set_xlabel('')
     ax1.set_ylabel('Status')
-    ax1.grid(True)
     ax1.set_ylim([-0.1, 1.1])
     ax1.get_yaxis().set_visible(False)
     ax1.set_xlabel('Date Time')
-    # ax1.xaxis.set_major_formatter(myFmt)
+
+    format_axes(fig, integers=True)
+    ax1.tick_params(labelbottom=True)
 
     fig.tight_layout()
     fig.savefig(HK_DIR / 'ROV_PWR.png')
@@ -399,8 +441,8 @@ def Rover_Power(PROC_DIR, Interact=False):
     # Rover Status and Power Extract
     ACT = ROV[(ROV.PWR_ST > 0) | (ROV.HTR_ST > 0)]
     if not ACT.empty:
-        gs2 = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
         fig2 = plt.figure(figsize=(14.0, 9.0))
+        gs2 = gridspec.GridSpec(2, 1, height_ratios=[3, 1], figure=fig)
         ax2 = fig2.add_subplot(gs2[0])
         ax3 = fig2.add_subplot(gs2[1], sharex=ax2)
 
@@ -408,22 +450,19 @@ def Rover_Power(PROC_DIR, Interact=False):
         ax2.plot(ACT.DT, ACT.HTR_Curr, label='HTR')
         ax2.legend(loc='upper right')
         ax2.set_ylabel('Current [A]')
-        ax2.grid(True)
-        ax2.set_xticklabels([], visible=False)
 
         ax3.plot(ACT.DT, ACT.PWR_ST, '.', label='Instr.')
         ax3.plot(ACT.DT, ACT.HTR_ST, '.', label='HTR')
-        ax3.text(.99, .9, 'Status', color='0.25', fontweight='bold',
-                 horizontalalignment='right', transform=ax3.transAxes)
+        add_text(ax3, 'Status')
         ax3.yaxis.tick_right()
         ax3.yaxis.set_label_position('right')
-        ax3.set_xlabel('')
         ax3.set_ylabel('Status')
-        ax3.grid(True)
         ax3.set_ylim([-0.1, 1.1])
         ax3.get_yaxis().set_visible(False)
         ax3.set_xlabel('Date Time')
-        # ax3.xaxis.set_major_formatter(myFmt)
+
+        format_axes(fig2)
+        ax3.tick_params(labelbottom=True)
 
         fig2.tight_layout()
         fig2.savefig(HK_DIR / 'ROV_PWR_EXT.png')
@@ -467,9 +506,10 @@ def HK_Overview(PROC_DIR, Interact=False):
         TC = pd.read_pickle(TCPikFile[0])
 
     # RAW Plot and Heater
-    gs = gridspec.GridSpec(5, 1, height_ratios=[1, 0.5, 0.5, 0.5, 0.5])
-    gs.update(hspace=0.0)
     fig = plt.figure(figsize=(14.0, 9.0))
+    gs = gridspec.GridSpec(5, 1, height_ratios=[
+                           1, 0.5, 0.5, 0.5, 0.5], figure=fig)
+    gs.update(hspace=0.0)
     ax0 = fig.add_subplot(gs[0])
     ax1 = fig.add_subplot(gs[1], sharex=ax0)
     ax2 = fig.add_subplot(gs[2], sharex=ax0)
@@ -489,18 +529,15 @@ def HK_Overview(PROC_DIR, Interact=False):
                          textcoords="offset points", va="top", ha="right", rotation=90)
     else:
         ax0.get_yaxis().set_visible(False)
-    ax0.grid(True)
-    ax0.text(.99, .95, 'Action List',
-             horizontalalignment='right', transform=ax0.transAxes)
+    add_text(ax0, 'Action List')
 
     # Cam Power and Enable
     ax1.plot(RAW.DT, RAW.Stat_PIU_En.astype('int64'), label='ENA')
     ax1.plot(RAW.DT, RAW.Stat_PIU_Pw.astype('int64'), label='PWR')
-    ax1.text(.99, .9, 'Cam ENA and PWR', color='0.25', fontweight='bold',
-             horizontalalignment='right', transform=ax1.transAxes)
+    add_text(ax1, 'Cam ENA and PWR')
     ax1.legend(loc='center right', bbox_to_anchor=(
         1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
-    ax1.grid(True)
+    ax1.set_ylim([-0.5, 3.4])
     ax1.set_yticks([0, 1, 2, 3])
     ax1.set_yticklabels(['None', 'WACL', 'WACR', 'HRC'])
 
@@ -516,9 +553,7 @@ def HK_Overview(PROC_DIR, Interact=False):
         1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
     ax2.set_ylim([-0.1, 1.1])
     ax2.get_yaxis().set_visible(False)
-    ax2.grid(True)
-    ax2.text(.99, .9, 'Errors excl. WAC CMD TO', color='0.25',
-             fontweight='bold', horizontalalignment='right', transform=ax2.transAxes)
+    add_text(ax2, 'Errors excl. WAC CMD TO')
 
     ax3.plot(RAW.DT, RAW.ERR_2_LWAC.astype('int64')
              == 0x4, '.', label='LWAC', color='C2')
@@ -528,18 +563,17 @@ def HK_Overview(PROC_DIR, Interact=False):
         1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
     ax3.set_ylim([-0.1, 1.1])
     ax3.get_yaxis().set_visible(False)
-    ax3.grid(True)
-    ax3.text(.99, .9, 'WAC CMD TO Error', color='0.25', fontweight='bold',
-             horizontalalignment='right', transform=ax3.transAxes)
-    # ax3.xaxis.set_major_formatter(myFmt)
+    add_text(ax3, 'WAC CMD TO Error')
 
     ax4.plot(RAW.DT, RAW.IMG_No)
     if ax4.get_ylim()[1] < 1:
         ax4.set_ylim([-0.1, 1.1])
     ax4.grid(True)
-    ax4.text(.99, .9, 'Img #', color='0.25', fontweight='bold',
-             horizontalalignment='right', transform=ax4.transAxes)
+    add_text(ax4, 'Img #')
     ax4.set_xlabel('Date Time')
+
+    format_axes(fig)
+    ax4.tick_params(labelbottom=True)
 
     fig.tight_layout()
     fig.savefig(HK_DIR / 'HK_OVR.png')
@@ -568,8 +602,12 @@ def HRC_CS(PROC_DIR, Interact=False):
 
     RAW = pd.read_pickle(RawPikFile[0])
 
-    if RAW['HRC_ACK'].empty:
+    if not 'HRC_ACK' in RAW:
         logger.info("No HRC data available")
+        return
+
+    if not 0x02 in RAW['HRC_ACK'].values:
+        logger.info("No HRC CS response available")
         return
 
     # Search for PanCam Rover Telecommands
@@ -587,10 +625,10 @@ def HRC_CS(PROC_DIR, Interact=False):
         TC = pd.read_pickle(TCPikFile[0])
 
     # Create plot structure
-    gs = gridspec.GridSpec(7, 1, height_ratios=[
-                           1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
-    gs.update(hspace=0.0)
     fig = plt.figure(figsize=(14.0, 9))
+    gs = gridspec.GridSpec(7, 1, height_ratios=[
+                           1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5], figure=fig)
+    gs.update(hspace=0.0)
     ax0 = fig.add_subplot(gs[0])
     ax1 = fig.add_subplot(gs[1], sharex=ax0)
     ax2 = fig.add_subplot(gs[2], sharex=ax0)
@@ -608,77 +646,59 @@ def HRC_CS(PROC_DIR, Interact=False):
             TC['DT'], TC['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
         plt.setp(markerline, mec="k", mfc="w", zorder=3)
         markerline.set_ydata(np.zeros(size))
-        ax0.text(.99, .9, 'Action List', horizontalalignment='right',
-                 transform=ax0.transAxes)
-        ax0.grid(True)
+        add_text('Action List')
         for i in range(0, size):
             ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0, -2),
                          textcoords="offset points", va="top", ha="right", rotation=90)
-        ax0.set_xticklabels([], visible=False)
-
     # remove y axis and spines
     ax0.get_yaxis().set_visible(False)
 
     # Encoder Value
     ax1.plot(RAW['DT'], RAW['HRC_ENC'], '.')
-    ax1.text(.99, .8, 'Enc Value', horizontalalignment='right',
-             transform=ax1.transAxes)
-    ax1.grid(True)
-    ax1.set_xticklabels([], visible=False)
+    add_text(ax1, 'Enc Value')
 
     # Enc and MM Flag
     ax2.plot(RAW['DT'], RAW['HRC_EPF'], label='Enc')
     ax2.plot(RAW['DT'], RAW['HRC_MMF'], '.', label='MM')
-    ax2.text(.99, .8, 'ENC & MM', horizontalalignment='right',
-             transform=ax2.transAxes)
-    ax2.grid(True)
+    ax2.legend(loc='center right', bbox_to_anchor=(
+        1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
+    add_text(ax2, 'ENC & MM')
     ax2.set_ylim([-0.1, 1.1])
     ax2.yaxis.tick_right()
     ax2.yaxis.set_label_position('right')
-    ax2.set_xticklabels([], visible=False)
-    ax2.legend(loc='center right', bbox_to_anchor=(
-        1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
     ax2.get_yaxis().set_visible(False)
 
     # AF and AI Flag
     ax3.plot(RAW['DT'], RAW['HRC_AFF'], label='AF')
     ax3.plot(RAW['DT'], RAW['HRC_AIF'], label='AI')
-    ax3.text(.99, .8, 'AF & AI', horizontalalignment='right',
-             transform=ax3.transAxes)
-    ax3.grid(True)
-    ax3.set_ylim([-0.1, 1.1])
-    ax3.set_xticklabels([], visible=False)
     ax3.legend(loc='center right', bbox_to_anchor=(
         1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
+    add_text(ax3, 'AF & AI')
+    ax3.set_ylim([-0.1, 1.1])
     ax3.get_yaxis().set_visible(False)
 
     # Current Sharpness
     ax4.plot(RAW['DT'], RAW['HRC_CS'])
-    ax4.text(.99, .8, 'Sharpness', horizontalalignment='right',
-             transform=ax4.transAxes)
-    ax4.grid(True)
-    ax4.set_xticklabels([], visible=False)
+    add_text(ax4, 'Sharpness')
 
     # Image Counter
     ax5.plot(RAW['DT'], RAW['HRC_IFC'], '.')
-    ax5.text(.99, .8, 'IMG Count', horizontalalignment='right',
-             transform=ax5.transAxes)
-    ax5.grid(True)
+    add_text(ax5, 'IMG Count')
     ax5.yaxis.tick_right()
     plt.setp(ax5.get_yticklabels(), visible=False)
     ax5.yaxis.set_label_position('right')
-    ax5.set_xticklabels([], visible=False)
 
     # Sensor Temp
     ax6.plot(RAW['DT'], RAW['HRC_TP'])
-    ax6.text(.99, .8, 'RAW Sensor Temp',
-             horizontalalignment='right', transform=ax6.transAxes)
-    ax6.grid(True)
+    add_text(ax6, 'RAW Sensor Temp')
 
-    # Re-adjust x-axis so that
-    xlimits = ax0.get_xlim()
-    new_xlimits = (xlimits[0], (xlimits[1] - xlimits[0])*1.1+xlimits[0])
+    # Re-adjust x-axis so that doesn't interfere with text
+    xstart, xend = ax0.get_xlim()
+    new_xlimits = (xstart, (xend - xstart)*1.1+xstart)
     ax0.set_xlim(new_xlimits)
+
+    format_axes(fig)
+    ax6.tick_params(labelbottom=True)
 
     fig.tight_layout()
     fig.savefig(HK_DIR / 'HRC_CS.png')
@@ -722,10 +742,11 @@ def FW(PROC_DIR, Interact=False):
         TC = pd.read_pickle(TCPikFile[0])
 
     # Create plot structure
-    gs = gridspec.GridSpec(7, 1, height_ratios=[
-                           1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5])
-    gs.update(hspace=0.0)
     fig = plt.figure(figsize=(14.0, 9))
+    gs = gridspec.GridSpec(7, 1,
+                           height_ratios=[1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+                           figure=fig)
+    gs.update(hspace=0.0)
     ax0 = fig.add_subplot(gs[0])
     ax1 = fig.add_subplot(gs[1], sharex=ax0)
     ax2 = fig.add_subplot(gs[2], sharex=ax0)
@@ -743,79 +764,61 @@ def FW(PROC_DIR, Interact=False):
             TC['DT'], TC['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
         plt.setp(markerline, mec="k", mfc="w", zorder=3)
         markerline.set_ydata(np.zeros(size))
-        ax0.text(.99, .9, 'Action List', horizontalalignment='right',
-                 transform=ax0.transAxes)
-        ax0.grid(True)
+        add_text(ax0, 'Action List')
         for i in range(0, size):
             ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0, -2),
                          textcoords="offset points", va="top", ha="right", rotation=90)
-        ax0.set_xticklabels([], visible=False)
-
     # remove y axis and spines
     ax0.get_yaxis().set_visible(False)
 
     # FW Running Flag
     ax1.plot(RAW['DT'], RAW['Stat_FWL_Op'], label='FWL')
     ax1.plot(RAW['DT'], RAW['Stat_FWR_Op'], label='FWR')
-    ax1.text(.99, .8, 'Running', horizontalalignment='right',
-             transform=ax1.transAxes)
-    ax1.grid(True)
-    ax1.set_ylim([-0.1, 1.1])
     ax1.legend(loc='center right', bbox_to_anchor=(
         1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
-    ax1.set_xticklabels([], visible=False)
+    add_text(ax1, 'Running')
+    ax1.set_ylim([-0.1, 1.1])
     ax1.get_yaxis().set_visible(False)
 
     # FW Home Flag
     ax2.plot(RAW['DT'], RAW['Stat_FWL_Ho'], label='FWL')
     ax2.plot(RAW['DT'], RAW['Stat_FWR_Ho'], label='FWR')
-    ax2.text(.99, .8, 'Home', horizontalalignment='right',
-             transform=ax2.transAxes)
-    ax2.grid(True)
+    add_text(ax2, 'Home')
     ax2.set_ylim([-0.1, 1.1])
     ax2.yaxis.tick_right()
-    ax2.set_xticklabels([], visible=False)
     ax2.get_yaxis().set_visible(False)
 
     # FW Index Flag
     ax3.plot(RAW['DT'], RAW['Stat_FWL_Id'], label='FWL')
     ax3.plot(RAW['DT'], RAW['Stat_FWR_Id'], label='FWR')
-    ax3.text(.99, .8, 'Index', horizontalalignment='right',
-             transform=ax3.transAxes)
-    ax3.grid(True)
+    add_text(ax3, 'Index')
     ax3.set_ylim([-0.1, 1.1])
-    ax3.set_xticklabels([], visible=False)
     ax3.get_yaxis().set_visible(False)
 
     # FW Position
     ax4.plot(RAW['DT'], RAW['Stat_FWL_Po'], label='FWL')
     ax4.plot(RAW['DT'], RAW['Stat_FWR_Po'], label='FWR')
-    ax4.text(.99, .8, 'Position', horizontalalignment='right',
-             transform=ax4.transAxes)
-    ax4.grid(True)
-    ax4.set_xticklabels([], visible=False)
+    add_text(ax4, 'Position')
 
     # Absolute Steps
     ax5.plot(RAW['DT'], RAW['FWL_ABS'], label='FWL')
     ax5.plot(RAW['DT'], RAW['FWR_ABS'], label='FWR')
-    ax5.text(.99, .8, 'Absolute Steps',
-             horizontalalignment='right', transform=ax5.transAxes)
-    ax5.grid(True)
+    add_text(ax5, 'Absolute Steps')
     ax5.yaxis.tick_right()
     ax5.yaxis.set_label_position('right')
-    ax5.set_xticklabels([], visible=False)
 
     # Relative Steps
     ax6.plot(RAW['DT'], RAW['FWL_REL'], label='FWL')
     ax6.plot(RAW['DT'], RAW['FWR_REL'], label='FWR')
-    ax6.text(.99, .8, 'Relative Steps',
-             horizontalalignment='right', transform=ax6.transAxes)
-    ax6.grid(True)
+    add_text(ax6, 'Relative Steps')
 
     # Re-adjust x-axis so that
     xlimits = ax0.get_xlim()
     new_xlimits = (xlimits[0], (xlimits[1] - xlimits[0])*1.1+xlimits[0])
     ax0.set_xlim(new_xlimits)
+
+    format_axes(fig)
+    ax6.tick_params(labelbottom=True)
 
     fig.tight_layout()
     fig.savefig(HK_DIR / 'FW.png')
@@ -839,10 +842,10 @@ if __name__ == "__main__":
     logger.info("Running Plotter.py as main")
     logger.info("Reading directory: %s", DIR)
 
-    # HK_Temperatures(DIR)
+    #HK_Temperatures(DIR, True)
     # Rover_Temperatures(DIR)
     # Rover_Power(DIR)
-    HK_Overview(DIR, True)
-    # HK_Voltages(DIR)
+    #HK_Overview(DIR, True)
+    #HK_Voltages(DIR, True)
     #HRC_CS(DIR, True)
-    #FW(DIR, Interact=True)
+    FW(DIR, Interact=True)

@@ -13,7 +13,6 @@
 
 * Add the rest of the HRC and WAC plots
 * Split data into activities so that it is easy to view HK etc.
-* Hide x-axis labels on multi-stack, particularly for overview as can see extra numbers.
 * Within HK Decode, stop passing bin around and change functions to only return relevant arrays
 
 ## Nice to haves
@@ -23,7 +22,6 @@
 * Generate HK Ess and Non-Ess Calibrated for the rest of the variables
 * Replace Temperature calibrations with a dictionary
 * Read in calibraitons from files rather than stored in software
-* Guareenteed way to distinguish between WAC and HRC CRs with just TM
 * Look into converting into archive database
 * Is it possible to heavily compress raw data
 * Set errors between 0 and 1 for a clear view
@@ -34,8 +32,6 @@
 * Break into powered chunks that can be easily navigated
 * Also look for PanCam service errors such as 5,2
 * Automatically generated ICD from files
-* More checks of the data integrity
-* Setup PEP8 tools and ensure code is up to standard.
 * Add liscense for project
 * Check all liscenses are valid
 * Update Readme
@@ -82,3 +78,6 @@
 * swis.py: Generate hk in raw pickle format
 * Img Cnt plot to add y-axis
 * Way to track data type and processing history
+* Guareenteed way to distinguish between WAC and HRC CRs with just TM
+* Logging to also stream to console if errors but otherwise ignore
+* Hide x-axis labels on multi-stack, particularly for overview as can see extra numbers.

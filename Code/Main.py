@@ -91,6 +91,7 @@ elif swis.hk_extract(top_dir):
         Plotter.HK_Overview(cur_dir)
         Plotter.HK_Voltages(cur_dir)
         Plotter.HK_Temperatures(cur_dir)
+        Plotter.FW(cur_dir)
 
         # Check_Sci(DIR)
 
@@ -111,6 +112,7 @@ Cal_HK.cal_HK(proc_dir)
 Plotter.HK_Overview(proc_dir)
 Plotter.HK_Voltages(proc_dir)
 Plotter.HK_Temperatures(proc_dir)
+Plotter.FW(proc_dir)
 Plotter.Rover_Power(proc_dir)
 Plotter.Rover_Temperatures(proc_dir)
 
