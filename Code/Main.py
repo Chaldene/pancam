@@ -56,20 +56,20 @@ logger.info('\n\n\n\n')
 logger.info("main.py")
 
 # First check if SWIS as multiple folders
-if swis.hk_extract(top_dir):
-    # Several instance files generated
-    unproc = PC_Fns.Find_Files(top_dir, '*Unproc_HKTM.pickle')
-    swis.hs_extract(top_dir)
-    for cur_file in unproc:
-        logger.error("Analysing %s", cur_file.name)
-        cur_dir = cur_file.parent
-        hs.decode(cur_dir, True)
-        hs.verify(cur_dir)
-        decodeRAW_HK.decode(cur_dir)
-        Cal_HK.cal_HK(cur_dir)
-        Plotter.all_plots(cur_dir)
-
-        # Check_Sci(DIR)
+instances = swis.create_instances(top_dir)
+if instances:
+    for inst in instances:
+        proc_dir = inst / "PROC"
+        logger.error("Analysing %s", inst.name)
+        swis.hk_extract(inst)
+        swis.hs_extract(inst)
+        hs.decode(proc_dir, True)
+        hs.verify(inst)
+        decodeRAW_HK.decode(proc_dir)
+        Cal_HK.cal_HK(proc_dir)
+        Plotter.all_plots(proc_dir)
+        swis.sci_extract(inst)
+        swis.sci_compare(inst)
 
 else:
     # LabView Files
@@ -84,7 +84,6 @@ else:
         labview.psu_extract(top_dir, archive=arc_logs)
         if arc_logs:
             labview.create_archive(top_dir)
-    # LV_TC = natsorted(Top_DIR.rglob(FILT_DIR), alg=ns.PATH)
 
     # Rover files
     # Process primary files found
@@ -99,7 +98,7 @@ else:
         swis.hk_extract(proc_dir)
         hs.decode(proc_dir)
         hs.verify(proc_dir)
-        swis.sci_extract(proc_dir)
+        swis.sci_extract(proc_dir, True)
         swis.sci_compare(proc_dir)
 
     # Process secondary files

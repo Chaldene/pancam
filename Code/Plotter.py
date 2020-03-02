@@ -649,7 +649,7 @@ def HRC_CS(PROC_DIR, Interact=False):
             TC['DT'], TC['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
         plt.setp(markerline, mec="k", mfc="w", zorder=3)
         markerline.set_ydata(np.zeros(size))
-        add_text('Action List')
+        add_text(ax0, 'Action List')
         for i in range(0, size):
             ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0, -2),
                          textcoords="offset points", va="top", ha="right", rotation=90)

@@ -2,15 +2,7 @@
 
 ## Prioties
 
-* Finish LabView processing:
-  * Make TC Extract
-* Set errors between 0 and 1 for a clear view
-* Ensure SWIS checks science images are as expected
 * Make reading csv Rover file output similar to that of .ha and other sources
-* Extract data from SWIS nsvf Router logs and run through analysis
-  * swis.py: Rebuild TCs from SpW replies
-  * swis.py: Correct UNIX time calculation as reporting year is 1970
-  * swis.py: Adapt Sci compare for SWIS generated images.
 * Make a list of required packages
 * Add the rest of the HRC and WAC plots
 * Split data into activities so that it is easy to view HK etc.
@@ -20,6 +12,7 @@
 
 ## Nice to haves
 
+* swis.py: Rebuild TCs from SpW replies
 * Look into the best use of the Pandas Int64 and how best to draw missing data.
 * Decode Rover Variables, HRCWarm etc.
 * Generate HK Ess and Non-Ess Calibrated for the rest of the variables
@@ -82,3 +75,11 @@
 * Make H&S extract from SWIS TB compatible with H&S Checker written
 * Is it possible to heavily compress raw data
 * Make PSU Log
+* Finish LabView processing:
+* Make TC Extract
+* Set errors between 0 and 1 for a clear view
+* Split SWIS and NSVF into seperate modules
+* Ensure SWIS checks science images are as expected
+* swis.py: Adapt Sci compare for SWIS generated images.
+* swis.py: Correct UNIX time calculation as reporting year is 1970
+* Extract data from SWIS nsvf Router logs and run through analysis
