@@ -28,8 +28,8 @@ def TM_extract(ROV_DIR):
 
     TMfiles = PC_Fns.Find_Files(ROV_DIR, "STDRawOcds*.csv")
     if not TMfiles:
-        logger.error("No files found - ABORTING")
-        return
+        logger.warning("No files found - ABORTING")
+        return False
 
     # Read CSV files and parse
     for file in TMfiles:
@@ -114,6 +114,8 @@ def TM_extract(ROV_DIR):
         logger.info("Rover Temperatures TM pickled.")
 
     logger.info("Processing Rover TM Files Completed")
+
+    return True
 
 
 def TC_extract(ROV_DIR):

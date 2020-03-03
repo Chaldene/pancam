@@ -338,16 +338,27 @@ def Determ_CamRes(TM, Bin):
     CamResSeries = Bin.apply(lambda x: x[44: 64])
     # Determine if Cam Response has changed
     camres_chg = CamResSeries != CamResSeries.shift(1)
-    # Ignore first entry
-    camres_chg[0] = False
+    # Ignore first entry if all 0x0s
+    if CamResSeries[0] == bytes([0x0]*20):
+        camres_chg[0] = False
 
     WACBin = Bin[camres_chg & (TM['Stat_PIU_Pw'].between(1, 2))]
     HRCBin = Bin[camres_chg & (TM['Stat_PIU_Pw'] == 3)]
 
     # Verify NulBin is empty
-    NulBin = Bin[camres_chg & (TM['Stat_PIU_Pw'] == 0)]
+    NulBin = CamResSeries[camres_chg & (TM['Stat_PIU_Pw'] == 0)]
     if not NulBin.shape[0] == 0:
-        logger.error("NulBin not empty!!")
+        resetbin = NulBin[NulBin == bytes([0x0]*20)]
+        undefbin = NulBin[NulBin != bytes([0x0]*20)]
+
+        if not resetbin.shape[0] == 0:
+            logger.warning("PanCam likely reset %d, times", resetbin.shape[0])
+            logger.info("\n%s", TM['DT'].iloc[resetbin.index])
+
+        if not undefbin.shape[0] == 0:
+            logger.error(
+                "Warning CamRes change during unpowered state, %d occurances.", undefbin.shape[0])
+            logger.info("\n%s", TM['DT'].iloc[undefbin.index])
 
     # Verify No Overlap between WACBin and HRCBin
     union = WACBin.to_frame().join(HRCBin.to_frame(), lsuffix='WAC',

@@ -2,8 +2,9 @@
 
 ## Prioties
 
-* Make reading csv Rover file output similar to that of .ha and other sources
 * Make a list of required packages
+* Reorganise into appropriate python structure.
+* HRC and WAC plots to display only camera commands
 * Add the rest of the HRC and WAC plots
 * Split data into activities so that it is easy to view HK etc.
 * Within HK Decode, stop passing bin around and change functions to only return relevant arrays
@@ -12,7 +13,7 @@
 
 ## Nice to haves
 
-* swis.py: Rebuild TCs from SpW replies
+* swis.py: Rebuild TCs from SpW replie
 * Look into the best use of the Pandas Int64 and how best to draw missing data.
 * Decode Rover Variables, HRCWarm etc.
 * Generate HK Ess and Non-Ess Calibrated for the rest of the variables

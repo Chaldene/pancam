@@ -36,6 +36,9 @@ ch.setFormatter(ch_formatter)
 # Select Folder to Process
 top_dir = Path(
     input("Type the path to the folder where the RAW log files are stored: "))
+if (not top_dir.is_dir()) or top_dir == Path("."):
+    logging.error("Non-Valid path provided - exiting")
+    quit()
 
 # Test if processed directory folder exists, if not create it.
 proc_dir = top_dir / 'PROC'
@@ -73,7 +76,7 @@ if instances:
 
 else:
     # LabView Files
-    arc_logs = True
+    arc_logs = False
     if labview.hk_extract(top_dir, archive=arc_logs):
         labview.hs_extract(top_dir, archive=arc_logs)
         hs.decode(proc_dir)
@@ -86,13 +89,12 @@ else:
             labview.create_archive(top_dir)
 
     # Rover files
-    # Process primary files found
-    # Rover.TM_extract(top_dir)
-    # Rover.TC_extract(top_dir)
-    # Rover.NavCamBrowse(top_dir)
-    # HaProc.HaScan(top_dir)
-    # HaProc.RestructureHK(proc_dir)
-    # HaProc.compareHaCSV(proc_dir)
+    elif Rover.TM_extract(top_dir):
+        Rover.TC_extract(top_dir)
+        Rover.NavCamBrowse(top_dir)
+        HaProc.HaScan(top_dir)
+        HaProc.RestructureHK(proc_dir)
+        HaProc.compareHaCSV(proc_dir)
 
     elif swis.nsvf_parse(top_dir):
         swis.hk_extract(proc_dir)
