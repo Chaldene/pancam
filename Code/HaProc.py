@@ -241,18 +241,20 @@ def HaPacketDecode(PKT_HD, PKT_ID, PKT_LINES, curFile, IMG_RAW_DIR):
     # First LDT Part
     if PKT_ID == LDT_IDs[0]:
         LDT_Cur_Pkt = LDT_Properties(PKT_Bin)
-        logger.info("New LDT part found with file ID: %s, and unitID %s",
-                    LDT_Cur_Pkt.FILE_ID, LDT_Cur_Pkt.Unit_ID)
-        LDTHeader(PKT_Bin)
+        if LDT_Cur_Pkt.PanCam:
+            logger.info("New PanCam LDT part found with file ID: %s, and unitID %s",
+                        LDT_Cur_Pkt.FILE_ID, LDT_Cur_Pkt.Unit_ID)
+            LDTHeader(PKT_Bin)
 
         # Check to see if ID already exists if not add to dict
-        if LDT_Cur_Pkt.Unit_ID in Found_IDS:
-            logger.warning("2 initial packets with the same ID found")
-        else:
-            # Write Data then add to dictionary
-            if LDT_Cur_Pkt.write:
-                LDT_Cur_Pkt.setWriteFile(IMG_RAW_DIR, PKT_HD)
-                writeBytesToFile(LDT_Cur_Pkt, PKT_Bin[29:-2])
+        if (LDT_Cur_Pkt.Unit_ID in Found_IDS) and LDT_Cur_Pkt.PanCam:
+            logger.error(
+                "2 initial packets with the same ID found, first ignored.")
+
+        # Write data then add to dictionary
+        if LDT_Cur_Pkt.write:
+            LDT_Cur_Pkt.setWriteFile(IMG_RAW_DIR, PKT_HD)
+            writeBytesToFile(LDT_Cur_Pkt, PKT_Bin[29:-2])
         Found_IDS.update({LDT_Cur_Pkt.Unit_ID: LDT_Cur_Pkt})
 
     # Second LDT Part
@@ -366,7 +368,7 @@ def LDTHeader(PKT_Bin):
     LDT_HDR = namedtuple('LDT_HDR', [
                          'Unit_ID', 'SEQ_No', 'PART_ID', 'FILE_ID', 'FILE_SIZE', 'FILE_TYPE', 'SPARE'])
     SCI_LDT_HDR = LDT_HDR(*bits_unpacked)
-    print(SCI_LDT_HDR)
+    logger.debug(SCI_LDT_HDR)
     return
 
 
@@ -474,6 +476,15 @@ def compareHaCSV(ProcDir):
 
 
 if __name__ == "__main__":
+    logger.setLevel(logging.INFO)
+
+    # create console handler logger
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    ch_formatter = logging.Formatter(
+        '%(module)s.%(funcName)s - %(levelname)s - %(message)s')
+    ch.setFormatter(ch_formatter)
+
     DIR = Path(
         input("Type the path to the folder where the .ha log files are stored: "))
 
@@ -484,9 +495,14 @@ if __name__ == "__main__":
         logger.info("Generating 'Processing' directory")
         PROC_DIR.mkdir()
 
-    logging.basicConfig(filename=(PROC_DIR / 'processing.log'),
-                        level=logging.INFO,
-                        format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+    fh = logging.FileHandler(PROC_DIR / 'processing.log')
+    fh.setLevel(logging.INFO)
+    fh_formatter = logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(module)s.%(funcName)s - %(message)s')
+    fh.setFormatter(fh_formatter)
+    logger.addHandler(fh)
+    logger.addHandler(ch)
+
     logger.info('\n\n\n\n')
     logger.info("Running HaImageProc.py as main")
     logger.info("Reading directory: %s", PROC_DIR)

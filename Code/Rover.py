@@ -100,6 +100,7 @@ def TM_extract(ROV_DIR):
 
     if DF.shape[0] != 0:
         write_dts = DF['DT'].iloc[0].strftime('%y%m%d_%H%M%S_')
+        DF['Source'] = "STDRawOcds.csv"
         DF.to_pickle(ROV_DIR / "PROC" / (write_dts + "csv_Unproc_HKTM.pickle"))
         logger.info("PanCam HKTM pickled.")
 
