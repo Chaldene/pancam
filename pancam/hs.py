@@ -14,8 +14,8 @@ from bitstruct import unpack_from as upf
 import pandas as pd
 import logging
 
-import PC_Fns
-from PC_Fns import PandUPF
+import pancam_fns
+from pancam_fns import PandUPF
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,8 @@ def decode(proc_dir: Path, spw_header: bool = False):
 
     logger.info("Running H+S decode")
     logger.info("Searching for hs_raw.pickle file")
-    hs_file = PC_Fns.Find_Files(proc_dir, "hs_raw.pickle", SingleFile=True)[0]
+    hs_file = pancam_fns.Find_Files(
+        proc_dir, "hs_raw.pickle", SingleFile=True)[0]
     hs = pd.read_pickle(hs_file)
 
     raw = hs['RAW'].apply(lambda x: bytearray.fromhex(x))
@@ -87,7 +88,7 @@ def verify(proc_dir: Path):
     logger.info("Running H+S verify")
 
     logger.info("Searching for hs.pickle file")
-    hs_file = PC_Fns.Find_Files(proc_dir, "hs.pickle", SingleFile=True)[0]
+    hs_file = pancam_fns.Find_Files(proc_dir, "hs.pickle", SingleFile=True)[0]
     hs = pd.read_pickle(hs_file)
 
     verify = pd.DataFrame()
@@ -170,7 +171,7 @@ def sci_cnt(proc_dir: Path):
 
     logger.info("Generating expected number of science images from HS")
     logger.info("Searching for hs.pickle file")
-    hs_file = PC_Fns.Find_Files(proc_dir, "hs.pickle", SingleFile=True)[0]
+    hs_file = pancam_fns.Find_Files(proc_dir, "hs.pickle", SingleFile=True)[0]
     hs = pd.read_pickle(hs_file)
 
     # First find last count entry

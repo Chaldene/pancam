@@ -7,13 +7,15 @@ Created on Thu Nov 14 12:01:04 2019
 
 # Convert pci_raw to viewable 8-bit .png and create appropriate label
 
-import PC_Fns
-from decodeRAW_ImgHDR import decodeRAW_ImgHDR
 from pathlib import Path
 import numpy as np
 import imageio
 import json
 import logging
+
+import pancam_fns
+from image_hdr_raw import decodeRAW_ImgHDR
+
 logger = logging.getLogger(__name__)
 
 
@@ -27,7 +29,7 @@ def Img_RAW_Browse(PROC_DIR):
     logger.info("Generating Image Browse Products from RAW Images")
 
     # Search for pci_raw files in the process directory
-    RAW_FILES = PC_Fns.Find_Files(PROC_DIR, "IMG_RAW\*.pci_raw")
+    RAW_FILES = pancam_fns.Find_Files(PROC_DIR, "IMG_RAW\*.pci_raw")
     if not RAW_FILES:
         logger.warning("No files found - ABORTING")
         return

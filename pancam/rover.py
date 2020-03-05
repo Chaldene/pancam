@@ -12,7 +12,7 @@ from bitstruct import unpack_from as upf
 import logging
 import imageio
 
-import PC_Fns
+import pancam_fns
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def TM_extract(ROV_DIR):
     DRT = pd.DataFrame()
     DG = pd.DataFrame()
 
-    TMfiles = PC_Fns.Find_Files(ROV_DIR, "STDRawOcds*.csv")
+    TMfiles = pancam_fns.Find_Files(ROV_DIR, "STDRawOcds*.csv")
     if not TMfiles:
         logger.warning("No files found - ABORTING")
         return False
@@ -125,7 +125,7 @@ def TC_extract(ROV_DIR):
     TC = pd.DataFrame()
 
     # Find all Rover TC files within folder and subfolders
-    TCfiles = PC_Fns.Find_Files(ROV_DIR, "STDChrono*.csv")
+    TCfiles = pancam_fns.Find_Files(ROV_DIR, "STDChrono*.csv")
     if not TCfiles:
         logger.error("No files found - ABORTING")
         return
@@ -162,7 +162,7 @@ def NavCamBrowse(ROV_DIR):
     """Searches for PGM files and creates an 8-bit .png to browse"""
 
     logger.info("Searching for NavCam .pgm files to generate browse")
-    PGM_Files = PC_Fns.Find_Files(ROV_DIR, "*.pgm")
+    PGM_Files = pancam_fns.Find_Files(ROV_DIR, "*.pgm")
 
     for curFile in PGM_Files:
         image = imageio.imread(curFile)

@@ -19,7 +19,7 @@ from datetime import datetime
 from pathlib import Path
 import logging
 
-import PC_Fns
+import pancam_fns
 
 logger = logging.getLogger(__name__)
 
@@ -167,7 +167,7 @@ def HaScan(ROV_DIR):
     logger.info("Processing Rover .ha Files")
 
     # Find Files
-    ROVER_HA = PC_Fns.Find_Files(ROV_DIR, "*.ha")
+    ROVER_HA = pancam_fns.Find_Files(ROV_DIR, "*.ha")
     if not ROVER_HA:
         logger.error("No files found - ABORTING")
         return
@@ -377,12 +377,12 @@ def RestructureHK(ROV_DIR):
     logger.info("Processing any .ha HK that has been created")
 
     # Find Files
-    RAW_ES = PC_Fns.Find_Files(ROV_DIR, "*.HKES_raw")
+    RAW_ES = pancam_fns.Find_Files(ROV_DIR, "*.HKES_raw")
     if not RAW_ES:
         logger.info("No .ha generated HK files found")
         return
 
-    RAW_NE = PC_Fns.Find_Files(ROV_DIR, "*.HKNE_raw")
+    RAW_NE = pancam_fns.Find_Files(ROV_DIR, "*.HKNE_raw")
     if not RAW_NE:
         logger.info("No .ha generated HK files found")
 
@@ -414,7 +414,7 @@ def RestructureHK(ROV_DIR):
 
     # Combine HK data into a single dataframe
     RTM = pd.concat([ES, NE], axis=0, join='outer')
-    RTM = PC_Fns.ReturnCUC_RAW(RTM, RTM['RAW'])
+    RTM = pancam_fns.ReturnCUC_RAW(RTM, RTM['RAW'])
     RTM['Source'] = '.ha'
     RTM = RTM.sort_values(by='Pkt_CUC').reset_index(drop=True)
 
@@ -437,13 +437,13 @@ def compareHaCSV(ProcDir):
 
     logger.info("Comparing .ha generated HK to .csv generated HK")
     # Find Files
-    RAW_ha = PC_Fns.Find_Files(
+    RAW_ha = pancam_fns.Find_Files(
         ProcDir, "*_ha_Unproc_HKTM.pickle", SingleFile=True)
     if not RAW_ha:
         logger.info("No .ha generated HK files found")
         return
 
-    RAW_csv = PC_Fns.Find_Files(
+    RAW_csv = pancam_fns.Find_Files(
         ProcDir, "*_csv_Unproc_HKTM.pickle", SingleFile=True)
     if not RAW_csv:
         logger.info("No .csv generated HK files found")
@@ -453,7 +453,7 @@ def compareHaCSV(ProcDir):
     csv = pd.read_pickle(RAW_csv[0])
     csv_bin = pd.DataFrame()
     csv_bin['RAW'] = csv['RAW'].apply(lambda x: bytearray.fromhex(x))
-    csv_bin = PC_Fns.ReturnCUC_RAW(csv_bin, csv_bin['RAW'])
+    csv_bin = pancam_fns.ReturnCUC_RAW(csv_bin, csv_bin['RAW'])
 
     result = pd.merge(ha_bin, csv_bin, on=['Pkt_CUC'], how='inner')
     comp = result['RAW_x'] != result['RAW_y']

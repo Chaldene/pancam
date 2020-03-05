@@ -3,7 +3,7 @@ import natsort
 import bitstruct
 
 
-import PC_Fns
+import pancam_fns
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
@@ -17,4 +17,3 @@ import logging
 
 import imageio
 print(sys.prefix)
-

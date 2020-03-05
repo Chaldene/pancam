@@ -18,7 +18,7 @@ import json
 import shutil
 import numpy as np
 
-import PC_Fns
+import pancam_fns
 import hs
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ def hk_extract(lv_dir: Path, archive: bool = False):
     # Seartch through folder for HK file
     logger.info("Processing LabView HK")
 
-    files_hk = PC_Fns.Find_Files(lv_dir, "RMAP_HK*.txt", Recursive=False)
+    files_hk = pancam_fns.Find_Files(lv_dir, "RMAP_HK*.txt", Recursive=False)
 
     if not files_hk:
         return False
@@ -102,7 +102,7 @@ def hs_extract(lv_dir: Path, archive: bool = False):
     # Search through folder for H&S file
     logger.info("Processing LabView H&S")
 
-    files_hs = PC_Fns.Find_Files(lv_dir, "RMAP_H&S*.txt", Recursive=False)
+    files_hs = pancam_fns.Find_Files(lv_dir, "RMAP_H&S*.txt", Recursive=False)
 
     if not files_hs:
         return
@@ -156,7 +156,7 @@ def sci_extract(lv_dir: Path, archive: bool = False):
 
     logger.info("Extracting science images from SpW Logs for comparing")
 
-    files_sci = PC_Fns.Find_Files(lv_dir, "RMAP_Sci*.txt", Recursive=False)
+    files_sci = pancam_fns.Find_Files(lv_dir, "RMAP_Sci*.txt", Recursive=False)
 
     if not files_sci:
         return
@@ -253,8 +253,8 @@ def bin_move(lv_dir: Path, archive: bool = False):
 
     logger.info("Moving saved science images that match SpW logs")
 
-    bin_files = PC_Fns.Find_Files(lv_dir, "*.bin")
-    spw_files = PC_Fns.Find_Files(lv_dir, "*.pci_spw")
+    bin_files = pancam_fns.Find_Files(lv_dir, "*.bin")
+    spw_files = pancam_fns.Find_Files(lv_dir, "*.pci_spw")
 
     if not bin_files:
         return
@@ -373,7 +373,7 @@ def psu_extract(lv_dir: Path, archive: bool = False):
 
     logger.info("Extracting PSU measurements.")
 
-    files_psu = PC_Fns.Find_Files(lv_dir, "PSU_Log_*.txt")
+    files_psu = pancam_fns.Find_Files(lv_dir, "PSU_Log_*.txt")
 
     if not files_psu:
         return
@@ -431,7 +431,7 @@ def psu_extract(lv_dir: Path, archive: bool = False):
 def tc_extract(lv_dir: Path, archive: bool = False):
     logger.info("Extracting Labview TC commands.")
 
-    files_tc = PC_Fns.Find_Files(lv_dir, "RMAP_CMD_*.txt")
+    files_tc = pancam_fns.Find_Files(lv_dir, "RMAP_CMD_*.txt")
 
     if not files_tc:
         return

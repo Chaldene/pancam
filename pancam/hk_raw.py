@@ -15,8 +15,8 @@ from pathlib import Path
 import binascii
 import logging
 
-import PC_Fns
-from PC_Fns import PandUPF
+import pancam_fns
+from pancam_fns import PandUPF
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ def decode(PROC_DIR):
     logger.info("---Processing RAW TM Files")
 
     # Search for PanCam unprocessed TM Files from ha source first
-    PikFile = PC_Fns.Find_Files(
+    PikFile = pancam_fns.Find_Files(
         PROC_DIR, "*Unproc_HKTM.pickle", SingleFile=True)
     if not PikFile:
         logger.warning("No files found - ABORTING")
@@ -45,7 +45,7 @@ def decode(PROC_DIR):
     except TypeError:
         Bin = RTM['RAW']
 
-    RTM = PC_Fns.ReturnCUC_RAW(RTM, Bin)
+    RTM = pancam_fns.ReturnCUC_RAW(RTM, Bin)
 
     TM = pd.DataFrame()
     verify = pd.DataFrame()
@@ -316,6 +316,9 @@ def DecodeParam_HKNE(TM, Bin):
 
         # Byte 78-79 PIU Version
         TM['PIU_Ver'] = PandUPF(NEBin, 'u16', 78, 0)  # PAN_TM_PIU_HKN_VER
+        allowed_PIU_Ver = [288, np.nan]
+        if (set(TM.PIU_Ver.unique()) - set(allowed_PIU_Ver)):
+            logger.error("Illegal PIU Version Detected!")
 
         # Byte 80-87 FW Config                           #From PAN_TM_PIU_HKN_FWMS and PAN_TM_PIU_HKN_SLF
         TM['FWL_RTi'] = PandUPF(NEBin, 'u8',  80, 0)

@@ -16,7 +16,7 @@ import numpy as np
 from pathlib import Path
 import logging
 
-import PC_Fns
+import pancam_fns
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +130,7 @@ def HK_Voltages(PROC_DIR, Interact=False):
     HK_DIR = MakeHKPlotsDir(PROC_DIR)
 
     # Search for PanCam RAW Processed Files
-    RawPikFile = PC_Fns.Find_Files(
+    RawPikFile = pancam_fns.Find_Files(
         PROC_DIR, "*RAW_HKTM.pickle", SingleFile=True)
     if not RawPikFile:
         logger.warning("No file found - ABORTING")
@@ -164,7 +164,7 @@ def HK_Voltages(PROC_DIR, Interact=False):
         plt.show(block=False)
 
     # Search for PanCam CAL Processed Files
-    CalPikFile = PC_Fns.Find_Files(
+    CalPikFile = pancam_fns.Find_Files(
         PROC_DIR, "*Cal_HKTM.pickle", SingleFile=True)
     if not CalPikFile:
         logger.warning("No file found - ABORTING")
@@ -223,7 +223,7 @@ def HK_Temperatures(PROC_DIR, Interact=False):
     HK_DIR = MakeHKPlotsDir(PROC_DIR)
 
     # Search for PanCam RAW Processed Files
-    RawPikFile = PC_Fns.Find_Files(
+    RawPikFile = pancam_fns.Find_Files(
         PROC_DIR, "*RAW_HKTM.pickle", SingleFile=True)
     if not RawPikFile:
         logger.warning("No file found - ABORTING")
@@ -289,7 +289,7 @@ def HK_Temperatures(PROC_DIR, Interact=False):
         plt.show(block=False)
 
     # Search for PanCam CAL Processed Files
-    CalPikFile = PC_Fns.Find_Files(
+    CalPikFile = pancam_fns.Find_Files(
         PROC_DIR, "*Cal_HKTM.pickle", SingleFile=True)
     if not CalPikFile:
         logger.warning("No file found - ABORTING")
@@ -341,7 +341,7 @@ def Rover_Temperatures(PROC_DIR, Interact=False):
     HK_DIR = MakeHKPlotsDir(PROC_DIR)
 
     # Search for PanCam Rover Status Processed Files
-    RawPikFile = PC_Fns.Find_Files(
+    RawPikFile = pancam_fns.Find_Files(
         PROC_DIR, "*RoverStatus.pickle", SingleFile=True)
     if not RawPikFile:
         logger.warning("No file found - ABORTING")
@@ -350,7 +350,7 @@ def Rover_Temperatures(PROC_DIR, Interact=False):
     ROV = pd.read_pickle(RawPikFile[0])
 
     # Search for PanCam Rover Temperature Processed Files
-    RawPikFile = PC_Fns.Find_Files(
+    RawPikFile = pancam_fns.Find_Files(
         PROC_DIR, "*RoverTemps.pickle", SingleFile=True)
     if not RawPikFile:
         logger.warning("No file found - ABORTING")
@@ -401,7 +401,7 @@ def Rover_Power(PROC_DIR, Interact=False):
     HK_DIR = MakeHKPlotsDir(PROC_DIR)
 
     # Search for PanCam Rover Status Processed Files
-    RawPikFile = PC_Fns.Find_Files(
+    RawPikFile = pancam_fns.Find_Files(
         PROC_DIR, "*RoverStatus.pickle", SingleFile=True)
     if not RawPikFile:
         logger.warning("No file found - ABORTING")
@@ -486,7 +486,7 @@ def HK_Overview(PROC_DIR, Interact=False):
     HK_DIR = MakeHKPlotsDir(PROC_DIR)
 
     # Search for PanCam RAW Processed Files
-    RawPikFile = PC_Fns.Find_Files(
+    RawPikFile = pancam_fns.Find_Files(
         PROC_DIR, "*RAW_HKTM.pickle", SingleFile=True)
     if not RawPikFile:
         logger.info("No RAW_HKTM file found - ABORTING")
@@ -496,7 +496,7 @@ def HK_Overview(PROC_DIR, Interact=False):
 
     # Search for PanCam Rover Telecommands
     # May need to switch to detect if Rover TC or LabView TC
-    TCPikFile = PC_Fns.Find_Files(
+    TCPikFile = pancam_fns.Find_Files(
         PROC_DIR, "*Unproc_TC.pickle", SingleFile=True)
     if not TCPikFile:
         logger.info("No TC file found - Leaving Blank")
@@ -597,7 +597,7 @@ def HRC_CS(PROC_DIR, Interact=False):
     HK_DIR = MakeHKPlotsDir(PROC_DIR)
 
     # Search for PanCam RAW Processed Files
-    RawPikFile = PC_Fns.Find_Files(
+    RawPikFile = pancam_fns.Find_Files(
         PROC_DIR, "*RAW_HKTM.pickle", SingleFile=True)
     if not RawPikFile:
         logger.warning("No file found - ABORTING")
@@ -615,7 +615,7 @@ def HRC_CS(PROC_DIR, Interact=False):
 
     # Search for PanCam Rover Telecommands
     # May need to switch to detect if Rover TC or LabView TC
-    TCPikFile = PC_Fns.Find_Files(
+    TCPikFile = pancam_fns.Find_Files(
         PROC_DIR, "*Unproc_TC.pickle", SingleFile=True)
     if not TCPikFile:
         logger.info("No TC file found - Leaving Blank")
@@ -722,7 +722,7 @@ def FW(PROC_DIR, Interact=False):
     HK_DIR = MakeHKPlotsDir(PROC_DIR)
 
     # Search for PanCam RAW Processed Files
-    RawPikFile = PC_Fns.Find_Files(
+    RawPikFile = pancam_fns.Find_Files(
         PROC_DIR, "*RAW_HKTM.pickle", SingleFile=True)
     if not RawPikFile:
         logger.warning("No file found - ABORTING")
@@ -732,7 +732,7 @@ def FW(PROC_DIR, Interact=False):
 
     # Search for PanCam Rover Telecommands
     # May need to switch to detect if Rover TC or LabView TC
-    TCPikFile = PC_Fns.Find_Files(
+    TCPikFile = pancam_fns.Find_Files(
         PROC_DIR, "*Unproc_TC.pickle", SingleFile=True)
     if not TCPikFile:
         logger.info("No TC file found - Leaving Blank")
@@ -841,7 +841,7 @@ def psu(proc_dir, Interact=False):
 
     hk_dir = MakeHKPlotsDir(proc_dir)
 
-    psupikfile = PC_Fns.Find_Files(proc_dir, "psu.pickle", SingleFile=True)
+    psupikfile = pancam_fns.Find_Files(proc_dir, "psu.pickle", SingleFile=True)
 
     if not psupikfile:
         logger.warning("No file found - ABORTING")

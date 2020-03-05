@@ -10,7 +10,7 @@ import numpy as np
 from pathlib import Path
 import logging
 
-import PC_Fns
+import pancam_fns
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def cal_HK(PROC_DIR):
     logger.info("Calibrating TM HK Files")
 
     # Search for PanCam Processed Files
-    PikFile = PC_Fns.Find_Files(PROC_DIR, "*RAW_HKTM.pickle")
+    PikFile = pancam_fns.Find_Files(PROC_DIR, "*RAW_HKTM.pickle")
     if not PikFile:
         logger.warning("No files found - ABORTING")
         return
