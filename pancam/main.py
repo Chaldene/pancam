@@ -21,6 +21,7 @@ import rover
 import swis
 import hs
 import labview
+import tc_cal
 import pancam_fns
 
 if __name__ == '__main__':
@@ -72,6 +73,7 @@ if __name__ == '__main__':
             hs.verify(inst)
             hk_raw.decode(proc_dir)
             hk_cal.cal_HK(proc_dir)
+            tc_cal.decode_all(proc_dir)
             plotter.all_plots(proc_dir)
             swis.sci_extract(inst)
             swis.sci_compare(inst)
@@ -109,6 +111,7 @@ if __name__ == '__main__':
         hk_raw.decode(proc_dir)
         image_browse.Img_RAW_Browse(proc_dir)
         hk_cal.cal_HK(proc_dir)
+        tc_cal.decode_all(proc_dir)
 
         # Produce Plots
         plotter.all_plots(proc_dir)

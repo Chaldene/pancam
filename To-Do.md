@@ -2,9 +2,6 @@
 
 ## Prioties
 
-* Make a list of required packages
-* Reorganise into appropriate python structure.
-* HRC and WAC plots to display only camera commands
 * Add the rest of the HRC and WAC plots
 * Split data into activities so that it is easy to view HK etc.
 * Within HK Decode, stop passing bin around and change functions to only return relevant arrays
@@ -84,3 +81,6 @@
 * swis.py: Adapt Sci compare for SWIS generated images.
 * swis.py: Correct UNIX time calculation as reporting year is 1970
 * Extract data from SWIS nsvf Router logs and run through analysis
+* Make a list of required packages
+* Reorganise into appropriate python structure.
+* HRC and WAC plots to display only camera commands.

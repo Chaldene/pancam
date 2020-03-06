@@ -61,7 +61,7 @@ def cal_HK(PROC_DIR):
         Cal_A[6] / RAW['Volt_Ref'] + Cal_B[6]
 
     write_file = PROC_DIR / \
-        (PikFile[0].stem.split('_RAW')[0] + "_Cal_HKTM.pickle")
+        ("Cal_HKTM.pickle")
     if write_file.exists():
         write_file.unlink()
         logger.info("Deleting file: %s", write_file.stem)

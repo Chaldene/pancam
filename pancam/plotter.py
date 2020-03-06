@@ -613,10 +613,9 @@ def HRC_CS(PROC_DIR, Interact=False):
         logger.info("No HRC CS response available")
         return
 
-    # Search for PanCam Rover Telecommands
-    # May need to switch to detect if Rover TC or LabView TC
+    # Search for PanCam Telecommands
     TCPikFile = pancam_fns.Find_Files(
-        PROC_DIR, "*Unproc_TC.pickle", SingleFile=True)
+        PROC_DIR, "*Cal_TC.pickle", SingleFile=True)
     if not TCPikFile:
         logger.info("No TC file found - Leaving Blank")
         TC = pd.DataFrame()
@@ -626,6 +625,7 @@ def HRC_CS(PROC_DIR, Interact=False):
 
     if TCPlot:
         TC = pd.read_pickle(TCPikFile[0])
+        hrc_tc = TC[TC['ACTION'] == 'HRC '].reset_index()
 
     # Create plot structure
     fig = plt.figure(figsize=(14.0, 9))
@@ -642,22 +642,30 @@ def HRC_CS(PROC_DIR, Interact=False):
 
     # Action List
     if TCPlot:
-        size = TC.shape[0]
-        TC['LEVEL'] = 1
+        size = hrc_tc.shape[0]
+        level = hrc_tc['Cam_Cmd'].apply(lambda x: -1 if x == "CS" else 1)
+        first_hrc_cs = next(i for i, v in enumerate(level) if v == -1)
 
         markerline, stemline, baseline = ax0.stem(
-            TC['DT'], TC['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
+            hrc_tc['DT'], level, linefmt='C3-', basefmt="k-", use_line_collection=True)
         plt.setp(markerline, mec="k", mfc="w", zorder=3)
         markerline.set_ydata(np.zeros(size))
         add_text(ax0, 'Action List')
         for i in range(0, size):
-            ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0, -2),
-                         textcoords="offset points", va="top", ha="right", rotation=90)
+            if level[i] > 0:
+                ax0.annotate(hrc_tc.Cam_Cmd.iloc[i], xy=(hrc_tc.DT.iloc[i], level.iloc[i]), xytext=(0, -2),
+                             textcoords="offset points", va="top", ha="right", rotation=90)
+
+        if first_hrc_cs:
+            i = first_hrc_cs
+            ax0.annotate(hrc_tc.Cam_Cmd.iloc[i], xy=(hrc_tc.DT.iloc[i], level.iloc[i]), xytext=(
+                0, -2), textcoords="offset points", va="bottom", ha="right", rotation=90)
+
     # remove y axis and spines
     ax0.get_yaxis().set_visible(False)
 
     # Encoder Value
-    ax1.plot(RAW['DT'], RAW['HRC_ENC'], '.')
+    ax1.plot(RAW['DT'], RAW['HRC_ENC'], '.-')
     add_text(ax1, 'Enc Value')
 
     # Enc and MM Flag
@@ -937,6 +945,6 @@ if __name__ == "__main__":
     # Rover_Power(DIR)
     #HK_Overview(DIR, True)
     #HK_Voltages(DIR, True)
-    #HRC_CS(DIR, True)
+    HRC_CS(DIR, True)
     #FW(DIR, Interact=True)
-    psu(DIR, Interact=True)
+    #psu(DIR, Interact=True)
