@@ -57,6 +57,8 @@ def Img_RAW_Browse(PROC_DIR):
                 Br_img = np.fliplr(img)
                 BrowseProps.update({'Browse_Transpose': "Left_Right"})
             else:
+                Br_img = img
+                BrowseProps.update({'Browse_Transform': 'None'})
                 ImgRawBrError("Warning invalid CAM number")
 
             # Create directory for Browse images
