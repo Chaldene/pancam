@@ -444,6 +444,9 @@ def sci_extract(swis_dir: Path, nsvf: bool = False):
                         "Incorrect final LDT Length. Image: %d", cur_img)
                     logger.info("Expected: 254000")
                     logger.info("Got: %d", len(data))
+                    # ! Temp workaround
+                    data = binary_format[:254000]
+                    # ! Temp workaround
 
                 f[cur_img].write(data)
 
@@ -571,6 +574,11 @@ def create_instances(swis_dir: Path):
     # Else look for standard SWIS hk files
     hk_files = pancam_fns.Find_Files(swis_dir, "*HK.txt", Recursive=False)
 
+    # If only 1 hk_files assume no need to create instances.
+    if len(hk_files) < 2:
+        logger.info("Less than two instances found so aborting")
+        return [swis_dir]
+
     instances = []
 
     if not hk_files:
@@ -605,6 +613,7 @@ def create_instances(swis_dir: Path):
             orig = swis_dir / ref
             if orig.exists():
                 copyfile(orig, inst_dir / ref)
+                orig.unlink()
 
     return instances
 

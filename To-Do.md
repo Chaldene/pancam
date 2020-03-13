@@ -6,7 +6,7 @@
 * Split data into activities so that it is easy to view HK etc.
 * Within HK Decode, stop passing bin around and change functions to only return relevant arrays
 * Check that all items from TC and TM plotter have been recreated in here.
-* Make easier to read verification of HK
+* Make easier to read verification of HK by creating dedicated verificaiton modules
 
 ## Nice to haves
 

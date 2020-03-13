@@ -77,6 +77,7 @@ if __name__ == '__main__':
             plotter.all_plots(proc_dir)
             swis.sci_extract(inst)
             swis.sci_compare(inst)
+            image_browse.Img_RAW_Browse(proc_dir)
 
     else:
         # LabView Files
@@ -102,7 +103,7 @@ if __name__ == '__main__':
 
         elif swis.nsvf_parse(top_dir):
             swis.hk_extract(proc_dir)
-            hs.decode(proc_dir)
+            hs.decode(proc_dir, spw_header=True)
             hs.verify(proc_dir)
             swis.sci_extract(proc_dir, True)
             swis.sci_compare(proc_dir)

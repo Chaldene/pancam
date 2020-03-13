@@ -84,16 +84,25 @@ def cam_decode(tc: pd.DataFrame()):
     """
 
     # Blank space needed after name as that is how it is stored
-    wac = tc[tc['ACTION'] == 'WAC ']
+    wac = tc[(tc['ACTION'] == 'WACL ') | (tc['ACTION'] == 'WACR ')]
     hrc = tc[tc['ACTION'] == 'HRC ']
+
+    wac_cmd = pd.DataFrame()
+    hrc_cmd = pd.DataFrame()
 
     if not wac.empty:
         logger.info("WAC Commands Found")
-        tc['Cam_Cmd'] = wac[5].replace(wac_cmd_dict)
+        wac_cid = wac[5].apply(lambda x: ((x & 0xC0) >> 6))
+        wac_cmd = wac_cid.replace(wac_cmd_dict)
+        tc['Cam_Cmd'] = wac_cmd
 
     if not hrc.empty:
         logger.info("HRC Commands Found")
-        tc['Cam_Cmd'] = hrc[5].replace(hrc_cmd_dict)
+        hrc_cmd = hrc[5].replace(hrc_cmd_dict)
+        tc['Cam_Cmd'] = hrc_cmd
+
+    if (not wac.empty) and (not hrc.empty):
+        tc['Cam_Cmd'] = pd.concat([wac_cmd, hrc_cmd])
 
     return tc
 

@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "pythonPath": "C:\\Users\\ucasbwh\\.conda\\envs\\Processor\\python.exe"
+            "console": "integratedTerminal"
         }
     ]
 }

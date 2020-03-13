@@ -577,6 +577,8 @@ def HK_Overview(PROC_DIR, Interact=False):
 
     format_axes(fig)
     ax4.tick_params(labelbottom=True)
+    ax4.yaxis.set_major_locator(
+        matplotlib.ticker.MaxNLocator(integer=True))
 
     fig.tight_layout()
     fig.savefig(HK_DIR / 'HK_OVR.png')
@@ -644,7 +646,10 @@ def HRC_CS(PROC_DIR, Interact=False):
     if TCPlot:
         size = hrc_tc.shape[0]
         level = hrc_tc['Cam_Cmd'].apply(lambda x: -1 if x == "CS" else 1)
-        first_hrc_cs = next(i for i, v in enumerate(level) if v == -1)
+        if -1 in level:
+            first_hrc_cs = next(i for i, v in enumerate(level) if v == -1)
+        else:
+            first_hrc_cs = False
 
         markerline, stemline, baseline = ax0.stem(
             hrc_tc['DT'], level, linefmt='C3-', basefmt="k-", use_line_collection=True)
@@ -720,6 +725,100 @@ def HRC_CS(PROC_DIR, Interact=False):
     plt.close(fig)
 
     logger.info("Producing HRC CS Plot Completed")
+
+
+def wac_res(proc_dir: Path, Interact=False):
+
+    logger.info("Producing WAC Plot")
+
+    hk_dir = MakeHKPlotsDir(proc_dir)
+
+    # Search for PanCam RAW processed files
+    rawpikfile = pancam_fns.Find_Files(
+        proc_dir, "*RAW_HKTM.pickle", SingleFile=True)
+    if not rawpikfile:
+        logger.warning("No file found - ABORTING")
+        return
+
+    raw = pd.read_pickle(rawpikfile[0])
+
+    if not 'WAC_CID' in raw:
+        logger.info("No WAC data available")
+        return
+
+    # Search for PanCam TCs
+    tcpikfile = pancam_fns.Find_Files(
+        proc_dir, "*Cal_TC.pickle", SingleFile=True)
+    if not tcpikfile:
+        logger.info("No TC file found - leaving blank")
+        tc = pd.DataFrame()
+        TCPlot = False
+    else:
+        TCPlot = True
+
+    if TCPlot:
+        tc = pd.read_pickle(tcpikfile[0])
+        wac_tc = tc[(tc['ACTION'] == 'WACL ') | (
+            tc['ACTION'] == 'WACR ')].reset_index()
+
+    # Create plot structure
+    fig = plt.figure(figsize=(14.0, 9))
+    gs = gridspec.GridSpec(7, 1, height_ratios=[
+                           1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5], figure=fig)
+    gs.update(hspace=0.0)
+    ax0 = fig.add_subplot(gs[0])
+    ax1 = fig.add_subplot(gs[1], sharex=ax0)
+    ax2 = fig.add_subplot(gs[2], sharex=ax0)
+    ax3 = fig.add_subplot(gs[3], sharex=ax0)
+    ax4 = fig.add_subplot(gs[4], sharex=ax0)
+    ax5 = fig.add_subplot(gs[5], sharex=ax0)
+    ax6 = fig.add_subplot(gs[6], sharex=ax0)
+
+    # Action List
+    if TCPlot:
+        wac_hk = wac_tc[wac_tc['Cam_Cmd'] == 'HK']
+        wac_ia = wac_tc[wac_tc['Cam_Cmd'] == 'IA']
+        wac_dt = wac_tc[wac_tc['Cam_Cmd'] == 'DT']
+        #wac_nk = wac_tc[wac_tc['Cam_Cmd'] ]
+
+        if not wac_ia.empty:
+            size_ia = wac_ia.shape[0]
+            marklineIA, stemlineIA, baselineIA = ax0.stem(
+                wac_ia['DT'], [1.5]*len(wac_ia), linefmt='C3-', basefmt="k-", use_line_collection=True)
+            plt.setp(marklineIA, mec="k", mfc="w", zorder=3)
+            for i in range(0, size_ia):
+                ax0.annotate(wac_ia.Cam_Cmd.iloc[i], xy=(wac_ia.DT.iloc[i], 1.5), xytext=(0, -2),
+                             textcoords="offset points", va="top", ha="right", rotation=90)
+
+        if not wac_dt.empty:
+            size_dt = wac_dt.shape[0]
+            marklineDT, stemlineDT, baselineDT = ax0.stem(
+                wac_dt['DT'], [1.0]*len(wac_dt), linefmt='C2-', basefmt="k-", use_line_collection=True)
+            plt.setp(marklineDT, mec="k", mfc="w", zorder=3)
+            for i in range(0, size_dt):
+                ax0.annotate(wac_dt.Cam_Cmd.iloc[i], xy=(wac_dt.DT.iloc[i], 1.0), xytext=(0, -2),
+                             textcoords="offset points", va="top", ha="right", rotation=90)
+
+        if not wac_hk.empty:
+            marklineHK, stemlineHK, baselineHK = ax0.stem(
+                wac_hk['DT'], [-1.0]*len(wac_hk), linefmt='C1-', basefmt="k-", use_line_collection=True)
+            plt.setp(marklineHK, mec="k", mfc="w", zorder=3)
+            ax0.annotate(wac_hk.Cam_Cmd.iloc[0], xy=(wac_hk.DT.iloc[0], -0.8), xytext=(
+                0, -2), textcoords="offset points", va="bottom", ha="right", rotation=90)
+
+    # remove y axis and spines
+    add_text(ax0, 'Action List')
+    ax0.set_ylim([-1.1, 1.6])
+    ax0.get_yaxis().set_visible(False)
+
+    # WAC ID
+    ax1.plot(raw['DT'], raw['WAC_WID'], '.')
+    add_text(ax1, 'WAC ID')
+
+    # Normal HK or EXT
+
+    if Interact:
+        plt.show(block=True)
 
 
 def FW(PROC_DIR, Interact=False):
@@ -943,8 +1042,10 @@ if __name__ == "__main__":
     #HK_Temperatures(DIR, True)
     # Rover_Temperatures(DIR)
     # Rover_Power(DIR)
-    #HK_Overview(DIR, True)
+    HK_Overview(DIR, True)
     #HK_Voltages(DIR, True)
-    HRC_CS(DIR, True)
+    #HRC_CS(DIR, True)
+    #wac_res(DIR, True)
     #FW(DIR, Interact=True)
     #psu(DIR, Interact=True)
+    # all_plots(DIR)
