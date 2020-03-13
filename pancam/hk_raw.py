@@ -45,19 +45,18 @@ def decode(PROC_DIR):
     except TypeError:
         Bin = RTM['RAW']
 
-    RTM = pancam_fns.ReturnCUC_RAW(RTM, Bin)
-
     TM = pd.DataFrame()
     verify = pd.DataFrame()
     err_df = pd.DataFrame()
 
     # Check for any blank HK
     verify['Blank'] = Bin.apply(len) == 0
-    err_df = Bin[verify['Blank']]
+    err_df = RTM[verify['Blank']]
     if not err_df.empty:
-        for index in err_df.index.tolist():
-            logging.error("Blank HK Entry Detected at line: %s", index)
-            Bin = Bin.drop(index)
+        logging.error("Blank HK Entry Detected")
+        RTM, Bin = DropTM(err_df, RTM, Bin)
+
+    RTM = pancam_fns.ReturnCUC_RAW(RTM, Bin)
 
     # Time stamp data from CUC
     TM['DT'] = pd.to_datetime(CUCtoUTC_DT(RTM))
@@ -611,13 +610,21 @@ def CUCtoUTC_DT(RAW):
                               + TimeDelta(row['CUCfrac'], format='sec')
                               ).iso, axis=1)
 
+    elif MajSource == '.ha':
+        CalcTime = RAW.apply(lambda row:
+                             (Time(2000, format='jyear')
+                              + TimeDelta((row['Pkt_CUC'] >> 16)*units.s)
+                              # To deal with 12-hour Rover offset
+                              + TimeDelta(row['CUCfrac'], format='sec')
+                              ).iso, axis=1)
+
     else:
         # Rover uses time since Mid-day of the year 2000 minues 12 hours
         CalcTime = RAW.apply(lambda row:
                              (Time(2000, format='jyear')
                               + TimeDelta((row['Pkt_CUC'] >> 16)*units.s)
                               # To deal with 12-hour Rover offset
-                              - TimeDelta(12*60*60, format='sec')
+                              #- TimeDelta(12*60*60, format='sec')
                               + TimeDelta(row['CUCfrac'], format='sec')
                               ).iso, axis=1)
 
