@@ -116,11 +116,25 @@ def add_text(axes: matplotlib.axes, text: str):
         text {str} -- String containing text to be added.
     """
 
-    axes.text(.99, .9, text,
+    axes.text(.99, .97, text,
               color='0.25',
               fontweight='bold',
               horizontalalignment='right',
+              verticalalignment='top',
               transform=axes.transAxes)
+
+
+def adjust_xscale(ax0: matplotlib.axes):
+    """Rescales plot x-axis by 10% to avoid overlap with axes text
+
+    Arguments:
+        ax0 {matplotlib.axes} -- The top axes that all other axes share.
+    """
+
+    # Re-adjust x-axis so that doesn't interfere with text
+    xstart, xend = ax0.get_xlim()
+    new_lim = (xend - xstart)*1.05+xstart
+    ax0.set_xlim(right=new_lim)
 
 
 def HK_Voltages(PROC_DIR, Interact=False):
@@ -203,6 +217,7 @@ def HK_Voltages(PROC_DIR, Interact=False):
 
     format_axes(fig2)
     ax5.tick_params(labelbottom=True)
+    adjust_xscale(ax0)
 
     fig2.tight_layout()
     fig2.savefig(HK_DIR / 'VOLT_CAL.png')
@@ -282,6 +297,7 @@ def HK_Temperatures(PROC_DIR, Interact=False):
 
     format_axes(fig, integers=False)
     ax3.tick_params(labelbottom=True)
+    adjust_xscale(ax0)
 
     fig.tight_layout()
     fig.savefig(HK_DIR / 'INT_TEMP_RAW.png')
@@ -321,6 +337,7 @@ def HK_Temperatures(PROC_DIR, Interact=False):
 
     format_axes(fig2)
     ax4.tick_params(labelbottom=True)
+    adjust_xscale(ax3)
 
     fig2.tight_layout()
     fig2.savefig(HK_DIR / 'INT_TEMP_CAL.png')
@@ -382,6 +399,7 @@ def Rover_Temperatures(PROC_DIR, Interact=False):
 
     format_axes(fig, integers=True)
     ax1.tick_params(labelbottom=True)
+    adjust_xscale(ax0)
 
     fig.tight_layout()
     fig.savefig(HK_DIR / 'ROV_TEMPS.png')
@@ -433,6 +451,7 @@ def Rover_Power(PROC_DIR, Interact=False):
 
     format_axes(fig, integers=True)
     ax1.tick_params(labelbottom=True)
+    adjust_xscale(ax0)
 
     fig.tight_layout()
     fig.savefig(HK_DIR / 'ROV_PWR.png')
@@ -467,6 +486,7 @@ def Rover_Power(PROC_DIR, Interact=False):
 
         format_axes(fig2)
         ax3.tick_params(labelbottom=True)
+        adjust_xscale(ax2)
 
         fig2.tight_layout()
         fig2.savefig(HK_DIR / 'ROV_PWR_EXT.png')
@@ -583,15 +603,11 @@ def HK_Overview(PROC_DIR, Interact=False):
     add_text(ax5, 'TM Type')
     ax5.set_xlabel('Date Time')
 
-    # Re-adjust x-axis so that doesn't interfere with text
-    xstart, xend = ax0.get_xlim()
-    new_xlimits = (xstart, (xend - xstart)*1.1+xstart)
-    ax0.set_xlim(new_xlimits)
-
     format_axes(fig)
     ax4.tick_params(labelbottom=True)
     ax4.yaxis.set_major_locator(
         matplotlib.ticker.MaxNLocator(integer=True))
+    adjust_xscale(ax0)
 
     fig.tight_layout()
     fig.savefig(HK_DIR / 'HK_OVR.png')
@@ -728,6 +744,7 @@ def HRC_CS(PROC_DIR, Interact=False):
 
     format_axes(fig)
     ax6.tick_params(labelbottom=True)
+    adjust_xscale(ax0)
 
     fig.tight_layout()
     fig.savefig(HK_DIR / 'HRC_CS.png')
@@ -869,6 +886,7 @@ def wac_res(proc_dir: Path, Interact=False):
         matplotlib.ticker.MaxNLocator(integer=True))
     if TCPlot:
         ax0.set_xlim(xrange)
+    adjust_xscale(ax0)
 
     fig.tight_layout()
     fig.savefig(hk_dir / 'WAC.png')
@@ -990,6 +1008,7 @@ def FW(PROC_DIR, Interact=False):
 
     format_axes(fig)
     ax6.tick_params(labelbottom=True)
+    adjust_xscale(ax0)
 
     fig.tight_layout()
     fig.savefig(HK_DIR / 'FW.png')
@@ -1045,6 +1064,7 @@ def psu(proc_dir, Interact=False):
     format_axes(fig)
     ax0.grid(False)
     ax2.tick_params(labelbottom=True)
+    adjust_xscale(ax0)
 
     fig.tight_layout()
     fig.savefig(hk_dir / 'PSU_Cur.png')
@@ -1080,6 +1100,7 @@ def psu(proc_dir, Interact=False):
     format_axes(fig2)
     ax3.grid(False)
     ax5.tick_params(labelbottom=True)
+    adjust_xscale(ax3)
 
     fig2.tight_layout()
     fig2.savefig(hk_dir / 'PSU_Pwr.png')
@@ -1105,7 +1126,7 @@ if __name__ == "__main__":
     # HK_Overview(DIR, True)
     # HK_Voltages(DIR, True)
     # HRC_CS(DIR, True)
-    wac_res(DIR, True)
+    # wac_res(DIR, True)
     # FW(DIR, Interact=True)
     # psu(DIR, Interact=True)
-    # all_plots(DIR)
+    all_plots(DIR)
