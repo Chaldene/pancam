@@ -575,8 +575,11 @@ def create_instances(swis_dir: Path):
     hk_files = pancam_fns.Find_Files(swis_dir, "*HK.txt", Recursive=False)
 
     # If only 1 hk_files assume no need to create instances.
-    if len(hk_files) < 2:
-        logger.info("Less than two instances found so aborting")
+    if len(hk_files) == 0:
+        return []
+
+    elif len(hk_files) == 1:
+        logger.info("One instances found so aborting")
         return [swis_dir]
 
     instances = []

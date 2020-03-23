@@ -624,7 +624,8 @@ def CUCtoUTC_DT(RAW):
                              (Time(2000, format='jyear')
                               + TimeDelta((row['Pkt_CUC'] >> 16)*units.s)
                               # To deal with 12-hour Rover offset
-                              #- TimeDelta(12*60*60, format='sec')
+                              # * Whether to apply time delta changes depending on when Rover files are generated
+                              - TimeDelta(12*60*60, format='sec')
                               + TimeDelta(row['CUCfrac'], format='sec')
                               ).iso, axis=1)
 

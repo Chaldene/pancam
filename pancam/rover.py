@@ -194,6 +194,6 @@ if __name__ == "__main__":
         logger.info("Generating 'Processing' directory")
         PROC_DIR.mkdir()
 
-    TM_extract(DIR)
-    TC_extract(DIR)
+    # TM_extract(DIR)
+    # TC_extract(DIR)
     NavCamBrowse(DIR)

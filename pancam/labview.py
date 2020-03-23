@@ -185,8 +185,9 @@ def sci_extract(lv_dir: Path, archive: bool = False):
             logger.error("Repeat chunks found. Renaming and excluding them")
             wrong_files = [files_sci[i] for i in repeat_chunks]
             for wrong_item in wrong_files:
-                logger.info("Renaming to .ignore %s", wrong_item.name)
-                wrong_item.rename(wrong_item.with_suffix('.txt.ignore'))
+                if archive:
+                    logger.info("Renaming to .ignore %s", wrong_item.name)
+                    wrong_item.rename(wrong_item.with_suffix('.txt.ignore'))
                 files_sci.remove(wrong_item)
 
             num_pkts = sum(1 for item in files_sci)

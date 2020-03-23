@@ -11,6 +11,7 @@ Created 31 Oct 2019
 
 from pathlib import Path
 import logging
+import shutil
 
 import plotter
 import hk_cal
@@ -38,10 +39,36 @@ if __name__ == '__main__':
 
     # Select Folder to Process
     top_dir = Path(
-        input("Type the path to the folder where the RAW log files are stored: "))
+        input("Type the path to the folder where the RAW log or archive files are stored: "))
     if (not top_dir.is_dir()) or top_dir == Path("."):
         logging.error("Non-Valid path provided - exiting")
         quit()
+
+    # Determine if working with archived folder
+    arch = input("Is the folder in a tar.bz2 archive? Y/N (Default): ")
+    if arch == 'Y' or arch == 'y':
+        file_arch = input("Input the archive full filename: ")
+        file_path = top_dir / file_arch
+
+        if file_path.suffixes != ['.tar', '.bz2']:
+            logger.error("Not a valid archive format - exiting")
+            quit()
+
+        logger.info("Unpacking archive to: %s", top_dir)
+        shutil.unpack_archive(file_path, top_dir, 'bztar')
+
+        # New top dir
+        top_dir = top_dir / file_path.stem[:-4]
+
+        arch_logs = False
+
+    else:
+        arch_user = input(
+            "Do you want to archive the files after processing? Y/N (Default): ")
+        if arch_user == 'Y' or arch == 'y':
+            arch_logs = True
+        else:
+            arch_logs = False
 
     # Test if processed directory folder exists, if not create it.
     proc_dir = top_dir / 'PROC'
@@ -81,16 +108,15 @@ if __name__ == '__main__':
 
     else:
         # LabView Files
-        arc_logs = False
-        if labview.hk_extract(top_dir, archive=arc_logs):
-            labview.hs_extract(top_dir, archive=arc_logs)
+        if labview.hk_extract(top_dir, archive=arch_logs):
+            labview.hs_extract(top_dir, archive=arch_logs)
             hs.decode(proc_dir)
             hs.verify(proc_dir)
             labview.tc_extract(top_dir)
-            labview.sci_extract(top_dir, archive=arc_logs)
-            labview.bin_move(top_dir, archive=arc_logs)
-            labview.psu_extract(top_dir, archive=arc_logs)
-            if arc_logs:
+            labview.sci_extract(top_dir, archive=arch_logs)
+            labview.bin_move(top_dir, archive=arch_logs)
+            labview.psu_extract(top_dir, archive=arch_logs)
+            if arch_logs:
                 labview.create_archive(top_dir)
 
         # Rover files

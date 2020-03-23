@@ -67,6 +67,7 @@ def all_plots(proc_dir: Path):
     psu(proc_dir)
 
     HRC_CS(proc_dir)
+    wac_res(proc_dir)
 
 
 def MakeHKPlotsDir(PROC_DIR):
@@ -99,7 +100,7 @@ def format_axes(fig, integers=False):
         integers {bool} -- If set to True, the y-axis ticks are forced to integers. (default: {False})
     """
 
-    for i, ax in enumerate(fig.axes):
+    for _, ax in enumerate(fig.axes):
         ax.grid(True)
         ax.tick_params(labelbottom=False)
         if integers:
@@ -309,12 +310,12 @@ def HK_Temperatures(PROC_DIR, Interact=False):
     ax3.plot(Cal.DT, Cal.Temp_LWAC, label='LWAC')
     ax3.plot(Cal.DT, Cal.Temp_RWAC, label='RWAC')
     ax3.plot(Cal.DT, Cal.Temp_HRCA, label='ACT')
-    ax3.set_ylabel('Temp [$^\circ$C]')
+    ax3.set_ylabel(r'Temp [$^\circ$C]')
     ax3.legend(loc='lower center', bbox_to_anchor=(
         0.5, 1.0), ncol=5, borderaxespad=0, frameon=False)
 
     ax4.plot(Cal.DT, Cal.Temp_LDO, '-k', label='LDO')
-    ax4.set_ylabel('LDO Temp [$^\circ$C]')
+    ax4.set_ylabel(r'LDO Temp [$^\circ$C]')
     ax4.set_xlabel('Date Time')
     # ax4.xaxis.set_major_formatter(myFmt)
 
@@ -367,7 +368,7 @@ def Rover_Temperatures(PROC_DIR, Interact=False):
     ax0.plot(TMP.DT, TMP.PIU_T.astype('int64'), label='PIU')
     ax0.plot(TMP.DT, TMP.DCDC_T.astype('int64'), label='DCDC')
     ax0.legend(loc='upper right', frameon=False)
-    ax0.set_ylabel('Rover Monitored \n Temperature [$^\circ$C]')
+    ax0.set_ylabel(r'Rover Monitored \n Temperature [$^\circ$C]')
 
     ax1.plot(ROV.DT, ROV.HTR_ST.astype('int64'), label='Heater Status')
     ax1.text(.99, .9, 'Rover Heater Status', color='0.25', fontweight='bold',
@@ -510,20 +511,21 @@ def HK_Overview(PROC_DIR, Interact=False):
 
     # RAW Plot and Heater
     fig = plt.figure(figsize=(14.0, 9.0))
-    gs = gridspec.GridSpec(5, 1, height_ratios=[
-                           1, 0.5, 0.5, 0.5, 0.5], figure=fig)
+    gs = gridspec.GridSpec(6, 1, height_ratios=[
+                           1, 0.5, 0.5, 0.5, 0.5, 0.5], figure=fig)
     gs.update(hspace=0.0)
     ax0 = fig.add_subplot(gs[0])
     ax1 = fig.add_subplot(gs[1], sharex=ax0)
     ax2 = fig.add_subplot(gs[2], sharex=ax0)
     ax3 = fig.add_subplot(gs[3], sharex=ax0)
     ax4 = fig.add_subplot(gs[4], sharex=ax0)
+    ax5 = fig.add_subplot(gs[5], sharex=ax0)
 
     # Action List
     if TCPlot:
         size = TC.shape[0]
         TC['LEVEL'] = 1
-        markerline, stemline, baseline = ax0.stem(
+        markerline, _, _ = ax0.stem(
             TC['DT'], TC['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
         plt.setp(markerline, mec="k", mfc="w", zorder=3)
         markerline.set_ydata(np.zeros(size))
@@ -573,7 +575,18 @@ def HK_Overview(PROC_DIR, Interact=False):
         ax4.set_ylim([-0.1, 1.1])
     ax4.grid(True)
     add_text(ax4, 'Img #')
-    ax4.set_xlabel('Date Time')
+
+    ax5.plot(RAW.DT, RAW.TM_Type_ID, 'o')
+    ax5.set_ylim([-0.1, 1.1])
+    ax5.set_yticks([0, 1])
+    ax5.set_yticklabels(['Ess.', 'NonE.'])
+    add_text(ax5, 'TM Type')
+    ax5.set_xlabel('Date Time')
+
+    # Re-adjust x-axis so that doesn't interfere with text
+    xstart, xend = ax0.get_xlim()
+    new_xlimits = (xstart, (xend - xstart)*1.1+xstart)
+    ax0.set_xlim(new_xlimits)
 
     format_axes(fig)
     ax4.tick_params(labelbottom=True)
@@ -651,7 +664,7 @@ def HRC_CS(PROC_DIR, Interact=False):
         else:
             first_hrc_cs = False
 
-        markerline, stemline, baseline = ax0.stem(
+        markerline, _, _ = ax0.stem(
             hrc_tc['DT'], level, linefmt='C3-', basefmt="k-", use_line_collection=True)
         plt.setp(markerline, mec="k", mfc="w", zorder=3)
         markerline.set_ydata(np.zeros(size))
@@ -763,8 +776,8 @@ def wac_res(proc_dir: Path, Interact=False):
 
     # Create plot structure
     fig = plt.figure(figsize=(14.0, 9))
-    gs = gridspec.GridSpec(7, 1, height_ratios=[
-                           1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5], figure=fig)
+    gs = gridspec.GridSpec(6, 1, height_ratios=[
+                           1, 0.5, 0.5, 0.5, 0.5, 1.5], figure=fig)
     gs.update(hspace=0.0)
     ax0 = fig.add_subplot(gs[0])
     ax1 = fig.add_subplot(gs[1], sharex=ax0)
@@ -772,18 +785,20 @@ def wac_res(proc_dir: Path, Interact=False):
     ax3 = fig.add_subplot(gs[3], sharex=ax0)
     ax4 = fig.add_subplot(gs[4], sharex=ax0)
     ax5 = fig.add_subplot(gs[5], sharex=ax0)
-    ax6 = fig.add_subplot(gs[6], sharex=ax0)
+
+    # WAC Data
+    wac_raw = raw[raw['WAC_HK_MCK'].notna()]
 
     # Action List
     if TCPlot:
         wac_hk = wac_tc[wac_tc['Cam_Cmd'] == 'HK']
         wac_ia = wac_tc[wac_tc['Cam_Cmd'] == 'IA']
         wac_dt = wac_tc[wac_tc['Cam_Cmd'] == 'DT']
-        #wac_nk = wac_tc[wac_tc['Cam_Cmd'] ]
+        # wac_nk = wac_tc[wac_tc['Cam_Cmd'] ]
 
         if not wac_ia.empty:
             size_ia = wac_ia.shape[0]
-            marklineIA, stemlineIA, baselineIA = ax0.stem(
+            marklineIA, _, _ = ax0.stem(
                 wac_ia['DT'], [1.5]*len(wac_ia), linefmt='C3-', basefmt="k-", use_line_collection=True)
             plt.setp(marklineIA, mec="k", mfc="w", zorder=3)
             for i in range(0, size_ia):
@@ -792,7 +807,7 @@ def wac_res(proc_dir: Path, Interact=False):
 
         if not wac_dt.empty:
             size_dt = wac_dt.shape[0]
-            marklineDT, stemlineDT, baselineDT = ax0.stem(
+            marklineDT, _, _ = ax0.stem(
                 wac_dt['DT'], [1.0]*len(wac_dt), linefmt='C2-', basefmt="k-", use_line_collection=True)
             plt.setp(marklineDT, mec="k", mfc="w", zorder=3)
             for i in range(0, size_dt):
@@ -800,25 +815,70 @@ def wac_res(proc_dir: Path, Interact=False):
                              textcoords="offset points", va="top", ha="right", rotation=90)
 
         if not wac_hk.empty:
-            marklineHK, stemlineHK, baselineHK = ax0.stem(
+            marklineHK, _, _ = ax0.stem(
                 wac_hk['DT'], [-1.0]*len(wac_hk), linefmt='C1-', basefmt="k-", use_line_collection=True)
             plt.setp(marklineHK, mec="k", mfc="w", zorder=3)
             ax0.annotate(wac_hk.Cam_Cmd.iloc[0], xy=(wac_hk.DT.iloc[0], -0.8), xytext=(
                 0, -2), textcoords="offset points", va="bottom", ha="right", rotation=90)
 
+        xrange = ax0.get_xlim()
+
     # remove y axis and spines
-    add_text(ax0, 'Action List')
+    add_text(ax0, 'WAC Actions')
     ax0.set_ylim([-1.1, 1.6])
     ax0.get_yaxis().set_visible(False)
 
     # WAC ID
-    ax1.plot(raw['DT'], raw['WAC_WID'], '.')
+    ax1.plot(wac_raw['DT'], wac_raw['WAC_WID'], '-')
+    ax1.set_ylim([-0.1, 1.1])
+    ax1.get_yaxis().set_visible(False)
     add_text(ax1, 'WAC ID')
 
-    # Normal HK or EXT
+    # Filter number
+    ax2.plot(wac_raw['DT'], wac_raw['Stat_FWL_Po'], label='FWL')
+    ax2.plot(wac_raw['DT'], wac_raw['Stat_FWR_Po'], label='FWR')
+    ax2.set_ylim([-0.1, 12])
+    ax2.yaxis.set_ticks([2, 4, 6, 8, 10])
+    ax2.legend(loc='center right', bbox_to_anchor=(
+        1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
+    add_text(ax2, 'FW #')
+
+    # Inhibit and Mem Check
+    ax3.plot(wac_raw['DT'], wac_raw['WAC_HK_INH'], label='Inhibit')
+    ax3.plot(wac_raw['DT'], wac_raw['WAC_HK_MCO'], label='Mem Check')
+    ax3.set_ylim([-0.1, 1.1])
+    ax3.get_yaxis().set_visible(False)
+    ax3.legend(loc='center right', bbox_to_anchor=(
+        1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
+
+    # Status
+    ax4.plot(wac_raw['DT'], wac_raw['WAC_HK_IAO'], label='Img Acq.')
+    ax4.plot(wac_raw['DT'], wac_raw['WAC_HK_TAO'], label='Tmp Acq.')
+    ax4.set_ylim([-0.1, 1.1])
+    ax4.get_yaxis().set_visible(False)
+    ax4.legend(loc='center right', bbox_to_anchor=(
+        1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
+
+    # RAW Temperature
+    # todo: Plot calibrated temperatures and PIU temp
+    ax5.plot(wac_raw['DT'], wac_raw['WAC_HK_LTP'], label='Temp')
+
+    format_axes(fig)
+    ax5.tick_params(labelbottom=True)
+    ax5.yaxis.set_major_locator(
+        matplotlib.ticker.MaxNLocator(integer=True))
+    if TCPlot:
+        ax0.set_xlim(xrange)
+
+    fig.tight_layout()
+    fig.savefig(hk_dir / 'WAC.png')
 
     if Interact:
         plt.show(block=True)
+
+    plt.close(fig)
+
+    logger.info("Producing WAC Plot Completed")
 
 
 def FW(PROC_DIR, Interact=False):
@@ -870,7 +930,7 @@ def FW(PROC_DIR, Interact=False):
         size = TC.shape[0]
         TC['LEVEL'] = 1
 
-        markerline, stemline, baseline = ax0.stem(
+        markerline, _, _ = ax0.stem(
             TC['DT'], TC['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
         plt.setp(markerline, mec="k", mfc="w", zorder=3)
         markerline.set_ydata(np.zeros(size))
@@ -1039,13 +1099,13 @@ if __name__ == "__main__":
     logger.info("Running Plotter.py as main")
     logger.info("Reading directory: %s", DIR)
 
-    #HK_Temperatures(DIR, True)
+    # HK_Temperatures(DIR, True)
     # Rover_Temperatures(DIR)
     # Rover_Power(DIR)
-    HK_Overview(DIR, True)
-    #HK_Voltages(DIR, True)
-    #HRC_CS(DIR, True)
-    #wac_res(DIR, True)
-    #FW(DIR, Interact=True)
-    #psu(DIR, Interact=True)
+    # HK_Overview(DIR, True)
+    # HK_Voltages(DIR, True)
+    # HRC_CS(DIR, True)
+    wac_res(DIR, True)
+    # FW(DIR, Interact=True)
+    # psu(DIR, Interact=True)
     # all_plots(DIR)

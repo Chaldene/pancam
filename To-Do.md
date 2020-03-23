@@ -2,11 +2,13 @@
 
 ## Prioties
 
-* Add the rest of the HRC and WAC plots
+* Adjust x-scale to avoid clash
 * Split data into activities so that it is easy to view HK etc.
 * Within HK Decode, stop passing bin around and change functions to only return relevant arrays
 * Check that all items from TC and TM plotter have been recreated in here.
 * Make easier to read verification of HK by creating dedicated verificaiton modules
+* Be consistent with python style and capitalisation
+* SWIS Verify that HK-Ess is generated at the right points
 
 ## Nice to haves
 
@@ -26,6 +28,11 @@
 * Add liscense for project
 * Check all liscenses are valid
 * Update Readme
+* For Plot labels add a white bounding box to stop overlap
+* Plot calibrated WAC temperature along with PIU temperature
+* Create a kind of WAC and HRC command history but not necessarily a plot
+* Set FW numbers and colors to be consistent across WACs and FW plot
+* Add borders around plot legends
 
 ## Completed
 
@@ -84,3 +91,7 @@
 * Make a list of required packages
 * Reorganise into appropriate python structure.
 * HRC and WAC plots to display only camera commands.
+* Add the rest of the HRC and WAC plots
+* Handle .tar.bz2 files
+* WAC FW Plot limits set to 0 and 1
+* If archive is active do not create a .ignore file

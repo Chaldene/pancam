@@ -206,7 +206,7 @@ def HaScan(ROV_DIR):
                     HaPacketDecode(PKT_HD, PKT_ID, PKT_LINES,
                                    curFile, IMG_RAW_DIR)
                 else:
-                    for x in range(PKT_LINES):
+                    for _ in range(PKT_LINES):
                         next(curFile)
 
                 PKT_HD[0] = next(curFile)
