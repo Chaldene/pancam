@@ -8,6 +8,7 @@ jupyter = "*"
 ipython = "*"
 ipykernel = "*"
 tornado = "*"
+rope = "*"
 
 [packages]
 numpy = "*"

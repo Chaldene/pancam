@@ -45,7 +45,7 @@ if __name__ == '__main__':
         quit()
 
     # Determine if working with archived folder
-    arch = input("Is the folder in a tar.bz2 archive? Y/N (Default): ")
+    arch = input("Is the folder in a tar.bz2 archive? [Y/N (Default)]: ")
     if arch == 'Y' or arch == 'y':
         file_arch = input("Input the archive full filename: ")
         file_path = top_dir / file_arch
@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
     else:
         arch_user = input(
-            "Do you want to archive the files after processing? Y/N (Default): ")
+            "Do you want to archive the files after processing? [Y/N (Default)]: ")
         if arch_user == 'Y' or arch == 'y':
             arch_logs = True
         else:

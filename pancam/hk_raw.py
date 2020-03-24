@@ -11,12 +11,13 @@ from astropy import units
 import pandas as pd
 import numpy as np
 from pathlib import Path
-
 import binascii
 import logging
 
 import pancam_fns
+from pancam_fns import DropTM
 from pancam_fns import PandUPF
+import hk_raw_verify as verify
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,7 @@ def decode(PROC_DIR):
     # Time stamp data from CUC
     TM['DT'] = pd.to_datetime(CUCtoUTC_DT(RTM))
 
-    TM, Bin = DecodeParam_HKHeader(TM, Bin)
+    TM, Bin = decode_hkheader(TM, Bin)
     TM = DecodeParam_HKVoltTemps(TM, Bin)
     TM = DecodeParam_HKErrors(TM, Bin)
     TM = DecodeParam_HKFW(TM, Bin)
@@ -98,11 +99,9 @@ def decode(PROC_DIR):
     logger.info("---Processing RAW TM Files Completed")
 
 
-def DecodeParam_HKHeader(TM, Bin):
-    """Ensures the TM Header is consistent with what's expected
-    So far checks include:
-    - TM Data length matches length of Data
-    - TM Type matches type ID
+def decode_hkheader(TM, Bin):
+    """Decodes the PanCam TM Header first 11 bytes and performs verification of contents.
+
     """
     # Byte 0-10 TM Block Header
     TM['Block_Type'] = PandUPF(Bin, 'u1', 0, 0)
@@ -113,41 +112,8 @@ def DecodeParam_HKHeader(TM, Bin):
     TM['Seq_Flag'] = PandUPF(Bin, 'u2', 0, 14)
     TM['Pkt_CUC'] = PandUPF(Bin, 'u48', 0, 16)
     TM['Data_Len'] = PandUPF(Bin, 'u24', 0, 64)
-    # Byte 11                                            #PAN_TM_PIU_HKN_RES and PAN_TM_PIU_HK_RES
-    if True in (PandUPF(Bin, 'u8', 11, 0) != 0).unique():
-        logger.error("TM Byte 11 not 0")
 
-    # Verification checks
-    # Check that the block type is always 0 for TM
-    Data_Type_Mismatch = TM[(TM['Block_Type'] != 0)]
-    if not Data_Type_Mismatch.empty:
-        logging.error("Incorrect Block Type identified not a TM")
-        TM, Bin = DropTM(Data_Type_Mismatch, TM, Bin)
-
-    # Check that the Instr. ID is always 5
-    if True in (TM['Instr_ID'] != 5).unique():
-        logging.error("TM Instr. ID instance when not equal to 5")
-
-    # Check that the TM Type is always 0 or 1
-    Data_TMID_NotHK = TM[(TM['TM_Type_ID'] > 1)]
-    if not Data_TMID_NotHK.empty:
-        logging.error("TM Type ID expected 0 or 1, not a HK")
-        TM, Bin = DropTM(Data_TMID_NotHK, TM, Bin)
-
-    # Check that the data length matches that in binary
-    Data_Len_Mismatch = TM[(Bin.apply(len)-11) != TM['Data_Len']]
-    if not Data_Len_Mismatch.empty:
-        logging.error(
-            "Missing HK Data Detected - TM Data Len does not match actual length")
-        TM, Bin = DropTM(Data_Len_Mismatch, TM, Bin)
-
-    # Check that the TM Type has the correct length
-    HK_Lengths = {0: 61, 1: 77}
-    Data_TMType_Bool = TM[(TM['TM_Type_ID'].replace(
-        HK_Lengths) != TM['Data_Len'])]
-    if not Data_TMType_Bool.empty:
-        logging.error("TM Type ID does not match TM Data Length in Header")
-        TM, Bin = DropTM(Data_TMType_Bool, TM, Bin)
+    TM, Bin = verify.hkheader(TM, Bin)
 
     return TM, Bin
 
@@ -239,20 +205,6 @@ def DecodeParam_HKErrors(TM, Bin):
             logging.info("PanCam HRC Error Detected: %s", TM.ERR_3_HRC[index])
 
     return TM
-
-
-def DropTM(TM_ErrorFrame, TM, Bin):
-    """Function to remove error entries. The TM_ErrorFrame must be
-    a subset of the TM dataframe. TM and Bin are pandas dataframes
-    of the same size.
-
-    The function returns the reduced TM and Bin"""
-
-    for index, _ in TM_ErrorFrame.iterrows():
-        logging.info("Packet removed: %s", binascii.hexlify(Bin[index]))
-    newTM = TM.drop(TM_ErrorFrame.index)
-    newBin = Bin.drop(TM_ErrorFrame.index)
-    return newTM, newBin
 
 
 def DecodeParam_HKFW(TM, Bin):

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 labview.py
+For parsing PanCam data generated using the LabView EGSE. 
 
 Barry Whiteside
 Mullard Space Science Laboratory - UCL

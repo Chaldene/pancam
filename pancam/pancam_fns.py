@@ -98,3 +98,17 @@ def ReturnCUC_RAW(TM, Bin):
 
     TM['Pkt_CUC'] = PandUPF(Bin, 'u48', 0, 16)
     return TM
+
+
+def DropTM(TM_ErrorFrame, TM, Bin):
+    """Function to remove error entries. The TM_ErrorFrame must be
+    a subset of the TM dataframe. TM and Bin are pandas dataframes
+    of the same size.
+
+    The function returns the reduced TM and Bin"""
+
+    for index, _ in TM_ErrorFrame.iterrows():
+        logging.info("Packet removed: %s", binascii.hexlify(Bin[index]))
+    newTM = TM.drop(TM_ErrorFrame.index)
+    newBin = Bin.drop(TM_ErrorFrame.index)
+    return newTM, newBin
