@@ -62,9 +62,9 @@ def decode(PROC_DIR):
     TM['DT'] = pd.to_datetime(CUCtoUTC_DT(RTM))
 
     TM, Bin = DecodeParam_HKHeader(TM, Bin)
-    TM, Bin = DecodeParam_HKVoltTemps(TM, Bin)
-    TM, Bin = DecodeParam_HKErrors(TM, Bin)
-    TM, Bin = DecodeParam_HKFW(TM, Bin)
+    TM = DecodeParam_HKVoltTemps(TM, Bin)
+    TM = DecodeParam_HKErrors(TM, Bin)
+    TM = DecodeParam_HKFW(TM, Bin)
 
     # Byte 42-43 PIU Cam Status                          #From PAN_TM_PIU_HKN_PCS and PAN_TM_PIU_HK_PCS
     # PAN_TM_PIU_HKN_PCS_CE / PAN_TM_PIU_HK_PCS_CE
@@ -92,9 +92,8 @@ def decode(PROC_DIR):
     if write_file.exists():
         write_file.unlink()
         logger.info("Deleting file: %s", write_file.name)
-    with open(write_file, 'w') as f:
-        TM.to_pickle(write_file)
-        logger.info("PanCam RAW TM pickled.")
+    TM.to_pickle(write_file)
+    logger.info("PanCam RAW TM pickled.")
 
     logger.info("---Processing RAW TM Files Completed")
 
@@ -189,7 +188,7 @@ def DecodeParam_HKVoltTemps(TM, Bin):
     # PAN_TM_PIU_HKN_TCS_SET / PAN_TM_PIU_HK_TCS_SET
     TM['Stat_Temp_Se'] = PandUPF(Bin, 'u12', 38, 4)
 
-    return TM, Bin
+    return TM
 
 
 def DecodeParam_HKErrors(TM, Bin):
@@ -210,36 +209,36 @@ def DecodeParam_HKErrors(TM, Bin):
     ERR = TM.ERR_1_CMD[TM['ERR_1_CMD'].diff() > 0]
     if not ERR.empty:
         logging.error("TM HK ERR1 CMD Detected")
-        for index, row in ERR.items():
+        for index, _ in ERR.items():
             logging.info("PanCam CMD Error Detected: %s", TM.ERR_1_CMD[index])
 
     ERR = TM.ERR_1_FW[TM['ERR_1_FW'].diff() > 0]
     if not ERR.empty:
         logging.error("TM HK ERR1 FW Detected")
-        for index, row in ERR.items():
+        for index, _ in ERR.items():
             logging.info("PanCam FW Error Detected: %s", TM.ERR_1_FW[index])
 
     ERR = TM.ERR_2_LWAC[TM['ERR_2_LWAC'].diff() > 0]
     if not ERR.empty:
         logging.error("TM HK ERR2 LWAC Detected")
-        for index, row in ERR.items():
+        for index, _ in ERR.items():
             logging.info("PanCam LWAC Error Detected: %s",
                          TM.ERR_2_LWAC[index])
 
     ERR = TM.ERR_2_RWAC[TM['ERR_2_RWAC'].diff() > 0]
     if not ERR.empty:
         logging.error("TM HK ERR2 RWAC Detected")
-        for index, row in ERR.items():
+        for index, _ in ERR.items():
             logging.info("PanCam RWAC Error Detected: %s",
                          TM.ERR_2_RWAC[index])
 
     ERR = TM.ERR_3_HRC[TM['ERR_3_HRC'].diff() > 0]
     if not ERR.empty:
         logging.error("TM HK ERR3 HRC Detected")
-        for index, row in ERR.items():
+        for index, _ in ERR.items():
             logging.info("PanCam HRC Error Detected: %s", TM.ERR_3_HRC[index])
 
-    return TM, Bin
+    return TM
 
 
 def DropTM(TM_ErrorFrame, TM, Bin):
@@ -249,7 +248,7 @@ def DropTM(TM_ErrorFrame, TM, Bin):
 
     The function returns the reduced TM and Bin"""
 
-    for index, row in TM_ErrorFrame.iterrows():
+    for index, _ in TM_ErrorFrame.iterrows():
         logging.info("Packet removed: %s", binascii.hexlify(Bin[index]))
     newTM = TM.drop(TM_ErrorFrame.index)
     newBin = Bin.drop(TM_ErrorFrame.index)
@@ -293,7 +292,7 @@ def DecodeParam_HKFW(TM, Bin):
     # PAN_TM_PIU_HKN_RFWRS and PAN_TM_PIU_HK_RFWRS
     TM['FWR_REL'] = PandUPF(Bin, 'u16', 70, 0)
 
-    return TM, Bin
+    return TM
 
 
 def DecodeParam_HKNE(TM, Bin):
@@ -378,8 +377,8 @@ def DecodeWAC_CamRes(TM, WACBin):
     TM['WAC_CID'] = PandUPF(WACBin, 'u2', 44, 0)
     # PAN_TM_WAC_IA_MK / PAN_TM_WAC_HK_MK / PAN_TM_WAC_DT_MK / PAN_TM_WAC_NK_MK
     if True in (PandUPF(WACBin, 'u1', 44, 2) != 1).unique():
-        raise decodeRAW_HK_Error("TM Byte 44 bit 2 not 0 for WAC")
         logger.error("Warning likely mixed WAC and HRC Cam responses.")
+        raise decodeRAW_HK_Error("TM Byte 44 bit 2 not 0 for WAC")
     # PAN_TM_WAC_IA_WID / PAN_TM_WAC_HK_WID / PAN_TM_WAC_DT_WID / PAN_TM_WAC_NK_WID
     TM['WAC_WID'] = PandUPF(WACBin, 'u3', 44, 5)
     # PAN_TM_WAC_IA_WTS / PAN_TM_WAC_HK_WTS / PAN_TM_WAC_DT_WTS / PAN_TM_WAC_NK_WTS
@@ -570,8 +569,8 @@ def DecodeHRC_CamRes(TM, HRCBin):
     # Command Response Packet
     TM['HRC_Res_CA'] = PandUPF(HRCBin, 'u8', 44, 0)  # PAN_TM_HRC_RES_CA1
     if True in (PandUPF(HRCBin, 'u48', 45, 0) != 0).unique():
-        raise decodeRAW_HK_Error("TM Bytes 45-50 not 0 for HRC CMD Response")
         logger.warning("Likely mixed WAC and HRC Cam responses.")
+        raise decodeRAW_HK_Error("TM Bytes 45-50 not 0 for HRC CMD Response")
 
     return TM
 
