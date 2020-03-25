@@ -9,6 +9,7 @@ from pathlib import Path
 from natsort import natsorted, ns
 from bitstruct import unpack_from as upf
 import pandas as pd
+import binascii
 import logging
 
 logger = logging.getLogger(__name__)

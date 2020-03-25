@@ -11,7 +11,6 @@ from astropy import units
 import pandas as pd
 import numpy as np
 from pathlib import Path
-import binascii
 import logging
 
 import pancam_fns
