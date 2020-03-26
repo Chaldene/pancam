@@ -2,6 +2,7 @@
 
 ## Prioties
 
+* Don't add instance names to SWIS products
 * Make easier to read verification of HK by creating dedicated verificaiton modules
 * Split data into activities so that it is easy to view HK etc.
 * Check that all items from TC and TM plotter have been recreated in here.
@@ -9,10 +10,10 @@
 * SWIS Verify that HK-Ess is generated at the right points
 * Ensure all globals have Cpas and Underscore
 * Don't define function types
-* Switch to Sphinx docstring
 * Use more lines for pandas long expressions
 * Multi-line functions have closing bracket on new line
 * Change console logging output to a STATUS Flag if possible
+* Improve Docstrings and follow standard conventions
 
 ## Nice to haves
 

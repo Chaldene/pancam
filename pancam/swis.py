@@ -97,7 +97,7 @@ def hk_extract(swis_dir: Path):
             dl['Unix_Time'] = dtab[0].apply(lambda x: x[11:-12])
             cur_dir = swis_dir / "PROC"
 
-        dl.to_pickle(cur_dir / (cur_name + "_Unproc_HKTM.pickle"))
+        dl.to_pickle(cur_dir / "Unproc_HKTM.pickle")
 
 
 def hs_extract(swis_dir: Path):
@@ -128,7 +128,7 @@ def hs_extract(swis_dir: Path):
     for curfile in files_hs:
 
         # New file within new folder
-        write_file = (proc_dir / (curfile.stem + "_HS.log"))
+        write_file = (proc_dir / "HS.log")
         if write_file.exists():
             logger.info("HS.log file already exists - deleting")
             write_file.unlink()
@@ -220,7 +220,8 @@ def nsvf_parse(swis_dir: Path):
             value.unlink()
             logger.info("Deleting file: %s", value.name)
         f_acc[key] = open(value, 'w')
-        f_wri[key] = csv.writer(f_acc[key], delimiter=' ', lineterminator='\r')
+        f_wri[key] = csv.writer(f_acc[key], delimiter=' ',
+                                lineterminator='\r')
 
     # Open file and check format is as expcted
     # Contains ..[IN=..].. and ..[SZ=..].., ..[EOP] at the end of each line
@@ -642,7 +643,7 @@ if __name__ == "__main__":
     # routeA = PC_Fns.Find_Files(dir, 'Router_A_packet.log', SingleFile=True)[0]
     # nsvf_parse(routeA)
 
-    #instances = create_instances(dir)
+    # instances = create_instances(dir)
     instances = [dir]
     if instances:
         for instance in instances:

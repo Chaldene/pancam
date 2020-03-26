@@ -87,8 +87,7 @@ def decode(PROC_DIR):
     del HRCBin
 
     # Write a new file with RAW data
-    write_file = PROC_DIR / \
-        (PikFile[0].stem.split('Unproc')[0] + "RAW_HKTM.pickle")
+    write_file = PROC_DIR / ("RAW_HKTM.pickle")
     if write_file.exists():
         write_file.unlink()
         logger.info("Deleting file: %s", write_file.name)
