@@ -2,7 +2,6 @@
 
 ## Prioties
 
-* Don't add instance names to SWIS products
 * Make easier to read verification of HK by creating dedicated verificaiton modules
 * Split data into activities so that it is easy to view HK etc.
 * Check that all items from TC and TM plotter have been recreated in here.
@@ -102,3 +101,4 @@
 * If archive is active do not create a .ignore file
 * Adjust x-scale to avoid clash
 * Within HK Decode, stop passing bin around and change functions to only return relevant arrays
+* Don't add instance names to SWIS products

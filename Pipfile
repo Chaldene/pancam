@@ -9,6 +9,7 @@ ipython = "*"
 ipykernel = "*"
 tornado = "*"
 rope = "*"
+bleach = ">=3.1.4"
 
 [packages]
 numpy = "*"
