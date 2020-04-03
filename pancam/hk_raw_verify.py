@@ -83,4 +83,29 @@ def hkheader(tm, bin):
         logging.error("TM Type ID does not match TM Data Length in Header")
         tm, bin = DropTM(err_df, tm, bin)
 
+    # Calculate the time delta between HK
+    tm['Pkt_CUC_Delta'] = tm['Pkt_CUC'].diff()
+    verify['Pkt_CUC_Delta'] = tm['Pkt_CUC_Delta'] != 0x10000  # Not a gap of 1s
+
+    err_df = tm[verify['Pkt_CUC_Delta']]
+    if not err_df.empty:
+        logging.warning("TM CUC Delta not equal to 1s")
+        logger.info("\n%s", err_df[['Pkt_CUC_Delta', 'TM_Type_ID']])
+
+    verify['LRG_Delta'] = ~tm['Pkt_CUC_Delta'].between(
+        0xCCCD, 0x17FFF)  # Not between 0.8s and 1.5s
+    err_df = tm[verify['LRG_Delta']]
+    if not err_df.empty:
+        logger.error("TM CUC Delta not between 0.8 and 1.5s")
+        logger.error("Values: ", verify['LRG_Delta'].value_counts())
+
+    # Ensure the time delta between Ess-HK is < 10s
+    ess_tm = tm[tm['TM_Type_ID'] == 0].copy()
+    ess_tm['Ess_CUC_Delta'] = ess_tm['Pkt_CUC'].diff()
+    verify['Ess_Delta'] = ess_tm['Ess_CUC_Delta'] > 0xA0000
+    err_df = ess_tm[verify['Ess_Delta'].dropna()]
+    if not err_df.empty:
+        logger.error("Instances of Ess HK TM CUC Delta not less than 10s")
+        logger.info("\n%s", err_df[['Ess_CUC_Delta', 'Pkt_CUC']])
+
     return tm, bin
