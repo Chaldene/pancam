@@ -97,7 +97,7 @@ def hkheader(tm, bin):
     err_df = tm[verify['LRG_Delta']]
     if not err_df.empty:
         logger.error("TM CUC Delta not between 0.8 and 1.5s")
-        logger.error("Values: ", verify['LRG_Delta'].value_counts())
+        logger.error("Values: %s", verify['LRG_Delta'].value_counts())
 
     # Ensure the time delta between Ess-HK is < 10s
     ess_tm = tm[tm['TM_Type_ID'] == 0].copy()
