@@ -59,6 +59,7 @@ def all_plots(proc_dir: Path):
     HK_Overview(proc_dir)
     HK_Voltages(proc_dir)
     HK_Temperatures(proc_dir)
+    HK_Deltas(proc_dir)
     FW(proc_dir)
 
     Rover_Temperatures(proc_dir)
@@ -604,8 +605,8 @@ def HK_Overview(PROC_DIR, Interact=False):
     ax5.set_xlabel('Date Time')
 
     format_axes(fig)
-    ax4.tick_params(labelbottom=True)
-    ax4.yaxis.set_major_locator(
+    ax5.tick_params(labelbottom=True)
+    ax5.yaxis.set_major_locator(
         matplotlib.ticker.MaxNLocator(integer=True))
     adjust_xscale(ax0)
 
@@ -620,8 +621,119 @@ def HK_Overview(PROC_DIR, Interact=False):
     logger.info("Producing Overview Plot Completed")
 
 
+def HK_Deltas(PROC_DIR, Interact=False):
+    """Produces a plot of the time gaps between HK generation"""
+
+    logger.info("Producing HK Time Delta Plot")
+
+    HK_DIR = MakeHKPlotsDir(PROC_DIR)
+
+    # Search for PanCam RAW Processed Files
+    RawPikFile = pancam_fns.Find_Files(
+        PROC_DIR, "*RAW_HKTM.pickle", SingleFile=True)
+    if not RawPikFile:
+        logger.info("No RAW_HKTM file found - ABORTING")
+        return
+
+    RAW = pd.read_pickle(RawPikFile[0])
+
+    # Search for PanCam Rover Telecommands
+    # May need to switch to detect if Rover TC or LabView TC
+    TCPikFile = pancam_fns.Find_Files(
+        PROC_DIR, "*Unproc_TC.pickle", SingleFile=True)
+    if not TCPikFile:
+        logger.info("No TC file found - Leaving Blank")
+        TC = pd.DataFrame()
+        TCPlot = False
+    else:
+        TCPlot = True
+
+    if TCPlot:
+        TC = pd.read_pickle(TCPikFile[0])
+
+    # RAW Plot and Heater
+    fig = plt.figure(figsize=(14.0, 9.0))
+    gs = gridspec.GridSpec(5, 1, height_ratios=[
+                           1, 0.5, 0.5, 0.5, 0.5], figure=fig)
+    gs.update(hspace=0.0)
+    ax0 = fig.add_subplot(gs[0])
+    ax1 = fig.add_subplot(gs[1], sharex=ax0)
+    ax2 = fig.add_subplot(gs[2], sharex=ax0)
+    ax3 = fig.add_subplot(gs[3], sharex=ax0)
+    ax4 = fig.add_subplot(gs[4], sharex=ax0)
+
+    # Action List
+    if TCPlot:
+        size = TC.shape[0]
+        TC['LEVEL'] = 1
+        markerline, _, _ = ax0.stem(
+            TC['DT'], TC['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
+        plt.setp(markerline, mec="k", mfc="w", zorder=3)
+        markerline.set_ydata(np.zeros(size))
+        for i in range(0, size):
+            ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0, -2),
+                         textcoords="offset points", va="top", ha="right", rotation=90)
+    else:
+        ax0.get_yaxis().set_visible(False)
+    add_text(ax0, 'Action List')
+
+    # TM Type
+    ax1.plot(RAW.DT, RAW.TM_Type_ID, 'o')
+    ax1.set_ylim([-0.1, 1.1])
+    ax1.set_yticks([0, 1])
+    ax1.set_yticklabels(['Ess.', 'NonE.'])
+    add_text(ax1, 'TM Type')
+
+    # HK CUC Delta
+    time_delta = RAW.Pkt_CUC.apply(lambda x: x >> 16).diff()
+
+    ax2.plot(RAW.DT, time_delta, 'ko-')
+    ax2.set_ylim(bottom=-0.1)
+    add_text(ax2, 'HK $\Delta$s')
+
+    # PIU Errors
+    err_params = RAW[['ERR_1_CMD',
+                      'ERR_1_FW',
+                      'ERR_2_LWAC',
+                      'ERR_2_RWAC',
+                      'ERR_3_HRC']]
+
+    err_diff = err_params - err_params.shift(1)
+    err_chg = (err_diff != 0).any(axis=1)
+
+    ax3.plot(RAW.DT, err_chg, 'o-', label='Errors')
+    ax3.plot(RAW.DT, RAW.CamRes_Chg, 'o-', label='CamRes')
+    ax3.set_ylim([-0.1, 1.1])
+    ax3.get_yaxis().set_visible(False)
+    add_text(ax3, 'Val. Change')
+
+    # HK Essential Delta
+    ess_tm = RAW[RAW['TM_Type_ID'] == 0].copy()
+    ess_tm['CUC_Delta'] = ess_tm.Pkt_CUC.apply(lambda x: x >> 16).diff()
+    ax4.plot(ess_tm.DT, ess_tm.CUC_Delta, 'ko-')
+    ax4.set_ylim(bottom=-0.1)
+    ax4.grid(True)
+    add_text(ax4, 'Ess. HK $\Delta$s')
+
+    format_axes(fig)
+    ax4.tick_params(labelbottom=True)
+    ax4.yaxis.set_major_locator(
+        matplotlib.ticker.MaxNLocator(integer=True))
+    adjust_xscale(ax0)
+
+    fig.tight_layout()
+    fig.savefig(HK_DIR / 'HK_Delta.png')
+
+    if Interact:
+        plt.show(block=True)
+
+    plt.close(fig)
+
+    logger.info("Producing HK Delta Plot Completed")
+
+
 def HRC_CS(PROC_DIR, Interact=False):
-    """"Produces a plot of the HRC Camera Status from pickle files"""
+    """Produces a plot of the HRC Camera Status from pickle files"""
 
     logger.info("Producing HRC Status Plots")
 
@@ -636,11 +748,11 @@ def HRC_CS(PROC_DIR, Interact=False):
 
     RAW = pd.read_pickle(RawPikFile[0])
 
-    if not 'HRC_ACK' in RAW:
+    if 'HRC_ACK' not in RAW:
         logger.info("No HRC data available")
         return
 
-    if not 0x02 in RAW['HRC_ACK'].values:
+    if ~RAW['HRC_ACK'].isin([0x02]).any():
         logger.info("No HRC CS response available")
         return
 
@@ -1129,4 +1241,5 @@ if __name__ == "__main__":
     # wac_res(DIR, True)
     # FW(DIR, Interact=True)
     # psu(DIR, Interact=True)
-    all_plots(DIR)
+    HK_Deltas(DIR, Interact=True)
+    # all_plots(DIR)

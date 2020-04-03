@@ -97,13 +97,14 @@ def hkheader(tm, bin):
     err_df = tm[verify['LRG_Delta']]
     if not err_df.empty:
         logger.error("TM CUC Delta not between 0.8 and 1.5s")
-        logger.error("Values: %s", verify['LRG_Delta'].value_counts())
+        logger.error("Values: %s\n", verify['LRG_Delta'].value_counts())
 
     # Ensure the time delta between Ess-HK is < 10s
     ess_tm = tm[tm['TM_Type_ID'] == 0].copy()
     ess_tm['Ess_CUC_Delta'] = ess_tm['Pkt_CUC'].diff()
+    verify = pd.DataFrame()  # As different size for just ess_tm
     verify['Ess_Delta'] = ess_tm['Ess_CUC_Delta'] > 0xA0000
-    err_df = ess_tm[verify['Ess_Delta'].dropna()]
+    err_df = ess_tm[verify['Ess_Delta']]
     if not err_df.empty:
         logger.error("Instances of Ess HK TM CUC Delta not less than 10s")
         logger.info("\n%s", err_df[['Ess_CUC_Delta', 'Pkt_CUC']])

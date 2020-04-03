@@ -76,7 +76,7 @@ def decode(PROC_DIR):
     TM = DecodeParam_HKNE(TM, Bin)
 
     # Camera Responses
-    WACBin, HRCBin = Determ_CamRes(TM, Bin)
+    TM, WACBin, HRCBin = Determ_CamRes(TM, Bin)
 
     if not WACBin.empty:
         TM = DecodeWAC_CamRes(TM, WACBin)
@@ -292,6 +292,7 @@ def Determ_CamRes(TM, Bin):
     # Ignore first entry if all 0x0s
     if CamResSeries[0] == bytes([0x0]*20):
         camres_chg[0] = False
+    TM['CamRes_Chg'] = camres_chg
 
     WACBin = Bin[camres_chg & (TM['Stat_PIU_Pw'].between(1, 2))]
     HRCBin = Bin[camres_chg & (TM['Stat_PIU_Pw'] == 3)]
@@ -317,7 +318,7 @@ def Determ_CamRes(TM, Bin):
     if union.shape[0] != 0:
         logger.error("Common entries for WACBin and HRCBin")
 
-    return WACBin, HRCBin
+    return TM, WACBin, HRCBin
 
 
 def DecodeWAC_CamRes(TM, WACBin):

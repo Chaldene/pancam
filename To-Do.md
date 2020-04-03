@@ -13,6 +13,7 @@
 * Multi-line functions have closing bracket on new line
 * Change console logging output to a STATUS Flag if possible
 * Improve Docstrings and follow standard conventions
+* Check why SWIS PIU version is not flagged
 
 ## Nice to haves
 
