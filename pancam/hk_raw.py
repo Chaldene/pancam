@@ -304,12 +304,12 @@ def Determ_CamRes(TM, Bin):
 
         if not resetbin.shape[0] == 0:
             logger.warning("PanCam likely reset %d, times", resetbin.shape[0])
-            logger.info("\n%s", TM['DT'].iloc[resetbin.index])
+            logger.info("\n%s", TM['DT'][resetbin.index])
 
         if not undefbin.shape[0] == 0:
             logger.error(
                 "Warning CamRes change during unpowered state, %d occurances.", undefbin.shape[0])
-            logger.info("\n%s", TM['DT'].iloc[undefbin.index])
+            logger.info("\n%s", TM['DT'][undefbin.index])
 
     # Verify No Overlap between WACBin and HRCBin
     union = WACBin.to_frame().join(HRCBin.to_frame(), lsuffix='WAC',
