@@ -397,6 +397,17 @@ def psu_extract(lv_dir: Path, archive: bool = False):
     hdr_types.setdefault("list", 'float64')
     skip = [0, 2, 3, 4, 5, 6]
 
+    # Read first line of data to determine type
+    file_df = pd.read_csv(files_psu[0],
+                          sep='\t',
+                          skiprows=1)
+
+    # Reduce headings if no heater data.
+    if file_df.shape[1] == 5:
+        hdr = hdr[:-2]
+        skip = skip[:-2]
+
+    # Loop through all files
     psu_df = pd.DataFrame()
 
     for curfile in files_psu:
@@ -414,6 +425,12 @@ def psu_extract(lv_dir: Path, archive: bool = False):
         file_df['DT'] = pd.to_datetime(file_df['Date Time'],
                                        format='%d/%m/%Y %H:%M:%S.%f')
         file_df['Power'] = file_df['Voltage'] * file_df['Current']
+
+        # If no heater just set all to zero
+        if file_df.shape[1] == 5:
+            file_df['Htr. Voltage'] = 0
+            file_df['Htr. Current'] = 0
+
         file_df['Htr. Power'] = file_df['Htr. Voltage'] * \
             file_df['Htr. Current']
         psu_df = psu_df.append(file_df, ignore_index=True)
