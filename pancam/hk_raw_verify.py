@@ -54,6 +54,7 @@ def hkheader(tm, bin):
     if not err_df.empty:
         logging.error("Incorrect Block Type identified not a TM")
         tm, bin = DropTM(err_df, tm, bin)
+        verify = verify.drop(err_df.index)
 
     # Check that the Instr. ID is always 5
     if True in (tm['Instr_ID'] != 5).unique():
@@ -65,6 +66,7 @@ def hkheader(tm, bin):
     if not err_df.empty:
         logging.error("TM Type ID expected 0 or 1, not a HK")
         tm, bin = DropTM(err_df, tm, bin)
+        verify = verify.drop(err_df.index)
 
     # Check that the data length matches that in binary
     verify['Data_Len'] = (bin.apply(len)-11) != tm['Data_Len']
@@ -73,6 +75,7 @@ def hkheader(tm, bin):
         logging.error(
             "Missing HK Data Detected - TM Data Len does not match actual length")
         tm, bin = DropTM(err_df, tm, bin)
+        verify = verify.drop(err_df.index)
 
     # Check that the TM Type has the correct length
     hk_lengths = {0: 61, 1: 77}
@@ -82,6 +85,7 @@ def hkheader(tm, bin):
     if not err_df.empty:
         logging.error("TM Type ID does not match TM Data Length in Header")
         tm, bin = DropTM(err_df, tm, bin)
+        verify = verify.drop(err_df.index)
 
     # Calculate the time delta between HK
     tm['Pkt_CUC_Delta'] = tm['Pkt_CUC'].diff()
