@@ -2,6 +2,7 @@
 
 ## Prioties
 
+* Create a status change log, that tracks all changed variables
 * Make easier to read verification of HK by creating dedicated verificaiton modules
 * Split data into activities so that it is easy to view HK etc.
 * Check that all items from TC and TM plotter have been recreated in here.
