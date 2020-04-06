@@ -38,6 +38,7 @@
 * Create a kind of WAC and HRC command history but not necessarily a plot
 * Set FW numbers and colors to be consistent across WACs and FW plot
 * Add borders around plot legends
+* Differentiate between WACL and WACR in WAC plots, especially for temperatures.
 
 ## Completed
 

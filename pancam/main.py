@@ -65,7 +65,7 @@ if __name__ == '__main__':
     else:
         arch_user = input(
             "Do you want to archive the files after processing? [Y/N (Default)]: ")
-        if arch_user == 'Y' or arch == 'y':
+        if arch_user == 'Y' or arch_user == 'y':
             arch_logs = True
         else:
             arch_logs = False
