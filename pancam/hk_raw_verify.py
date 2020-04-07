@@ -98,6 +98,7 @@ def hkheader(tm, bin):
 
     verify['LRG_Delta'] = ~tm['Pkt_CUC_Delta'].between(
         0xCCCD, 0x17FFF)  # Not between 0.8s and 1.5s
+    verify['LRG_Delta'].iloc[0] = False
     err_df = tm[verify['LRG_Delta']]
     if not err_df.empty:
         logger.error("TM CUC Delta not between 0.8 and 1.5s")
