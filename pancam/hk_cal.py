@@ -65,7 +65,7 @@ def cal_HK(PROC_DIR):
     if write_file.exists():
         write_file.unlink()
         logger.info("Deleting file: %s", write_file.stem)
-    with open(write_file, 'w') as f:
+    with open(write_file, 'w'):
         CalTM.to_pickle(write_file)
         logger.info("PanCam Cal HK TM pickled.")
 
