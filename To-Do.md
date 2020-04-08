@@ -2,23 +2,20 @@
 
 ## Prioties
 
-* Make easier to read verification of HK by creating dedicated verificaiton modules
-* Split data into activities so that it is easy to view HK etc.
-* Check that all items from TC and TM plotter have been recreated in here.
 * Be consistent with python style and capitalisation
 * SWIS Verify that HK-Ess is generated at the right points
-* Ensure all globals have Cpas and Underscore
+* Ensure all globals have Caps and Underscore
 * Don't define function types
 * Use more lines for pandas long expressions
 * Multi-line functions have closing bracket on new line
 * Change console logging output to a STATUS Flag if possible
 * Improve Docstrings and follow standard conventions
 * Check why SWIS PIU version is not flagged
+* Split data into activities so that it is easy to view HK etc.
 
 ## Nice to haves
 
 * swis.py: Rebuild TCs from SpW replie
-* Look into the best use of the Pandas Int64 and how best to draw missing data.
 * Decode Rover Variables, HRCWarm etc.
 * Generate HK Ess and Non-Ess Calibrated for the rest of the variables
 * Replace Temperature calibrations with a dictionary
@@ -106,3 +103,6 @@
 * Within HK Decode, stop passing bin around and change functions to only return relevant arrays
 * Don't add instance names to SWIS products
 * Create a status change log, that tracks all changed variables
+* Make easier to read verification of HK by creating dedicated verificaiton modules
+* Check that all items from TC and TM plotter have been recreated in here.
+* Look into the best use of the Pandas Int64 and how best to draw missing data.

@@ -46,16 +46,7 @@ def decode(PROC_DIR):
         Bin = RTM['RAW']
 
     TM = pd.DataFrame()
-    verify = pd.DataFrame()
-    err_df = pd.DataFrame()
-
-    # Check for any blank HK
-    verify['Blank'] = Bin.apply(len) == 0
-    err_df = RTM[verify['Blank']]
-    if not err_df.empty:
-        logging.error("Blank HK Entry Detected")
-        RTM, Bin = DropTM(err_df, RTM, Bin)
-
+    RTM, Bin = verify.blanks(RTM, Bin)
     RTM = pancam_fns.ReturnCUC_RAW(RTM, Bin)
 
     # Time stamp data from CUC
@@ -66,7 +57,8 @@ def decode(PROC_DIR):
     TM = DecodeParam_HKErrors(TM, Bin)
     TM = DecodeParam_HKFW(TM, Bin)
 
-    # Byte 42-43 PIU Cam Status                          #From PAN_TM_PIU_HKN_PCS and PAN_TM_PIU_HK_PCS
+    # Byte 42-43 PIU Cam Status
+    # From PAN_TM_PIU_HKN_PCS and PAN_TM_PIU_HK_PCS
     # PAN_TM_PIU_HKN_PCS_CE / PAN_TM_PIU_HK_PCS_CE
     TM['Stat_PIU_En'] = PandUPF(Bin, 'u8', 42, 0)
     # PAN_TM_PIU_HKN_PCS_PSS / PAN_TM_PIU_HK_PCS_PSS
@@ -144,7 +136,7 @@ def DecodeParam_HKVoltTemps(TM, Bin):
     # PAN_TM_PIU_HKN_HRCAT and PAN_TM_PIU_HK_HRCAT
     TM['Temp_HRCA'] = PandUPF(Bin, 'u16', 30, 0)
 
-    # Byte 38-39 PIU Htr Status                          #From PAN_TM_PIU_HKN_TCS and PAN_TM_PIU_HK_TCS
+    # Byte 38-39 PIU Htr Status from PAN_TM_PIU_HKN_TCS and PAN_TM_PIU_HK_TCS
     # PAN_TM_PIU_HKN_TCS_STAT / PAN_TM_PIU_HK_TCS_STAT
     TM['Stat_Temp_On'] = PandUPF(Bin, 'u1', 38, 0)
     # PAN_TM_PIU_HKN_TCS_MODE / PAN_TM_PIU_HK_TCS_MODE
@@ -210,10 +202,10 @@ def DecodeParam_HKErrors(TM, Bin):
 def DecodeParam_HKFW(TM, Bin):
     """Decodes all filter wheel parameters"""
 
-    # Byte 40-41 PIU FW Status                           #From PAN_TM_PIU_HKN_FWS and PAN_TM_PIU_HK_FWS
+    # Byte 40-41 PIU FW Status from PAN_TM_PIU_HKN_FWS and PAN_TM_PIU_HK_FWS
     # PAN_TM_PIU_HKN_FWS_LRES / PAN_TM_PIU_HK_FWS_LRES
-    if True in (PandUPF(Bin, 'u1', 40, 0) != 0).unique():
-        raise decodeRAW_HK_Error("TM Byte 40 bit 0 not 0")
+    # if True in (PandUPF(Bin, 'u1', 40, 0) != 0).unique():
+    #    raise decodeRAW_HK_Error("TM Byte 40 bit 0 not 0")
     # PAN_TM_PIU_HKN_FWS_LOP / PAN_TM_PIU_HK_FWS_LOP
     TM['Stat_FWL_Op'] = PandUPF(Bin, 'u1', 40, 1)
     # PAN_TM_PIU_HKN_FWS_LHM / PAN_TM_PIU_HK_FWS_LHM
@@ -252,8 +244,10 @@ def DecodeParam_HKNE(TM, Bin):
 
     NEBin = Bin[TM['TM_Type_ID'] == 1]
     if not NEBin.empty:
-        # Byte 72-77 Image ID                            #From PAN_TM_PIU_HKN_IID[1:3]
-        TM['IMG_SOL'] = PandUPF(NEBin, 'u12', 72, 0)  # PAN_TM_PIU_HKN_SIID_SOL
+        # Byte 72-77 Image ID from PAN_TM_PIU_HKN_IID[1:3]
+        # PAN_TM_PIU_HKN_SIID_SOL
+        TM['IMG_SOL'] = PandUPF(NEBin, 'u12', 72, 0)
+
         # PAN_TM_PIU_HKN_SIID_TID
         TM['IMG_Task_ID'] = PandUPF(NEBin, 'u7', 73, 4)
         TM['IMG_Task_RNO'] = PandUPF(
@@ -261,16 +255,14 @@ def DecodeParam_HKNE(TM, Bin):
         TM['IMG_Cam'] = PandUPF(NEBin, 'u2', 75, 2)  # PAN_TM_PIU_HKN_SIID_PC
         TM['IMG_FW'] = PandUPF(NEBin, 'u4', 75, 4)  # PAN_TM_PIU_HKN_SIID_FW
         TM['IMG_No'] = PandUPF(NEBin, 'u8', 76, 0)  # PAN_TM_PIU_HKN_SIID_IN
-        if True in (PandUPF(NEBin, 'u1', 77, 0) != 0).unique():  # PAN_TM_PIU_HKN_SIID_RES
+        # PAN_TM_PIU_HKN_SIID_RES
+        if True in (PandUPF(NEBin, 'u1', 77, 0) != 0).unique():
             raise decodeRAW_HK_Error("TM Byte 77 not 0")
 
         # Byte 78-79 PIU Version
         TM['PIU_Ver'] = PandUPF(NEBin, 'u16', 78, 0)  # PAN_TM_PIU_HKN_VER
-        allowed_PIU_Ver = [288, np.nan]
-        if (set(TM.PIU_Ver.unique()) - set(allowed_PIU_Ver)):
-            logger.error("Illegal PIU Version Detected!")
 
-        # Byte 80-87 FW Config                           #From PAN_TM_PIU_HKN_FWMS and PAN_TM_PIU_HKN_SLF
+        # Byte 80-87 FW Config from PAN_TM_PIU_HKN_FWMS and PAN_TM_PIU_HKN_SLF
         TM['FWL_RTi'] = PandUPF(NEBin, 'u8',  80, 0)
         TM['FWL_Spe'] = PandUPF(NEBin, 'u4',  81, 0)
         TM['FWR_Spe'] = PandUPF(NEBin, 'u4',  81, 4)
@@ -280,6 +272,8 @@ def DecodeParam_HKNE(TM, Bin):
         TM['FWL_StL'] = PandUPF(NEBin, 'u4',  87, 0)
         TM['FWR_StR'] = PandUPF(NEBin, 'u4',  87, 4)
         del NEBin
+
+        TM, Bin = verify.hkne(TM, Bin)
 
     return TM
 
@@ -399,6 +393,8 @@ def DecodeWAC_CamRes(TM, WACBin):
         if True in (PandUPF(WNK, 'u32', 60, 0) != 0).unique():  # PAN_TM_WAC_HK_RES4
             raise decodeRAW_HK_Error("TM Bytes 60-63 not 0 for WAC NAK")
     del WNK
+
+    TM, WACBin = verify.wac(TM, WACBin)
 
     return TM
 

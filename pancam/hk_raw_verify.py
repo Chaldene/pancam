@@ -12,12 +12,42 @@ Created 24 Mar 2020
 
 import pandas as pd
 import logging
+import numpy as np
 
 import pancam_fns
 from pancam_fns import DropTM
 from pancam_fns import PandUPF
 
 logger = logging.getLogger(__name__)
+
+
+def blanks(rtm, bin):
+    """
+    Performs checks on the following:
+        - bin line is not empty
+
+    Arguments:
+        rtm {pd.DataFrame} -- raw unprocessed HK tm
+        bin {bytearray} -- raw HK tm data
+
+    Returns:
+        rtm -- with removed blank entries
+        bin -- with removed blank entries
+    """
+
+    verify = pd.DataFrame()
+    err_df = pd.DataFrame()
+
+    logger.info("Verifying no blank HK lines")
+
+    # Check for blank entries in bin
+    verify['Blank'] = bin.apply(len) == 0
+    err_df = rtm[verify['Blank']]
+    if not err_df.empty:
+        logging.error("Blank HK Entry Detected")
+        rtm, bin = DropTM(err_df, rtm, bin)
+
+    return rtm, bin
 
 
 def hkheader(tm, bin):
@@ -31,8 +61,8 @@ def hkheader(tm, bin):
         - TM Header Data Length is one of two expected lengths
 
     Arguments:
-        tm {pd.DataFrame} -- pandas dataframe containing already decoded tm header.
-        bin {bytearray} -- bytearray of raw HK tm data
+        tm {pd.DataFrame} -- decoded tm header.
+        bin {bytearray} -- raw HK tm data
 
     Returns:
         tm -- with removed entries that do not match expected
@@ -115,3 +145,87 @@ def hkheader(tm, bin):
         logger.info("\n%s", err_df[['Ess_CUC_Delta', 'Pkt_CUC']])
 
     return tm, bin
+
+
+def hkne(tm, bin):
+    """
+    Performs checks on the following:
+        - Reported PIU version is within the list of allowed values
+        - filter wheel recirculation time has not changed
+        - filter wheel speed has not changed
+        - filter wheel current has not changed
+        - filter wheel step level factor has not changed
+
+    Arguments:
+        tm {pd.DataFrame} -- decoded tm header.
+        bin {bytearray} -- raw HK tm data
+
+    Returns:
+        tm -- same as input with nothing removed (placeholder)
+        bin -- same as input with nothing removed, (placeholder)
+    """
+
+    allowed_PIU_Ver = [288, np.nan]
+
+    logger.info("Verifying HKNE Contents")
+
+    # Check PIU version
+    if (set(tm.PIU_Ver.unique()) - set(allowed_PIU_Ver)):
+        logger.error("Illegal PIU Version Detected!")
+
+    # Check recirculation time
+    if (tm['FWL_RTi'].nunique() != 1) or (tm['FWR_RTi'].nunique() != 1):
+        logger.error("Filter Wheel recirculation time change detected!")
+
+    # Check speed
+    if (tm['FWL_Spe'].nunique() != 1) or (tm['FWR_Spe'].nunique() != 1):
+        logger.error("Filter Wheel speed change detected")
+
+    # Check current
+    if (tm['FWL_Cur'].nunique() != 1) or (tm['FWR_Cur'].nunique() != 1):
+        logger.error("Filter Wheel current change detected")
+
+    # Check step level factor
+    if (tm['FWL_StL'].nunique() != 1) or (tm['FWR_StR'].nunique() != 1):
+        logger.error("Filter Wheel step level factor change detected")
+
+    return tm, bin
+
+
+def wac(tm, wacbin):
+    """
+    Performs checks on the following:
+        - WAC TMs begin with with a '0x1' start marker
+        - Reports if a memory check has been performed, raises error if failed
+
+    Arguments:
+        tm {pd.DataFrame} -- decoded tm header.
+        wacbin {bytearray} -- raw HK tm data containing just wac
+
+    Returns:
+        tm -- same as input with nothing removed (placeholder)
+        wacbin -- same as input with nothing removed, (placeholder)
+    """
+
+    logger.info("Verifying WAC Contents")
+
+    verify = pd.DataFrame()
+    err_df = pd.DataFrame()
+
+    # Check that the start marker is always 1
+    verify['MKR'] = PandUPF(wacbin, 'u1', 44, 2) != 1
+    err_df = wacbin[verify['MKR']]
+    if not err_df.empty:
+        logging.error("WAC start marker not always 0x1")
+        logging.info("Marker error at: %d", err_df.index.values)
+
+    # Memory check
+    mc = tm['WAC_HK_MCK']
+    if 1 in mc.values:
+        logging.error("Memory check performed and successful")
+    if 2 in mc.values:
+        logging.error("Memory check performed and failed!")
+    if any(x > 3 for x in mc.values):
+        logging.error("Memory check invalid value")
+
+    return tm, wacbin
