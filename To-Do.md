@@ -2,7 +2,6 @@
 
 ## Prioties
 
-* Create a status change log, that tracks all changed variables
 * Make easier to read verification of HK by creating dedicated verificaiton modules
 * Split data into activities so that it is easy to view HK etc.
 * Check that all items from TC and TM plotter have been recreated in here.
@@ -40,6 +39,7 @@
 * Set FW numbers and colors to be consistent across WACs and FW plot
 * Add borders around plot legends
 * Differentiate between WACL and WACR in WAC plots, especially for temperatures.
+* Calculate CRCs for WAC and verify
 
 ## Completed
 
@@ -105,3 +105,4 @@
 * Adjust x-scale to avoid clash
 * Within HK Decode, stop passing bin around and change functions to only return relevant arrays
 * Don't add instance names to SWIS products
+* Create a status change log, that tracks all changed variables

@@ -94,6 +94,8 @@ def decode(PROC_DIR):
     TM.to_pickle(write_file)
     logger.info("PanCam RAW TM pickled.")
 
+    changelog(PROC_DIR, TM)
+
     logger.info("---Processing RAW TM Files Completed")
 
 
@@ -580,6 +582,89 @@ def CUCtoUTC_DT(RAW):
                               ).iso, axis=1)
 
     return CalcTime
+
+
+def changelog(proc_dir, tm):
+    """Produces a timestamped text log of the HK listing the changed parameters.
+
+    Arguments:
+        proc_dir {pathlib.Path} -- Directory for the changelog.
+        tm {pd.DataFrame} -- The populated HK dataframe, requires that the 
+                             TM Header, Voltages and Temperatures have been 
+                             decoded .
+
+    Generates:
+        changelog.txt -- The HK changelog located in hte proc_dir folder.
+    """
+
+    logger.info("---Creating changelog")
+
+    # Create blank file
+    write_file = proc_dir / ("Changelog.txt")
+    if write_file.exists():
+        write_file.unlink()
+        logger.info("Deleting file: %s", write_file.name)
+    wf = open(write_file, 'w')
+
+    cols_drop = ['DT',
+                 'Block_Type',
+                 'Data_Len',
+                 'Pkt_CUC_Delta',
+                 'Volt_Ref',
+                 'Volt_6V0',
+                 'Volt_1V5',
+                 'Temp_LFW',
+                 'Temp_RFW',
+                 'Temp_HRC',
+                 'Temp_LWAC',
+                 'Temp_RWAC',
+                 'Temp_LDO',
+                 'Temp_HRCA']
+
+    # tm_subset is made of the parameters watched within the changelog.
+    tm_subset = tm.drop(cols_drop, axis=1).astype('float')
+    # Move Pkt_CUC to first column for better formatting in changelog
+    cols = tm_subset.columns.tolist()
+    cols.remove('Pkt_CUC')
+    cols = ['Pkt_CUC'] + cols
+    tm_subset = tm_subset[cols]
+
+    # First forward fill to account for params only in HKNE
+    # then look for changes in values
+    change = tm_subset.fillna(method='ffill').fillna(0).diff() != 0
+    # CamRes_Chg already a diff so can just that value.
+    change['CamRes_Chg'] = tm['CamRes_Chg'].fillna(False)
+
+    names_hex = {'Pkt_CUC', 'WAC_WTS', 'WAC_HK_TAT', 'WAC_DT_ITS'}
+
+    for row in change.itertuples():
+        dt = tm.DT[row.Index]
+        wf.write(f"{dt:%Y-%m-%d %H:%M:%S.3%f}\t")
+        wf.write(f"HK_Index:{row.Index:03d}  ")
+
+        for name in row._fields:
+            # Ignore index name
+            if name == 'Index':
+                continue
+
+            # Only interested in values that are True and therefore changed
+            value = getattr(row, name)
+            if value == True:
+                tm_val = tm.loc[row.Index].get(name)
+                if (name in names_hex) and (tm_val > 0):  # To catch nan case
+                    value_str = f"{tm_val:#016_X}"
+
+                elif name == 'HRC_ACK' and (tm_val > 0):
+                    value_str = f"{tm_val:#02_X}"
+
+                else:
+                    value_str = f"{tm_val}"
+                wf.write(f"{name}:{value_str}  ")
+        wf.write("\n")
+
+    wf.close()
+
+    logger.info("---Changelog completed.")
 
 
 if __name__ == "__main__":
