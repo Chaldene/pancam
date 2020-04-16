@@ -606,8 +606,6 @@ def HK_Overview(PROC_DIR, Interact=False):
 
     format_axes(fig)
     ax5.tick_params(labelbottom=True)
-    ax5.yaxis.set_major_locator(
-        matplotlib.ticker.MaxNLocator(integer=True))
     adjust_xscale(ax0)
 
     fig.tight_layout()
@@ -1235,11 +1233,11 @@ if __name__ == "__main__":
     # HK_Temperatures(DIR, True)
     # Rover_Temperatures(DIR)
     # Rover_Power(DIR)
-    # HK_Overview(DIR, True)
+    HK_Overview(DIR, True)
     # HK_Voltages(DIR, True)
     # HRC_CS(DIR, True)
     # wac_res(DIR, True)
     # FW(DIR, Interact=True)
     # psu(DIR, Interact=True)
-    HK_Deltas(DIR, Interact=True)
+    # HK_Deltas(DIR, Interact=True)
     # all_plots(DIR)
