@@ -192,15 +192,62 @@ def hkne(tm, bin):
     return tm, bin
 
 
+def gen_wac_crc_tab():
+    """Generates a CRC lookup table using the WAC algorithm.
+
+    Returns:
+        bytes -- A lookup table with the 256 entries for the WAC algorithm.
+    """
+
+    poly = 0x4D
+    table = []
+
+    for byte in range(256):
+        crc = 0
+        for _ in range(8):
+            if (byte ^ crc) & 0x80:
+                crc = (crc << 1) ^ poly
+            else:
+                crc <<= 1
+            byte <<= 1
+            crc &= 0xFF
+
+        table.append(crc)
+    return table
+
+
+def calc_wac_crc(crc_tab, bin_data):
+    """Calculates the CRC of the bin_data using the WAC algorithm
+
+    Arguments:
+        crc_tab {bytes} -- Precomputed CRC lookup table for WAC algorithm
+        bin_data {bytes} -- Data CRC is to be calculated
+
+    Returns:
+        int -- Returns value of CRC or 0x0 if WAC response is a DT.
+    """
+
+    if (bin_data[0] & 0xC0) == 0x80:
+        return 0x00
+
+    incr = 0xFF
+
+    for inbyte in bin_data:
+        incr = crc_tab[incr ^ inbyte]
+
+    return incr
+
+
 def wac(tm, wacbin):
     """
     Performs checks on the following:
         - WAC TMs begin with with a '0x1' start marker
         - Reports if a memory check has been performed, raises error if failed
+        - Response CRC matches for all except DT 
 
     Arguments:
         tm {pd.DataFrame} -- decoded tm header.
-        wacbin {bytearray} -- raw HK tm data containing just wac
+        wacbin {bytearray} -- raw HK tm data containing just wac rows
 
     Returns:
         tm -- same as input with nothing removed (placeholder)
@@ -217,7 +264,7 @@ def wac(tm, wacbin):
     err_df = wacbin[verify['MKR']]
     if not err_df.empty:
         logging.error("WAC start marker not always 0x1")
-        logging.info("Marker error at: %d", err_df.index.values)
+        logging.info("Marker error at: \n%s", err_df.index.values)
 
     # Memory check
     mc = tm['WAC_HK_MCK']
@@ -227,5 +274,13 @@ def wac(tm, wacbin):
         logging.error("Memory check performed and failed!")
     if any(x > 3 for x in mc.values):
         logging.error("Memory check invalid value")
+
+    # Response CRC
+    crc_tab = gen_wac_crc_tab()
+    verify['CRC'] = wacbin.apply(lambda x: calc_wac_crc(crc_tab, x[44:60]))
+    err_df = wacbin[verify['CRC'] != 0]
+    if not err_df.empty:
+        logging.error("WAC response CRC mismatch!")
+        logging.info("WAC CRC errors at: \n%s", err_df.index.values)
 
     return tm, wacbin
