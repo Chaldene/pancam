@@ -157,7 +157,7 @@ def DecodeParam_HKErrors(TM, Bin):
     TM['ERR_1_FW'] = PandUPF(Bin, 'u8', 33, 0)
     # PAN_TM_ PIU_ HKN_ ERR2 and PAN_TM_PIU_ HK_ ERR2
     TM['ERR_2_LWAC'] = PandUPF(Bin, 'u8', 34, 0)
-    TM['ERR_2_RWAC'] = PandUPF(Bin, 'u8', 34, 0)
+    TM['ERR_2_RWAC'] = PandUPF(Bin, 'u8', 35, 0)
     # PAN_TM_ PIU_ HKN_ ERR3 and PAN_TM_PIU_HK_ ERR3
     TM['ERR_3_HRC'] = PandUPF(Bin, 'u8', 36, 0)
     if True in (PandUPF(Bin, 'u8', 37, 0) != 0).unique():
