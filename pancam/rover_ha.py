@@ -390,25 +390,40 @@ def RestructureHK(ROV_DIR):
     NE = pd.DataFrame(columns=['RAW'])
     raw_data = []
 
+    es_line_len = 72
+    ne_line_len = 88
+
     # Read files
     for curfile in RAW_ES:
+        # Ignore if not all packets are complete
+        if curfile.stat().st_size % es_line_len != 0:
+            target = curfile.with_suffix('.HKES_raw.ignore')
+            curfile.rename(target)
+            continue
+
         with open(curfile, 'rb') as f:
             logger.info("Reading %s", f.name)
-            line = f.read(72)
-            while len(line) == 72:
+            line = f.read(es_line_len)
+            while len(line) == es_line_len:
                 raw_data.append(line)
-                line = f.read(72)
+                line = f.read(es_line_len)
 
     ES['RAW'] = raw_data
     raw_data = []
 
     for curfile in RAW_NE:
+        # Ignore if not all packets are complete
+        if curfile.stat().st_size % ne_line_len != 0:
+            target = curfile.with_suffix('.HKNE_raw.ignore')
+            curfile.rename(target)
+            continue
+
         with open(curfile, 'rb') as f:
             logger.info("Reading %s", f.name)
-            line = f.read(88)
-            while len(line) == 88:
+            line = f.read(ne_line_len)
+            while len(line) == ne_line_len:
                 raw_data.append(line)
-                line = f.read(88)
+                line = f.read(ne_line_len)
 
     NE['RAW'] = raw_data
 
