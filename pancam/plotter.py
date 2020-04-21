@@ -40,6 +40,59 @@ class plotter_Error(Exception):
     pass
 
 
+def plot_cycles(proc_dir):
+    """Generates plot limits start and stop, if PanCam has been power cycled.
+
+    Arguments:
+        proc_dir {Path} -- Directory containing either the Rover status or psu 
+                           .pickle files.
+
+    Returns:
+        list -- None if less than 2 cycles. Otherwise list made up of two
+                sublists of switch on datetime and switch off datetime. 
+    """
+
+    # First look for Rover status files
+    logger.info("Searching for plot subsets")
+
+    limits = None
+
+    rv_files = pancam_fns.Find_Files(
+        proc_dir, "*RoverStatus.pickle", SingleFile=True)
+
+    psu_files = pancam_fns.Find_Files(
+        proc_dir, "*psu.pickle", SingleFile=True)
+
+    if rv_files:
+        rv_status = pd.read_pickle(rv_files[0])
+        on_dt = rv_status['DT'][rv_status.PWR_ST.diff() == 1].tolist()
+        off_dt = rv_status['DT'][rv_status.PWR_ST.diff() == -1].tolist()
+
+    elif psu_files:
+        psu_status = pd.read_pickle(psu_files[0])
+
+        map_dict = {True: 1, False: 0}
+        psu_status['Active'] = psu_status.Power > 1
+        psu_status['Active'] = psu_status['Active'].map(map_dict)
+
+        on_dt = psu_status['DT'][psu_status.Active.diff() == 1].tolist()
+        off_dt = psu_status['DT'][psu_status.Active.diff() == -1].tolist()
+
+    if on_dt:
+        cycles = len(on_dt)
+        if cycles - 1 == len(off_dt):
+            off_dt.append(psu_status['DT'].iloc[-1])
+
+        if cycles > 1:
+            limits = [on_dt, off_dt]
+            logger.info(f"Found {cycles} cycles to plot.")
+
+    else:
+        logger.info("Only 1 cycle to plot.")
+
+    return limits
+
+
 def all_plots(proc_dir: Path):
     """Generates one of each defined plots.
 
@@ -56,11 +109,14 @@ def all_plots(proc_dir: Path):
             VOLT_RAW.png     -- Plot of the raw voltages
     """
 
-    HK_Overview(proc_dir)
-    HK_Voltages(proc_dir)
-    HK_Temperatures(proc_dir)
+    # Determine if multiple power cycles
+    cyc_lims = plot_cycles(proc_dir)
+
+    HK_Overview(proc_dir, limits=cyc_lims)
+    HK_Voltages(proc_dir, limits=cyc_lims)
+    HK_Temperatures(proc_dir, limits=cyc_lims)
     HK_Deltas(proc_dir)
-    FW(proc_dir)
+    FW(proc_dir, limits=cyc_lims)
 
     Rover_Temperatures(proc_dir)
     Rover_Power(proc_dir)
@@ -138,7 +194,7 @@ def adjust_xscale(ax0: matplotlib.axes):
     ax0.set_xlim(right=new_lim)
 
 
-def HK_Voltages(PROC_DIR, Interact=False):
+def HK_Voltages(PROC_DIR, Interact=False, limits=None):
     """"Produces a calibrated and uncalibrated voltage plots from pickle files"""
 
     logger.info("Producing Voltage Plots")
@@ -174,7 +230,9 @@ def HK_Voltages(PROC_DIR, Interact=False):
     ax2.tick_params(labelbottom=True)
 
     fig.tight_layout()
-    fig.savefig(HK_DIR / 'VOLT_RAW.png')
+    fig_path = HK_DIR / "VOLT_RAW.png"
+    fig.savefig(fig_path)
+    plot_subsets(fig, fig_path, limits)
 
     if Interact:
         plt.show(block=False)
@@ -221,7 +279,9 @@ def HK_Voltages(PROC_DIR, Interact=False):
     adjust_xscale(ax0)
 
     fig2.tight_layout()
-    fig2.savefig(HK_DIR / 'VOLT_CAL.png')
+    fig_path2 = HK_DIR / 'VOLT_CAL.png'
+    fig2.savefig(fig_path2)
+    plot_subsets(fig2, fig_path2, limits)
 
     if Interact:
         plt.show(block=True)
@@ -232,7 +292,7 @@ def HK_Voltages(PROC_DIR, Interact=False):
     logger.info("Producing Voltage Plots Completed")
 
 
-def HK_Temperatures(PROC_DIR, Interact=False):
+def HK_Temperatures(PROC_DIR, Interact=False, limits=None):
     """"Produces a calibrated and uncalibrated temperature plots from pickle files"""
 
     logger.info("Producing Temperature Plots")
@@ -301,7 +361,9 @@ def HK_Temperatures(PROC_DIR, Interact=False):
     adjust_xscale(ax0)
 
     fig.tight_layout()
-    fig.savefig(HK_DIR / 'INT_TEMP_RAW.png')
+    fig_path = HK_DIR / 'INT_TEMP_RAW.png'
+    fig.savefig(fig_path)
+    plot_subsets(fig, fig_path, limits)
 
     if Interact:
         plt.show(block=False)
@@ -341,7 +403,9 @@ def HK_Temperatures(PROC_DIR, Interact=False):
     adjust_xscale(ax3)
 
     fig2.tight_layout()
-    fig2.savefig(HK_DIR / 'INT_TEMP_CAL.png')
+    fig2_path = HK_DIR / 'INT_TEMP_CAL.png'
+    fig2.savefig(fig2_path)
+    plot_subsets(fig2, fig2_path, limits)
 
     if Interact:
         plt.show(block=True)
@@ -500,7 +564,7 @@ def Rover_Power(PROC_DIR, Interact=False):
     logger.info("Producing Rover Power Plot Completed")
 
 
-def HK_Overview(PROC_DIR, Interact=False):
+def HK_Overview(PROC_DIR, Interact=False, limits=None):
     """"Produces an overview of the TCs, Power Status and Errors"""
 
     logger.info("Producing Overview Plot")
@@ -609,7 +673,9 @@ def HK_Overview(PROC_DIR, Interact=False):
     adjust_xscale(ax0)
 
     fig.tight_layout()
-    fig.savefig(HK_DIR / 'HK_OVR.png')
+    fig_path = HK_DIR / 'HK_OVR.png'
+    fig.savefig(fig_path)
+    plot_subsets(fig, fig_path, limits)
 
     if Interact:
         plt.show(block=True)
@@ -619,7 +685,34 @@ def HK_Overview(PROC_DIR, Interact=False):
     logger.info("Producing Overview Plot Completed")
 
 
-def HK_Deltas(PROC_DIR, Interact=False):
+def plot_subsets(fig, stem_path, limits):
+    """Generates new instances of fig with the x-axis using the limit pairs given.
+
+    Arguments:
+        fig {plt} -- The original full-scale matplotlib figure handle 
+        stem_path {Path} -- Pathlib Path to the original saved figure
+        limits {list} -- A list made up of start and stop x limits [xmins, xmaxs]
+                         which are lists of datetimes. Iif limits is 
+                         None then function does not execute.
+
+    Generates:
+        plot file -- A file of the plot with the name Cycle_{i}_{stem_name} 
+                    where i is the cycle number and stem_name is the full plot
+                    name.
+    """
+
+    if limits:
+        ax0 = fig.axes[0]
+        fig_master = stem_path.name
+
+        for (i, start), stop in zip(enumerate(limits[0]), limits[1]):
+            ax0.set_xlim(start, stop)
+            fig_name = stem_path.with_name(f'Cycle_{i}_{fig_master}')
+            logger.info(f"Generating subplot {fig_name.name}")
+            fig.savefig(fig_name)
+
+
+def HK_Deltas(PROC_DIR, Interact=False, limits=None):
     """Produces a plot of the time gaps between HK generation"""
 
     logger.info("Producing HK Time Delta Plot")
@@ -720,7 +813,9 @@ def HK_Deltas(PROC_DIR, Interact=False):
     adjust_xscale(ax0)
 
     fig.tight_layout()
-    fig.savefig(HK_DIR / 'HK_Delta.png')
+    fig_path = HK_DIR / 'HK_Delta.png'
+    fig.savefig(fig_path)
+    plot_subsets(fig, fig_path, limits)
 
     if Interact:
         plt.show(block=True)
@@ -1009,7 +1104,7 @@ def wac_res(proc_dir: Path, Interact=False):
     logger.info("Producing WAC Plot Completed")
 
 
-def FW(PROC_DIR, Interact=False):
+def FW(PROC_DIR, Interact=False, limits=None):
     """"Produces a plot of the FW Status from pickle files"""
 
     logger.info("Producing FW Status Plots")
@@ -1121,7 +1216,9 @@ def FW(PROC_DIR, Interact=False):
     adjust_xscale(ax0)
 
     fig.tight_layout()
-    fig.savefig(HK_DIR / 'FW.png')
+    fig_path = HK_DIR / 'FW.png'
+    fig.savefig(fig_path)
+    plot_subsets(fig, fig_path, limits)
 
     if Interact:
         plt.show(block=True)
@@ -1131,7 +1228,7 @@ def FW(PROC_DIR, Interact=False):
     logger.info("Producing FW Status Plot Completed")
 
 
-def psu(proc_dir, Interact=False):
+def psu(proc_dir, Interact=False, limits=None):
 
     logger.info("Producing PSU Plot")
 
@@ -1177,7 +1274,9 @@ def psu(proc_dir, Interact=False):
     adjust_xscale(ax0)
 
     fig.tight_layout()
-    fig.savefig(hk_dir / 'PSU_Cur.png')
+    fig_path = hk_dir / 'PSU_Cur.png'
+    fig.savefig(fig_path)
+    plot_subsets(fig, fig_path, limits)
 
     if Interact:
         plt.show(block=False)
@@ -1213,7 +1312,9 @@ def psu(proc_dir, Interact=False):
     adjust_xscale(ax3)
 
     fig2.tight_layout()
-    fig2.savefig(hk_dir / 'PSU_Pwr.png')
+    fig2_path = hk_dir / 'PSU_Pwr.png'
+    fig2.savefig(fig2_path)
+    plot_subsets(fig2, fig2_path, limits)
 
     if Interact:
         plt.show(block=True)
@@ -1233,11 +1334,11 @@ if __name__ == "__main__":
     # HK_Temperatures(DIR, True)
     # Rover_Temperatures(DIR)
     # Rover_Power(DIR)
-    HK_Overview(DIR, True)
+    # HK_Overview(DIR, True)
     # HK_Voltages(DIR, True)
     # HRC_CS(DIR, True)
     # wac_res(DIR, True)
     # FW(DIR, Interact=True)
     # psu(DIR, Interact=True)
     # HK_Deltas(DIR, Interact=True)
-    # all_plots(DIR)
+    all_plots(DIR)

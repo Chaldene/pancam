@@ -11,7 +11,6 @@
 * Change console logging output to a STATUS Flag if possible
 * Improve Docstrings and follow standard conventions
 * Check why SWIS PIU version is not flagged
-* Split data into activities so that it is easy to view HK etc.
 
 ## Nice to haves
 
@@ -106,3 +105,4 @@
 * Make easier to read verification of HK by creating dedicated verificaiton modules
 * Check that all items from TC and TM plotter have been recreated in here.
 * Look into the best use of the Pandas Int64 and how best to draw missing data.
+* Split data into activities so that it is easy to view HK etc.
