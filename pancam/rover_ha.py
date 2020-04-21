@@ -470,7 +470,7 @@ def compareHaCSV(ProcDir):
     csv_bin['RAW'] = csv['RAW'].apply(lambda x: bytearray.fromhex(x))
     csv_bin = pancam_fns.ReturnCUC_RAW(csv_bin, csv_bin['RAW'])
 
-    result = pd.merge(ha_bin, csv_bin, on=['Pkt_CUC'], how='inner')
+    result = pd.merge(ha_bin, csv_bin, on=['Pkt_CUC'], how='right')
     comp = result['RAW_x'] != result['RAW_y']
     mismatch = result[comp]
 
