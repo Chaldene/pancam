@@ -417,7 +417,7 @@ def DecodeHRC_CamRes(TM, HRCBin):
         HRCBin = HRCBin.drop(HHK.index.values)
         TM['HRC_CS'] = PandUPF(HHK, 'u16', 44, 0)  # PAN_TM_HRC_ HK_CS
         TM['HRC_TP'] = PandUPF(HHK, 'u10', 46, 0)  # PAN_TM_HRC_HK_TP
-        TM['HRC_ENC'] = PandUPF(HHK, 'u10', 47, 3)  # PAN_TM_HRC_HK_ENC
+        TM['HRC_ENC'] = PandUPF(HHK, 'u10', 47, 2)  # PAN_TM_HRC_HK_ENC
         TM['HRC_EPF'] = PandUPF(HHK, 'u1', 48, 4)  # PAN_TM_HRC_HK_EP
         TM['HRC_AIF'] = PandUPF(HHK, 'u1', 48, 5)  # PAN_TM_HRC_HK_AI
         TM['HRC_AFF'] = PandUPF(HHK, 'u1', 48, 6)  # PAN_TM_HRC_HK_AF
