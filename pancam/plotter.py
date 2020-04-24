@@ -56,6 +56,7 @@ def plot_cycles(proc_dir):
     logger.info("Searching for plot subsets")
 
     limits = None
+    output = False
 
     rv_files = pancam_fns.Find_Files(
         proc_dir, "*RoverStatus.pickle", SingleFile=True)
@@ -67,6 +68,7 @@ def plot_cycles(proc_dir):
         rv_status = pd.read_pickle(rv_files[0])
         on_dt = rv_status['DT'][rv_status.PWR_ST.diff() == 1].tolist()
         off_dt = rv_status['DT'][rv_status.PWR_ST.diff() == -1].tolist()
+        output = True
 
     elif psu_files:
         psu_status = pd.read_pickle(psu_files[0])
@@ -77,8 +79,9 @@ def plot_cycles(proc_dir):
 
         on_dt = psu_status['DT'][psu_status.Active.diff() == 1].tolist()
         off_dt = psu_status['DT'][psu_status.Active.diff() == -1].tolist()
+        output = True
 
-    if on_dt:
+    if output:
         cycles = len(on_dt)
         if cycles - 1 == len(off_dt):
             off_dt.append(psu_status['DT'].iloc[-1])
@@ -1332,7 +1335,7 @@ if __name__ == "__main__":
     logger.info("Reading directory: %s", DIR)
 
     # HK_Temperatures(DIR, True)
-    # Rover_Temperatures(DIR)
+    Rover_Temperatures(DIR)
     # Rover_Power(DIR)
     # HK_Overview(DIR, True)
     # HK_Voltages(DIR, True)
@@ -1341,4 +1344,4 @@ if __name__ == "__main__":
     # FW(DIR, Interact=True)
     # psu(DIR, Interact=True)
     # HK_Deltas(DIR, Interact=True)
-    all_plots(DIR)
+    # all_plots(DIR)

@@ -136,7 +136,7 @@ if __name__ == '__main__':
 
         # Process secondary files
         hk_raw.decode(proc_dir)
-        # image_browse.Img_RAW_Browse(proc_dir)
+        image_browse.Img_RAW_Browse(proc_dir)
         hk_cal.cal_HK(proc_dir)
         tc_cal.decode_all(proc_dir)
 
