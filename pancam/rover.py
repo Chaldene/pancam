@@ -11,6 +11,7 @@ from pathlib import Path
 from bitstruct import unpack_from as upf
 import logging
 import imageio
+from datetime import datetime
 
 import pancam_fns
 
@@ -78,20 +79,34 @@ def TM_extract(ROV_DIR):
         if not DK.empty:
             DW = DK.RAW_DATA.apply(lambda x: x[2:])
             DW = DW.apply(lambda x: bytearray.fromhex(x))
+            DK['DT'] = pd.to_datetime(
+                DK['GROUND_REFERENCE_TIME'], format='%d/%m/%Y %H:%M:%S.%f')
+
+            # Get first entry and determine if to use old or new cal
+            dtime0 = DK['DT'].iloc[0]
+            # If after Feb 2020 use new Cal
+            if dtime0 < datetime(2020, 2, 1):
+                logger.info("Using old thermistor calibration")
+                piu_loc = (511, 3, 'u13')
+                dcdc_loc = (559, 3, 'u13')
+            else:
+                logger.info("Using new thermistor calibration")
+                piu_loc = (508, 3, 's13')
+                dcdc_loc = (556, 3, 's13')
+
             # PIU Temp
-            OffBy, OffBi, Len = 511, 3, 'u13'
+            (OffBy, OffBi, Len) = piu_loc
             DK['RAW_PIU_T'] = DW.apply(
                 lambda x: upf(Len, x, offset=8*OffBy+OffBi)[0])
             # Calculated from thermistor curve provided
             DK['PIU_T'] = DK['RAW_PIU_T']*0.18640 - 259.84097
             # DCDC Temp
-            OffBy, OffBi, Len = 559, 3, 'u13'
+            OffBy, OffBi, Len = dcdc_loc
             DK['RAW_DCDC_T'] = DW.apply(
                 lambda x: upf(Len, x, offset=8*OffBy+OffBi)[0])
             # Calculated from thermistor curve provided
             DK['DCDC_T'] = DK['RAW_DCDC_T']*0.18640 - 259.84097
-            DK['DT'] = pd.to_datetime(
-                DK['GROUND_REFERENCE_TIME'], format='%d/%m/%Y %H:%M:%S.%f')
+
             DRT = DRT.append(DK, ignore_index=True)
 
     # logger.info("Number of PanCam TMs found: %d", DF.shape[0])
