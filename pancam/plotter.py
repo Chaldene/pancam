@@ -599,14 +599,15 @@ def HK_Overview(PROC_DIR, Interact=False, limits=None):
 
     # RAW Plot and Heater
     fig = plt.figure(figsize=(14.0, 9.0))
-    gs = gridspec.GridSpec(5, 1, height_ratios=[
-                           0.5, 0.5, 0.5, 0.5, 0.5], figure=fig)
+    gs = gridspec.GridSpec(6, 1, height_ratios=[
+                           1, 0.5, 0.5, 0.5, 0.5, 0.5], figure=fig)
     gs.update(hspace=0.0)
-    ax1 = fig.add_subplot(gs[0])
-    ax2 = fig.add_subplot(gs[1], sharex=ax1)
-    ax3 = fig.add_subplot(gs[2], sharex=ax1)
-    ax4 = fig.add_subplot(gs[3], sharex=ax1)
-    ax5 = fig.add_subplot(gs[4], sharex=ax1)
+    ax0 = fig.add_subplot(gs[0])
+    ax1 = fig.add_subplot(gs[1], sharex=ax0)
+    ax2 = fig.add_subplot(gs[2], sharex=ax0)
+    ax3 = fig.add_subplot(gs[3], sharex=ax0)
+    ax4 = fig.add_subplot(gs[4], sharex=ax0)
+    ax5 = fig.add_subplot(gs[5], sharex=ax0)
 
     # Action List
     if TCPlot:
@@ -619,6 +620,9 @@ def HK_Overview(PROC_DIR, Interact=False, limits=None):
         for i in range(0, size):
             ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0, -2),
                          textcoords="offset points", va="top", ha="right", rotation=90)
+    else:
+        ax0.get_yaxis().set_visible(False)
+    add_text(ax0, 'Action List')
 
     # Cam Power and Enable
     ax1.plot(RAW.DT, RAW.Stat_PIU_En.astype('int64'), label='ENA')
@@ -669,7 +673,7 @@ def HK_Overview(PROC_DIR, Interact=False, limits=None):
 
     format_axes(fig)
     ax5.tick_params(labelbottom=True)
-    adjust_xscale(ax1)
+    adjust_xscale(ax0)
 
     fig.tight_layout()
     fig_path = HK_DIR / 'HK_OVR.png'
@@ -743,13 +747,14 @@ def HK_Deltas(PROC_DIR, Interact=False, limits=None):
 
     # RAW Plot and Heater
     fig = plt.figure(figsize=(14.0, 9.0))
-    gs = gridspec.GridSpec(4, 1, height_ratios=[
-                           0.5, 0.5, 0.5, 0.5], figure=fig)
+    gs = gridspec.GridSpec(5, 1, height_ratios=[
+                           1, 0.5, 0.5, 0.5, 0.5], figure=fig)
     gs.update(hspace=0.0)
-    ax1 = fig.add_subplot(gs[0])
-    ax2 = fig.add_subplot(gs[1], sharex=ax1)
-    ax3 = fig.add_subplot(gs[2], sharex=ax1)
-    ax4 = fig.add_subplot(gs[3], sharex=ax1)
+    ax0 = fig.add_subplot(gs[0])
+    ax1 = fig.add_subplot(gs[1], sharex=ax0)
+    ax2 = fig.add_subplot(gs[2], sharex=ax0)
+    ax3 = fig.add_subplot(gs[3], sharex=ax0)
+    ax4 = fig.add_subplot(gs[4], sharex=ax0)
 
     # Action List
     if TCPlot:
@@ -762,6 +767,9 @@ def HK_Deltas(PROC_DIR, Interact=False, limits=None):
         for i in range(0, size):
             ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0, -2),
                          textcoords="offset points", va="top", ha="right", rotation=90)
+    else:
+        ax0.get_yaxis().set_visible(False)
+    add_text(ax0, 'Action List')
 
     # TM Type
     ax1.plot(RAW.DT, RAW.TM_Type_ID, 'o')
@@ -805,7 +813,7 @@ def HK_Deltas(PROC_DIR, Interact=False, limits=None):
     ax4.tick_params(labelbottom=True)
     ax4.yaxis.set_major_locator(
         matplotlib.ticker.MaxNLocator(integer=True))
-    adjust_xscale(ax1)
+    adjust_xscale(ax0)
 
     fig.tight_layout()
     fig_path = HK_DIR / 'HK_Delta.png'
@@ -860,15 +868,16 @@ def HRC_CS(PROC_DIR, Interact=False):
 
     # Create plot structure
     fig = plt.figure(figsize=(14.0, 9))
-    gs = gridspec.GridSpec(6, 1, height_ratios=[
-                           0.5, 0.5, 0.5, 0.5, 0.5, 0.5], figure=fig)
+    gs = gridspec.GridSpec(7, 1, height_ratios=[
+                           1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5], figure=fig)
     gs.update(hspace=0.0)
-    ax1 = fig.add_subplot(gs[0])
-    ax2 = fig.add_subplot(gs[1], sharex=ax1)
-    ax3 = fig.add_subplot(gs[2], sharex=ax1)
-    ax4 = fig.add_subplot(gs[3], sharex=ax1)
-    ax5 = fig.add_subplot(gs[4], sharex=ax1)
-    ax6 = fig.add_subplot(gs[5], sharex=ax1)
+    ax0 = fig.add_subplot(gs[0])
+    ax1 = fig.add_subplot(gs[1], sharex=ax0)
+    ax2 = fig.add_subplot(gs[2], sharex=ax0)
+    ax3 = fig.add_subplot(gs[3], sharex=ax0)
+    ax4 = fig.add_subplot(gs[4], sharex=ax0)
+    ax5 = fig.add_subplot(gs[5], sharex=ax0)
+    ax6 = fig.add_subplot(gs[6], sharex=ax0)
 
     # Action List
     if TCPlot:
@@ -895,6 +904,7 @@ def HRC_CS(PROC_DIR, Interact=False):
                 0, -2), textcoords="offset points", va="bottom", ha="right", rotation=90)
 
     # remove y axis and spines
+    ax0.get_yaxis().set_visible(False)
 
     # Encoder Value
     ax1.plot(RAW['DT'], RAW['HRC_ENC'], '.-')
@@ -917,7 +927,7 @@ def HRC_CS(PROC_DIR, Interact=False):
     ax3.legend(loc='center right', bbox_to_anchor=(
         1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
     add_text(ax3, 'AF & AI')
-    #ax3.set_ylim([-0.1, 1.1])
+    ax3.set_ylim([-0.1, 1.1])
     ax3.get_yaxis().set_visible(False)
 
     # Current Sharpness
@@ -936,13 +946,13 @@ def HRC_CS(PROC_DIR, Interact=False):
     add_text(ax6, 'RAW Sensor Temp')
 
     # Re-adjust x-axis so that doesn't interfere with text
-    xstart, xend = ax1.get_xlim()
+    xstart, xend = ax0.get_xlim()
     new_xlimits = (xstart, (xend - xstart)*1.1+xstart)
-    ax1.set_xlim(new_xlimits)
+    ax0.set_xlim(new_xlimits)
 
     format_axes(fig)
     ax6.tick_params(labelbottom=True)
-    adjust_xscale(ax1)
+    adjust_xscale(ax0)
 
     fig.tight_layout()
     fig.savefig(HK_DIR / 'HRC_CS.png')
@@ -991,14 +1001,15 @@ def wac_res(proc_dir: Path, Interact=False):
 
     # Create plot structure
     fig = plt.figure(figsize=(14.0, 9))
-    gs = gridspec.GridSpec(5, 1, height_ratios=[
-                           0.5, 0.5, 0.5, 0.5, 1.5], figure=fig)
+    gs = gridspec.GridSpec(6, 1, height_ratios=[
+                           1, 0.5, 0.5, 0.5, 0.5, 1.5], figure=fig)
     gs.update(hspace=0.0)
-    ax1 = fig.add_subplot(gs[0])
-    ax2 = fig.add_subplot(gs[1], sharex=ax1)
-    ax3 = fig.add_subplot(gs[2], sharex=ax1)
-    ax4 = fig.add_subplot(gs[3], sharex=ax1)
-    ax5 = fig.add_subplot(gs[4], sharex=ax1)
+    ax0 = fig.add_subplot(gs[0])
+    ax1 = fig.add_subplot(gs[1], sharex=ax0)
+    ax2 = fig.add_subplot(gs[2], sharex=ax0)
+    ax3 = fig.add_subplot(gs[3], sharex=ax0)
+    ax4 = fig.add_subplot(gs[4], sharex=ax0)
+    ax5 = fig.add_subplot(gs[5], sharex=ax0)
 
     # WAC Data
     wac_raw = raw[raw['WAC_HK_MCK'].notna()]
@@ -1038,6 +1049,9 @@ def wac_res(proc_dir: Path, Interact=False):
         xrange = ax0.get_xlim()
 
     # remove y axis and spines
+    add_text(ax0, 'WAC Actions')
+    ax0.set_ylim([-1.1, 1.6])
+    ax0.get_yaxis().set_visible(False)
 
     # WAC ID
     ax1.plot(wac_raw['DT'], wac_raw['WAC_WID'], '-')
@@ -1080,7 +1094,7 @@ def wac_res(proc_dir: Path, Interact=False):
         matplotlib.ticker.MaxNLocator(integer=True))
     if TCPlot:
         ax0.set_xlim(xrange)
-    adjust_xscale(ax1)
+    adjust_xscale(ax0)
 
     fig.tight_layout()
     fig.savefig(hk_dir / 'WAC.png')
@@ -1125,16 +1139,17 @@ def FW(PROC_DIR, Interact=False, limits=None):
 
     # Create plot structure
     fig = plt.figure(figsize=(14.0, 9))
-    gs = gridspec.GridSpec(6, 1,
-                           height_ratios=[0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+    gs = gridspec.GridSpec(7, 1,
+                           height_ratios=[1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
                            figure=fig)
     gs.update(hspace=0.0)
-    ax1 = fig.add_subplot(gs[0])
-    ax2 = fig.add_subplot(gs[1], sharex=ax1)
-    ax3 = fig.add_subplot(gs[2], sharex=ax1)
-    ax4 = fig.add_subplot(gs[3], sharex=ax1)
-    ax5 = fig.add_subplot(gs[4], sharex=ax1)
-    ax6 = fig.add_subplot(gs[5], sharex=ax1)
+    ax0 = fig.add_subplot(gs[0])
+    ax1 = fig.add_subplot(gs[1], sharex=ax0)
+    ax2 = fig.add_subplot(gs[2], sharex=ax0)
+    ax3 = fig.add_subplot(gs[3], sharex=ax0)
+    ax4 = fig.add_subplot(gs[4], sharex=ax0)
+    ax5 = fig.add_subplot(gs[5], sharex=ax0)
+    ax6 = fig.add_subplot(gs[6], sharex=ax0)
 
     # Action List
     if TCPlot:
@@ -1150,6 +1165,7 @@ def FW(PROC_DIR, Interact=False, limits=None):
             ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0, -2),
                          textcoords="offset points", va="top", ha="right", rotation=90)
     # remove y axis and spines
+    ax0.get_yaxis().set_visible(False)
 
     # FW Running Flag
     ax1.plot(RAW['DT'], RAW['Stat_FWL_Op'], label='FWL')
@@ -1193,9 +1209,14 @@ def FW(PROC_DIR, Interact=False, limits=None):
     add_text(ax6, 'Relative Steps')
     ax6.set_xlabel('Date Time')
 
+    # Re-adjust x-axis so that
+    xlimits = ax0.get_xlim()
+    new_xlimits = (xlimits[0], (xlimits[1] - xlimits[0])*1.1+xlimits[0])
+    ax0.set_xlim(new_xlimits)
+
     format_axes(fig)
     ax6.tick_params(labelbottom=True)
-    adjust_xscale(ax1)
+    adjust_xscale(ax0)
 
     fig.tight_layout()
     fig_path = HK_DIR / 'FW.png'
@@ -1314,7 +1335,7 @@ if __name__ == "__main__":
     logger.info("Reading directory: %s", DIR)
 
     # HK_Temperatures(DIR, True)
-    # Rover_Temperatures(DIR)
+    Rover_Temperatures(DIR)
     # Rover_Power(DIR)
     # HK_Overview(DIR, True)
     # HK_Voltages(DIR, True)
@@ -1323,4 +1344,4 @@ if __name__ == "__main__":
     # FW(DIR, Interact=True)
     # psu(DIR, Interact=True)
     # HK_Deltas(DIR, Interact=True)
-    all_plots(DIR)
+    # all_plots(DIR)
