@@ -266,14 +266,15 @@ def wac(tm, wacbin):
         logging.error("WAC start marker not always 0x1")
         logging.info("Marker error at: \n%s", err_df.index.values)
 
-    # Memory check
-    mc = tm['WAC_HK_MCK']
-    if 1 in mc.values:
-        logging.error("Memory check performed and successful")
-    if 2 in mc.values:
-        logging.error("Memory check performed and failed!")
-    if any(x > 3 for x in mc.values):
-        logging.error("Memory check invalid value")
+    # Memory check if HK request sent
+    if 1 in tm['WAC_CID'].values:
+        mc = tm['WAC_HK_MCK']
+        if 1 in mc.values:
+            logging.error("Memory check performed and successful")
+        if 2 in mc.values:
+            logging.error("Memory check performed and failed!")
+        if any(x > 3 for x in mc.values):
+            logging.error("Memory check invalid value")
 
     # Response CRC
     crc_tab = gen_wac_crc_tab()

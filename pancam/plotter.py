@@ -1012,7 +1012,7 @@ def wac_res(proc_dir: Path, Interact=False):
     ax5 = fig.add_subplot(gs[5], sharex=ax0)
 
     # WAC Data
-    wac_raw = raw[raw['WAC_HK_MCK'].notna()]
+    wac_raw = raw[raw['WAC_CID'].notna()]
 
     # Action List
     if TCPlot:
@@ -1068,25 +1068,27 @@ def wac_res(proc_dir: Path, Interact=False):
         1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
     add_text(ax2, 'FW #')
 
-    # Inhibit and Mem Check
-    ax3.plot(wac_raw['DT'], wac_raw['WAC_HK_INH'], label='Inhibit')
-    ax3.plot(wac_raw['DT'], wac_raw['WAC_HK_MCO'], label='Mem Check')
-    ax3.set_ylim([-0.1, 1.1])
-    ax3.get_yaxis().set_visible(False)
-    ax3.legend(loc='center right', bbox_to_anchor=(
-        1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
+    # Cases when WACs used without HK request
+    if 1 in wac_raw['WAC_CID'].values:
+        # Inhibit and Mem Check
+        ax3.plot(wac_raw['DT'], wac_raw['WAC_HK_INH'], label='Inhibit')
+        ax3.plot(wac_raw['DT'], wac_raw['WAC_HK_MCO'], label='Mem Check')
+        ax3.set_ylim([-0.1, 1.1])
+        ax3.get_yaxis().set_visible(False)
+        ax3.legend(loc='center right', bbox_to_anchor=(
+            1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
 
-    # Status
-    ax4.plot(wac_raw['DT'], wac_raw['WAC_HK_IAO'], label='Img Acq.')
-    ax4.plot(wac_raw['DT'], wac_raw['WAC_HK_TAO'], label='Tmp Acq.')
-    ax4.set_ylim([-0.1, 1.1])
-    ax4.get_yaxis().set_visible(False)
-    ax4.legend(loc='center right', bbox_to_anchor=(
-        1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
+        # Status
+        ax4.plot(wac_raw['DT'], wac_raw['WAC_HK_IAO'], label='Img Acq.')
+        ax4.plot(wac_raw['DT'], wac_raw['WAC_HK_TAO'], label='Tmp Acq.')
+        ax4.set_ylim([-0.1, 1.1])
+        ax4.get_yaxis().set_visible(False)
+        ax4.legend(loc='center right', bbox_to_anchor=(
+            1.0, 0.5), ncol=1, borderaxespad=0, frameon=False)
 
-    # RAW Temperature
-    # todo: Plot calibrated temperatures and PIU temp
-    ax5.plot(wac_raw['DT'], wac_raw['WAC_HK_LTP'], label='Temp')
+        # RAW Temperature
+        # todo: Plot calibrated temperatures and PIU temp
+        ax5.plot(wac_raw['DT'], wac_raw['WAC_HK_LTP'], label='Temp')
 
     format_axes(fig)
     ax5.tick_params(labelbottom=True)
@@ -1335,7 +1337,7 @@ if __name__ == "__main__":
     logger.info("Reading directory: %s", DIR)
 
     # HK_Temperatures(DIR, True)
-    Rover_Temperatures(DIR)
+    # Rover_Temperatures(DIR)
     # Rover_Power(DIR)
     # HK_Overview(DIR, True)
     # HK_Voltages(DIR, True)
@@ -1344,4 +1346,4 @@ if __name__ == "__main__":
     # FW(DIR, Interact=True)
     # psu(DIR, Interact=True)
     # HK_Deltas(DIR, Interact=True)
-    # all_plots(DIR)
+    all_plots(DIR)
