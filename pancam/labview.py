@@ -23,6 +23,7 @@ import pancam_fns
 import hs
 
 logger = logging.getLogger(__name__)
+status = logging.getLogger('status')
 
 # Global parameters
 labviewProcVer = {'LVProcVer': 1.0}
@@ -196,7 +197,8 @@ def sci_extract(lv_dir: Path, archive: bool = False):
                 logger.critical(
                     "Still unexpected number of packets. Now %d", num_pkts)
             else:
-                logger.error("Number of packets now as expected, %d", num_pkts)
+                logger.info("Number of packets now as expected, %d", num_pkts)
+                status.info("Number of packets now as expected, %d", num_pkts)
 
     # Create directory for binary image files
     img_spw_dir = lv_dir / "PROC" / "IMG_SPW"
@@ -581,17 +583,17 @@ if __name__ == "__main__":
 
     proc_dir = dir / "PROC"
     if proc_dir.is_dir():
-        logger.info("Processing' Directory already exists")
+        status.info("Processing' Directory already exists")
     else:
-        logger.info("Generating 'Processing' directory")
+        status.info("Generating 'Processing' directory")
         proc_dir.mkdir()
 
-    logging.basicConfig(filename=(proc_dir / 'processing.log'),
-                        level=logging.INFO,
-                        format='%(asctime)s - %(levelname)s - %(module)s.%(funcName)s - %(message)s')
+    logger, status = pancam_fns.setup_logging()
+    pancam_fns.setup_proc_logging(logger, proc_dir)
+
     logger.info('\n\n\n\n')
     logger.info("Running labview.py as main")
-    logger.info("Reading directory: %s", dir)
+    logger.info("Reading directory: %s", proc_dir)
 
     # hs_extract(dir, archive=True)
     # hk_extract(dir, archive=True)

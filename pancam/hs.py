@@ -18,6 +18,7 @@ import pancam_fns
 from pancam_fns import PandUPF
 
 logger = logging.getLogger(__name__)
+status = logging.getLogger('status')
 
 
 def decode(proc_dir: Path, spw_header: bool = False):
@@ -189,13 +190,13 @@ if __name__ == "__main__":
     proc_dir = Path(
         input("Type the path to thefolder where the hs.pickle files are stored: "))
 
-    logging.basicConfig(filename=(proc_dir / 'processing.log'),
-                        level=logging.INFO,
-                        format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+    logger, status = pancam_fns.setup_logging()
+    pancam_fns.setup_proc_logging(logger, proc_dir)
+
     logger.info('\n\n\n\n')
     logger.info("Running hs.py as main")
     logger.info("Reading directory: %s", proc_dir)
 
     decode(proc_dir)
     verify(proc_dir)
-    print(sci_cnt(proc_dir))
+    status.info("Sci_Cnt: %s", sci_cnt(proc_dir))

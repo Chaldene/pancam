@@ -16,6 +16,7 @@ import pandas as pd
 import pancam_fns
 
 logger = logging.getLogger(__name__)
+status = logging.getLogger('status')
 
 wac_cmd_dict = {0x00: "IA",
                 0x01: "HK",
@@ -112,11 +113,11 @@ if __name__ == "__main__":
     proc_dir = Path(
         input("Type the path to the folder PROC dir: "))
 
-    logging.basicConfig(filename=(proc_dir / 'processing.log'),
-                        level=logging.INFO,
-                        format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+    logger, status = pancam_fns.setup_logging()
+    pancam_fns.setup_proc_logging(logger, proc_dir)
+
     logger.info('\n\n\n\n')
     logger.info("Running tc_cal.py as main")
-    logger.info("Reading directory: %s", dir)
+    logger.info("Reading directory: %s", proc_dir)
 
     decode_all(proc_dir)

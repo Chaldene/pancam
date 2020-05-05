@@ -16,6 +16,7 @@ from datetime import datetime
 import pancam_fns
 
 logger = logging.getLogger(__name__)
+status = logging.getLogger('status')
 
 
 def TM_extract(ROV_DIR):
@@ -192,23 +193,23 @@ def NavCamBrowse(ROV_DIR):
 
 
 if __name__ == "__main__":
-    DIR = Path(
+    dir = Path(
         input("Type the path to thefolder where the Rover files are stored: "))
 
-    logging.basicConfig(filename=(DIR / 'processing.log'),
-                        level=logging.INFO,
-                        format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
-    logger.info('\n\n\n\n')
-    logger.info("Running Rover.py as main")
-    logger.info("Reading directory: %s", DIR)
-
-    PROC_DIR = DIR / "PROC"
-    if PROC_DIR.is_dir():
-        logger.info("Processing' Directory already exists")
+    proc_dir = dir / "PROC"
+    if proc_dir.is_dir():
+        status.info("Processing' Directory already exists")
     else:
-        logger.info("Generating 'Processing' directory")
-        PROC_DIR.mkdir()
+        status.info("Generating 'Processing' directory")
+        proc_dir.mkdir()
 
-    TM_extract(DIR)
-    TC_extract(DIR)
-    NavCamBrowse(DIR)
+    logger, status = pancam_fns.setup_logging()
+    pancam_fns.setup_proc_logging(logger, proc_dir)
+
+    logger.info('\n\n\n\n')
+    logger.info("Running rover.py as main")
+    logger.info("Reading directory: %s", proc_dir)
+
+    TM_extract(dir)
+    TC_extract(dir)
+    NavCamBrowse(dir)

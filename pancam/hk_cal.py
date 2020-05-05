@@ -13,6 +13,7 @@ import logging
 import pancam_fns
 
 logger = logging.getLogger(__name__)
+status = logging.getLogger('status')
 
 
 class cal_HK_Error(Exception):
@@ -71,14 +72,15 @@ def cal_HK(PROC_DIR):
 
 
 if __name__ == "__main__":
-    DIR = Path(
+    proc_dir = Path(
         input("Type the path to the PROC folder where the processed files are stored: "))
 
-    logging.basicConfig(filename=(DIR / 'processing.log'),
-                        level=logging.INFO,
-                        format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+    logger, status = pancam_fns.setup_logging()
+    pancam_fns.setup_proc_logging(logger, proc_dir)
+
     logger.info('\n\n\n\n')
     logger.info("Running Cal_HK.py as main")
-    logger.info("Reading directory: %s", DIR)
+    logger.info("Reading directory: %s", proc_dir)
 
-    cal_HK(DIR)
+    cal_HK(proc_dir)
+    status.info("Completed")

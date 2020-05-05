@@ -22,6 +22,7 @@ import logging
 import pancam_fns
 
 logger = logging.getLogger(__name__)
+status = logging.getLogger('status')
 
 # Global parameters
 HaImageProcVer = {'HaImageProcVer': 0.5}
@@ -491,37 +492,24 @@ def compareHaCSV(ProcDir):
 
 
 if __name__ == "__main__":
-    logger.setLevel(logging.INFO)
 
-    # create console handler logger
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    ch_formatter = logging.Formatter(
-        '%(module)s.%(funcName)s - %(levelname)s - %(message)s')
-    ch.setFormatter(ch_formatter)
-
-    DIR = Path(
+    dir = Path(
         input("Type the path to the folder where the .ha log files are stored: "))
 
-    PROC_DIR = DIR / "PROC"
-    if PROC_DIR.is_dir():
-        logger.info("Processing' Directory already exists")
+    proc_dir = dir / "PROC"
+    if proc_dir.is_dir():
+        status.info("Processing' Directory already exists")
     else:
-        logger.info("Generating 'Processing' directory")
-        PROC_DIR.mkdir()
+        status.info("Generating 'Processing' directory")
+        proc_dir.mkdir()
 
-    fh = logging.FileHandler(PROC_DIR / 'processing.log')
-    fh.setLevel(logging.INFO)
-    fh_formatter = logging.Formatter(
-        '%(asctime)s - %(levelname)s - %(module)s.%(funcName)s - %(message)s')
-    fh.setFormatter(fh_formatter)
-    logger.addHandler(fh)
-    logger.addHandler(ch)
+    logger, status = pancam_fns.setup_logging()
+    pancam_fns.setup_proc_logging(logger, proc_dir)
 
     logger.info('\n\n\n\n')
     logger.info("Running HaImageProc.py as main")
-    logger.info("Reading directory: %s", PROC_DIR)
+    logger.info("Reading directory: %s", proc_dir)
 
-    HaScan(DIR)
-    RestructureHK(PROC_DIR)
-    compareHaCSV(PROC_DIR)
+    HaScan(dir)
+    RestructureHK(proc_dir)
+    compareHaCSV(proc_dir)

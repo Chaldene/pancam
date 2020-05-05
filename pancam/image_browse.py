@@ -17,6 +17,7 @@ import pancam_fns
 from image_hdr_raw import decodeRAW_ImgHDR
 
 logger = logging.getLogger(__name__)
+status = logging.getLogger('status')
 
 
 class ImgRawBrError(Exception):
@@ -29,7 +30,7 @@ def Img_RAW_Browse(PROC_DIR):
     logger.info("Generating Image Browse Products from RAW Images")
 
     # Search for pci_raw files in the process directory
-    RAW_FILES = pancam_fns.Find_Files(PROC_DIR, "IMG_RAW\*.pci_raw")
+    RAW_FILES = pancam_fns.Find_Files(PROC_DIR, r"IMG_RAW\*.pci_raw")
     if not RAW_FILES:
         logger.warning("No files found - ABORTING")
         return
@@ -101,14 +102,14 @@ def Img_RAW_Browse(PROC_DIR):
 
 
 if __name__ == "__main__":
-    DIR = Path(
+    proc_dir = Path(
         input("Type the path to the folder where the PROC folder is located: "))
 
-    logging.basicConfig(filename=(DIR / 'processing.log'),
-                        level=logging.INFO,
-                        format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+    logger, status = pancam_fns.setup_logging()
+    pancam_fns.setup_proc_logging(logger, proc_dir)
+
     logger.info('\n\n\n\n')
     logger.info("Running ImageRAWtoBrowse.py as main")
-    logger.info("Reading directory: %s", DIR)
+    logger.info("Reading directory: %s", proc_dir)
 
-    Img_RAW_Browse(DIR)
+    Img_RAW_Browse(proc_dir)

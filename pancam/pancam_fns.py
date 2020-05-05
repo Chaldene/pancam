@@ -13,10 +13,11 @@ import binascii
 import logging
 
 logger = logging.getLogger(__name__)
+status = logging.getLogger('status')
 
 
 def Find_Files(DIR, FILT, SingleFile=False, Recursive=True):
-    """Finds all the files within DIR using the wildcard FILT. 
+    """Finds all the files within DIR using the wildcard FILT.
     If SingleFile is True expects to return only one file."""
 
     logger.info("Find_Files Called")
@@ -113,3 +114,57 @@ def DropTM(TM_ErrorFrame, TM, Bin):
     newTM = TM.drop(TM_ErrorFrame.index)
     newBin = Bin.drop(TM_ErrorFrame.index)
     return newTM, newBin
+
+
+def setup_logging():
+    """Adds a configured stream handler to the root logger for console output.
+
+    2 logging streams created:
+        - display errors to console
+        - display status to console
+
+    Returns:
+        logger -- standard logger to console used for errors
+        stat -- logger used for status of processing for many files
+    """
+
+    # Setup 2 loggers one for general and one for status
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    stat = logging.getLogger('status')
+    stat.setLevel(logging.INFO)
+
+    # create console handler logger
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.ERROR)
+    ch_formatter = logging.Formatter(
+        '%(module)s.%(funcName)s - %(levelname)s - %(message)s')
+    ch.setFormatter(ch_formatter)
+    logger.addHandler(ch)
+
+    # create status logger
+    sh = logging.StreamHandler()
+    sh_formatter = logging.Formatter(
+        'STATUS:   %(module)s.%(funcName)s - %(message)s')
+    sh.setFormatter(sh_formatter)
+    stat.addHandler(sh)
+
+    return logger, stat
+
+
+def setup_proc_logging(logger, proc_dir):
+    """Sets the output file of the main logger with INFO logging level.
+
+    Arguments:
+        logger -- the logging.logger used to record messages
+        proc_dir -- pathlib.dir where to create the processing.log
+    """
+
+    fh = logging.FileHandler(proc_dir / 'processing.log')
+    fh.setLevel(logging.INFO)
+    fh_formatter = logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(module)s.%(funcName)s - %(message)s')
+    fh.setFormatter(fh_formatter)
+
+    logger.addHandler(fh)

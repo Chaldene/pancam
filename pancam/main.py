@@ -25,17 +25,11 @@ import labview
 import tc_cal
 import pancam_fns
 
+logger, status = pancam_fns.setup_logging()
+
 if __name__ == '__main__':
 
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-
-    # create console handler logger
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.ERROR)
-    ch_formatter = logging.Formatter(
-        '%(module)s.%(funcName)s - %(levelname)s - %(message)s')
-    ch.setFormatter(ch_formatter)
+    status.info("Running main.py")
 
     # Select Folder to Process
     top_dir = Path(
@@ -77,23 +71,17 @@ if __name__ == '__main__':
         proc_dir.mkdir()
 
     # create file handler logger
-    fh = logging.FileHandler(proc_dir / 'processing.log')
-    fh.setLevel(logging.INFO)
-    fh_formatter = logging.Formatter(
-        '%(asctime)s - %(levelname)s - %(module)s.%(funcName)s - %(message)s')
-    fh.setFormatter(fh_formatter)
-    logger.addHandler(fh)
-    logger.addHandler(ch)
-
+    pancam_fns.setup_proc_logging(logger, proc_dir)
     logger.info('\n\n\n\n')
     logger.info("main.py")
 
     # First check if SWIS as multiple folders
     instances = swis.create_instances(top_dir)
     if instances:
+        status.info("SWIS Instances Found")
         for inst in instances:
             proc_dir = inst / "PROC"
-            logger.error("Analysing %s", inst.name)
+            status.info("Analysing %s", inst.name)
             swis.hk_extract(inst)
             swis.hs_extract(inst)
             hs.decode(proc_dir, True)
@@ -109,6 +97,7 @@ if __name__ == '__main__':
     else:
         # LabView Files
         if labview.hk_extract(top_dir, archive=arch_logs):
+            status.info("LabView Type Found")
             labview.hs_extract(top_dir, archive=arch_logs)
             hs.decode(proc_dir)
             hs.verify(proc_dir)
@@ -121,6 +110,7 @@ if __name__ == '__main__':
 
         # Rover files
         elif rover.TM_extract(top_dir):
+            status.info("Rover Type Found")
             rover.TC_extract(top_dir)
             rover.NavCamBrowse(top_dir)
             rover_ha.HaScan(top_dir)
@@ -128,6 +118,7 @@ if __name__ == '__main__':
             rover_ha.compareHaCSV(proc_dir)
 
         elif swis.nsvf_parse(top_dir):
+            status.info("Single SWIS Type Found")
             swis.hk_extract(proc_dir)
             hs.decode(proc_dir, spw_header=True)
             hs.verify(proc_dir)

@@ -19,6 +19,7 @@ import logging
 import pancam_fns
 
 logger = logging.getLogger(__name__)
+status = logging.getLogger('status')
 
 
 register_matplotlib_converters()
@@ -783,7 +784,7 @@ def HK_Deltas(PROC_DIR, Interact=False, limits=None):
 
     ax2.plot(RAW.DT, time_delta, 'ko-')
     ax2.set_ylim(bottom=-0.1)
-    add_text(ax2, 'HK $\Delta$s')
+    add_text(ax2, r'HK $\Delta$s')
 
     # PIU Errors
     err_params = RAW[['ERR_1_CMD',
@@ -807,7 +808,7 @@ def HK_Deltas(PROC_DIR, Interact=False, limits=None):
     ax4.plot(ess_tm.DT, ess_tm.CUC_Delta, 'ko-')
     ax4.set_ylim(bottom=-0.1)
     ax4.grid(True)
-    add_text(ax4, 'Ess. HK $\Delta$s')
+    add_text(ax4, r'Ess. HK $\Delta$s')
 
     format_axes(fig)
     ax4.tick_params(labelbottom=True)
@@ -1326,24 +1327,24 @@ def psu(proc_dir, Interact=False, limits=None):
 
 
 if __name__ == "__main__":
-    DIR = Path(
+    proc_dir = Path(
         input("Type the path to the PROC folder where the processed files are stored: "))
 
-    logging.basicConfig(filename=(DIR / 'processing.log'),
-                        level=logging.INFO,
-                        format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
-    logger.info('\n\n\n\n')
-    logger.info("Running Plotter.py as main")
-    logger.info("Reading directory: %s", DIR)
+    logger, status = pancam_fns.setup_logging()
+    pancam_fns.setup_proc_logging(logger, proc_dir)
 
-    # HK_Temperatures(DIR, True)
-    # Rover_Temperatures(DIR)
-    # Rover_Power(DIR)
-    # HK_Overview(DIR, True)
-    # HK_Voltages(DIR, True)
-    # HRC_CS(DIR, True)
-    # wac_res(DIR, True)
-    # FW(DIR, Interact=True)
-    # psu(DIR, Interact=True)
-    # HK_Deltas(DIR, Interact=True)
-    all_plots(DIR)
+    logger.info('\n\n\n\n')
+    logger.info("Running plotter.py as main")
+    logger.info("Reading directory: %s", proc_dir)
+
+    # HK_Temperatures(proc_dir, True)
+    # Rover_Temperatures(proc_dir)
+    # Rover_Power(proc_dir)
+    # HK_Overview(proc_dir, True)
+    # HK_Voltages(proc_dir, True)
+    # HRC_CS(proc_dir, True)
+    # wac_res(proc_dir, True)
+    # FW(proc_dir, Interact=True)
+    # psu(proc_dir, Interact=True)
+    # HK_Deltas(proc_dir, Interact=True)
+    all_plots(proc_dir)

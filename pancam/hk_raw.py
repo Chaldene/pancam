@@ -19,6 +19,7 @@ from pancam_fns import PandUPF
 import hk_raw_verify as verify
 
 logger = logging.getLogger(__name__)
+status = logging.getLogger('status')
 
 
 class decodeRAW_HK_Error(Exception):
@@ -664,14 +665,14 @@ def changelog(proc_dir, tm):
 
 
 if __name__ == "__main__":
-    DIR = Path(
+    proc_dir = Path(
         input("Type the path to the PROC folder where the processed files are stored: "))
 
-    logging.basicConfig(filename=(DIR / 'processing.log'),
-                        level=logging.INFO,
-                        format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
-    logger.info('\n\n\n\n')
-    logger.info("Running decodeRAW_HK.py as main")
-    logger.info("Reading directory: %s", DIR)
+    logger, status = pancam_fns.setup_logging()
+    pancam_fns.setup_proc_logging(logger, proc_dir)
 
-    decode(DIR)
+    logger.info('\n\n\n\n')
+    logger.info("Running hk_raw.py as main")
+    logger.info("Reading directory: %s", proc_dir)
+
+    decode(proc_dir)

@@ -23,6 +23,7 @@ import pancam_fns
 import hs
 
 logger = logging.getLogger(__name__)
+status = logging.getLogger('status')
 
 # Global parameters
 swisProcVer = {'swisProcVer': 1.0}
@@ -57,7 +58,6 @@ def hk_extract(swis_dir: Path):
     for curfile in hk_files:
         dl = pd.DataFrame()
         logger.info("Reading %s", curfile.name)
-        cur_name = curfile.stem
 
         if nsvf:
             logger.info("Type is nsvf")
@@ -550,7 +550,7 @@ def sci_compare(proc_dir: Path):
         # Compare files
         logger.info("Comparing: %s", sci.name)
         if filecmp.cmp(tmp_file, ref, shallow=False):
-            logger.error("Science Files match")
+            status.info("Science Files match")
         else:
             logger.error("Science Files do not match!")
 
@@ -628,17 +628,17 @@ if __name__ == "__main__":
 
     proc_dir = dir / "PROC"
     if proc_dir.is_dir():
-        logger.info("Processing' Directory already exists")
+        status.info("Processing' Directory already exists")
     else:
-        logger.info("Generating 'Processing' directory")
+        status.info("Generating 'Processing' directory")
         proc_dir.mkdir()
 
-    logging.basicConfig(filename=(proc_dir / 'processing.log'),
-                        level=logging.INFO,
-                        format='%(asctime)s - %(funcName)s - %(levelname)s - %(message)s')
+    logger, status = pancam_fns.setup_logging()
+    pancam_fns.setup_proc_logging(logger, proc_dir)
+
     logger.info('\n\n\n\n')
-    logger.info("Running SIWS.py as main")
-    logger.info("Reading directory: %s", dir)
+    logger.info("Running swis.py as main")
+    logger.info("Reading directory: %s", proc_dir)
 
     # routeA = PC_Fns.Find_Files(dir, 'Router_A_packet.log', SingleFile=True)[0]
     # nsvf_parse(routeA)

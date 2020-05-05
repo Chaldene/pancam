@@ -19,6 +19,7 @@ from pancam_fns import DropTM
 from pancam_fns import PandUPF
 
 logger = logging.getLogger(__name__)
+status = logging.getLogger('status')
 
 
 def blanks(rtm, bin):

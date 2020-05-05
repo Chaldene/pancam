@@ -8,7 +8,6 @@
 * Don't define function types
 * Use more lines for pandas long expressions
 * Multi-line functions have closing bracket on new line
-* Change console logging output to a STATUS Flag if possible
 * Improve Docstrings and follow standard conventions
 * Check why SWIS PIU version is not flagged
 
@@ -26,7 +25,6 @@
 * Break into powered chunks that can be easily navigated
 * Also look for PanCam service errors such as 5,2
 * Automatically generated ICD from files
-* Add liscense for project
 * Check all liscenses are valid
 * Update Readme
 * For Plot labels add a white bounding box to stop overlap
@@ -106,3 +104,6 @@
 * Check that all items from TC and TM plotter have been recreated in here.
 * Look into the best use of the Pandas Int64 and how best to draw missing data.
 * Split data into activities so that it is easy to view HK etc.
+* Add liscense for project
+* Create a terminal logger called status instead of using error.
+* Change console logging output to a STATUS Flag if possible
