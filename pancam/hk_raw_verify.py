@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-"""
-hk_raw_verify.py
-For verifying the structure and contents of PanCam hk_raw.
+"""Called by hk_raw.py to verify the structure and contents of PanCam hk.
 
-Barry Whiteside
-Mullard Space Science Laboratory - UCL
+Each function describes the checks performed, if any errors are found the
+function genertes a logging error and in some cases removes the offending
+data if it would disrupt the execution of subsequent functions. 
 
-PanCam Data Processing Tools
-Created 24 Mar 2020
+:copyright: (c) 2020 by Barry J Whiteside. Mullard Space Science Laboratory - UCL
+
+:license: GPLv3, see LICENSE for more details.
 """
 
 import pandas as pd
@@ -23,17 +23,21 @@ status = logging.getLogger('status')
 
 
 def blanks(rtm, bin):
-    """
-    Performs checks on the following:
+    """Ensures that the HK entry is not empty and removes blank entries.
+
+    Blank lines can be caused by SWIS model terminating early or sometimes by 
+    the labview EGSE sudenly halting. 
+
+    This function verifies the following:
         - bin line is not empty
 
     Arguments:
         rtm {pd.DataFrame} -- raw unprocessed HK tm
-        bin {bytearray} -- raw HK tm data
+        bin {bytes} -- raw HK tm data
 
     Returns:
-        rtm -- with removed blank entries
-        bin -- with removed blank entries
+        pd.DataFrame -- with removed blank entries
+        bytes -- with removed blank entries
     """
 
     verify = pd.DataFrame()
@@ -52,7 +56,8 @@ def blanks(rtm, bin):
 
 
 def hkheader(tm, bin):
-    """
+    """Ensures the HK TM header is the correct format. 
+
     Performs checks on the following:
         - Byte 11 is empty
         - Block type is always 0 for TM
@@ -63,11 +68,11 @@ def hkheader(tm, bin):
 
     Arguments:
         tm {pd.DataFrame} -- decoded tm header.
-        bin {bytearray} -- raw HK tm data
+        bin {bytes} -- raw HK tm data
 
     Returns:
-        tm -- with removed entries that do not match expected
-        bin -- with removed entries that do not match expected
+        pd.DataFrame -- with removed entries that do not match expected
+        bytes -- with removed entries that do not match expected
     """
 
     verify = pd.DataFrame()
@@ -75,7 +80,7 @@ def hkheader(tm, bin):
 
     logger.info("Verifying HK RAW TM Header")
 
-    # Byte 11                                            #PAN_TM_PIU_HKN_RES and PAN_TM_PIU_HK_RES
+    # Byte 11 - PAN_TM_PIU_HKN_RES and PAN_TM_PIU_HK_RES
     if True in (PandUPF(bin, 'u8', 11, 0) != 0).unique():
         logger.error("TM Byte 11 not 0")
 
@@ -104,7 +109,7 @@ def hkheader(tm, bin):
     err_df = tm[verify['Data_Len']]
     if not err_df.empty:
         logging.error(
-            "Missing HK Data Detected - TM Data Len does not match actual length")
+            "Missing HK Data - TM Data Len does not match actual length")
         tm, bin = DropTM(err_df, tm, bin)
         verify = verify.drop(err_df.index)
 
@@ -149,7 +154,8 @@ def hkheader(tm, bin):
 
 
 def hkne(tm, bin):
-    """
+    """Ensures the HKNE contents is of the expected format. 
+
     Performs checks on the following:
         - Reported PIU version is within the list of allowed values
         - filter wheel recirculation time has not changed
@@ -159,11 +165,11 @@ def hkne(tm, bin):
 
     Arguments:
         tm {pd.DataFrame} -- decoded tm header.
-        bin {bytearray} -- raw HK tm data
+        bin {bytes} -- raw HK tm data
 
     Returns:
-        tm -- same as input with nothing removed (placeholder)
-        bin -- same as input with nothing removed, (placeholder)
+        pd.DataFrame -- same as input with nothing removed (placeholder)
+        bytes -- same as input with nothing removed, (placeholder)
     """
 
     allowed_PIU_Ver = [288, np.nan]
@@ -240,7 +246,8 @@ def calc_wac_crc(crc_tab, bin_data):
 
 
 def wac(tm, wacbin):
-    """
+    """Ensures the WAC TM is of the expected format where possible.
+
     Performs checks on the following:
         - WAC TMs begin with with a '0x1' start marker
         - Reports if a memory check has been performed, raises error if failed
@@ -248,11 +255,11 @@ def wac(tm, wacbin):
 
     Arguments:
         tm {pd.DataFrame} -- decoded tm header.
-        wacbin {bytearray} -- raw HK tm data containing just wac rows
+        wacbin {bytes} -- raw HK tm data containing just wac rows
 
     Returns:
-        tm -- same as input with nothing removed (placeholder)
-        wacbin -- same as input with nothing removed, (placeholder)
+        pd.DataFrame -- same as input with nothing removed (placeholder)
+        bytes -- same as input with nothing removed, (placeholder)
     """
 
     logger.info("Verifying WAC Contents")

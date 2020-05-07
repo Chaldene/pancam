@@ -1,15 +1,14 @@
-"""Where applicable applies calibration to the processed RAW HK pickle file
+# -*- coding: utf-8 -*-
+"""Where applicable applies calibration to the processed RAW HK pickle file.
 
-    pancam.hk_cal
-    ~~~~~~~~~~~~~
+This module applies the predetermined calibrations and generates a new
+calibrated pickle file:
+    - HK Voltages
+    - HK Temperatures
 
-    This module applies the predetermined calibrations and generates a new
-    calibrated pickle file:
-        - HK Voltages
-        - HK Temperatures
+:copyright: (c) 2020 by Barry J Whiteside. Mullard Space Science Laboratory - UCL
 
-    :copyright: (c) 2020 by Barry J Whiteside. Mullard Space Science Laboratory - UCL
-    :license: GPLv3, see LICENSE for more details.
+:license: GPLv3, see LICENSE for more details.
 """
 
 import pandas as pd
