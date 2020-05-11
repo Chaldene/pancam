@@ -75,10 +75,16 @@ class LDT_Properties(object):
 
         self.write = self.PanCam
         self.writtenLen = 0
+        self.write_completed = False
+        self.write_occurance = 0
 
     def setWriteFile(self, DIR, pkt_HD):
-        # Determine FileName and check if exists
-        write_filename = "PanCam_" + str(self.FILE_ID) + ".pci_raw.partial"
+        # Create filename
+        write_filename = "PanCam_" \
+            + str(self.FILE_ID) \
+            + "_" \
+            + str(self.write_occurance).zfill(2) \
+            + ".pci_raw.partial"
         self.write_file = DIR / write_filename
         pancam_fns.exist_unlink(self.write_file)
         logger.info("Creating file: %s", self.write_file.name)
@@ -87,32 +93,23 @@ class LDT_Properties(object):
         # Keep a running tally of the number of bytes written to file
         self.writtenLen += len(Data)
 
-    def fileRename(self):
-        # Once all parts of the file have been received then finish
-        # Check written equals expected and rename file
-        if self.writtenLen == self.FILE_SIZE:
-            logger.info("Packet Length as expected - renaming")
-            newFile = self.write_file.with_suffix("")
-            self.write_file.replace(newFile)
-            self.write_file = newFile
-        else:
-            logger.error("Warning written length: %d not equal to FILE_SIZE %d ",
-                         self.writtenLen, self.FILE_SIZE)
-
     def moveHK(self):
         if self.DataType > 1:
             return
         elif self.DataType == 0:
             # HKNE
-            newName = self.write_file.with_suffix(".HKNE_raw")
+            newName = self.write_file.with_suffix(".HKNE_raw").name
         elif self.DataType == 1:
-            newName = self.write_file.with_suffix(".HKES_raw")
+            # HKES
+            newName = self.write_file.with_suffix(".HKES_raw").name
         logger.info("Moving HK Files")
-        p = newName.absolute()
         # Move up a directory
-        parent_dir = p.parents[1]
-        self.write_file.replace(parent_dir / p.name)
-        self.write_file = p / p.name
+        newDir = self.write_file.parents[1]
+        pancam_fns.exist_unlink(newDir / newName, logging.WARNING)
+
+        logger.info("Moving file: %s up a dir", newName)
+        self.write_file.rename(newDir / newName)
+        self.write_file = newDir / newName
 
     def createJSON(self):
         if self.DataType < 2:
@@ -139,6 +136,33 @@ class LDT_Properties(object):
         with open(JSON_file, 'w') as f:
             json.dump(TopLevDic, f,  indent=4)
 
+    def complete_file(self):
+        if self.write_completed:
+            logger.error("%s unitID completed but attempt to complete again!")
+
+        else:
+            self.write_completed = True
+            logger.info("%s unitID now complete", self.Unit_ID)
+
+            # Once all parts of the file have been received then finish
+            # Check written equals expected and rename file
+            if self.writtenLen == self.FILE_SIZE:
+                logger.info("Packet Length as expected - renaming")
+                newFile = self.write_file.with_suffix("")
+                pancam_fns.exist_unlink(newFile)
+                self.write_file.rename(newFile)
+                self.write_file = newFile
+
+            else:
+                logger.error("Warning written length: %d not equal to FILE_SIZE %d ",
+                             self.writtenLen, self.FILE_SIZE)
+
+        self.moveHK()
+        self.createJSON()
+
+    def setOccurance(self, occurance):
+        self.write_occurance = occurance
+
 
 class LDT_Intermediate:
     """Creates a quick class for the LDT intermediate parts"""
@@ -162,6 +186,8 @@ def HaScan(ROV_DIR):
     """Searches for .ha Rover files and creates raw binary files
     for each image found"""
     logger.info("Processing Rover .ha Files")
+
+    global Found_IDS
 
     # Find Files
     ROVER_HA = pancam_fns.Find_Files(ROV_DIR, "*.ha")
@@ -232,27 +258,36 @@ def HaScan(ROV_DIR):
 def HaPacketDecode(PKT_HD, PKT_ID, PKT_LINES, curFile, IMG_RAW_DIR):
     """Decodes the first packet"""
 
+    global Found_IDS
+
     TXT_Data = [next(curFile)[:-1] for x in range(PKT_LINES)]
     PKT_Bin = bytes.fromhex(''.join(TXT_Data))
 
     # First LDT Part
     if PKT_ID == LDT_IDs[0]:
         LDT_Cur_Pkt = LDT_Properties(PKT_Bin)
+
         if LDT_Cur_Pkt.PanCam:
             logger.info("New PanCam LDT part found with file ID: %s, and unitID %s",
                         LDT_Cur_Pkt.FILE_ID, LDT_Cur_Pkt.Unit_ID)
 
         # If write is True, check to see if ID already exists
+        if LDT_Cur_Pkt.write and (LDT_Cur_Pkt.Unit_ID in Found_IDS):
+            status.info(
+                "Multiple initial packets with the same ID found.")
+            prev_count = Found_IDS.get(LDT_Cur_Pkt.Unit_ID).write_occurance
+            LDT_Cur_Pkt.setOccurance(prev_count + 1)
 
-        # Check to see if ID already exists if not add to dict
-        if (LDT_Cur_Pkt.Unit_ID in Found_IDS) and LDT_Cur_Pkt.PanCam:
-            logger.error(
-                "2 initial packets with the same ID found, first ignored.")
+            # Check to see if previous ID was not already completed
+            if not Found_IDS.get(LDT_Cur_Pkt.Unit_ID).write_completed:
+                logger.error(
+                    "Previous FileID not completed, now adding to second FileID")
 
-        # Write data then add to dictionary
+        # Write packet contents to file
         if LDT_Cur_Pkt.write:
             LDT_Cur_Pkt.setWriteFile(IMG_RAW_DIR, PKT_HD)
             writeBytesToFile(LDT_Cur_Pkt, PKT_Bin[29:-2])
+
         Found_IDS.update({LDT_Cur_Pkt.Unit_ID: LDT_Cur_Pkt})
 
     # Second LDT Part
@@ -306,8 +341,8 @@ def HaPacketDecode(PKT_HD, PKT_ID, PKT_LINES, curFile, IMG_RAW_DIR):
                 Expected_SEQ = (Cur_LDT.Unit_ID, Cur_LDT.SEQ_No + 1)
                 if Expected_SEQ == (EndP.Unit_ID, EndP.SEQ_No):
                     Cur_LDT.SEQ_No += 1
-                    CompleteTelemetry(Cur_LDT)
                     Found_IDS.update({EndP.Unit_ID: Cur_LDT})
+                    Cur_LDT.complete_file()
 
                 else:
                     logger.warning("END LDT not sequential")
@@ -322,6 +357,8 @@ def HaPacketDecode(PKT_HD, PKT_ID, PKT_LINES, curFile, IMG_RAW_DIR):
 
 def checkBuffers(Cur_LDT):
     """Function checks the LDT part buffer and end buffer to add parts already found out of sequence"""
+
+    global Found_IDS
 
     Expected_SEQ = (Cur_LDT.Unit_ID, Cur_LDT.SEQ_No + 1)
 
@@ -342,9 +379,9 @@ def checkBuffers(Cur_LDT):
     if Expected_SEQ in EndBuffer:
         logger.warning("End LDT now fits: %d", Expected_SEQ[1])
         Cur_LDT.SEQ_No += 1
-        CompleteTelemetry(Cur_LDT)
-        EndBuffer.pop(Expected_SEQ)
         Found_IDS.update({Cur_LDT.Unit_ID: Cur_LDT})
+        Cur_LDT.complete_file()
+        EndBuffer.pop(Expected_SEQ)
 
 
 def pkt_Len(PKT_HD):
@@ -425,14 +462,6 @@ def RestructureHK(ROV_DIR):
     # Then save file
     curName = (RAW_ES + RAW_NE)[0].stem
     RTM.to_pickle(ROV_DIR / (curName + "_ha_Unproc_HKTM.pickle"))
-
-
-def CompleteTelemetry(Cur_LDT):
-    """Once a telemetry has been fully reassembled, rename and create JSON"""
-    Cur_LDT.fileRename()
-    Cur_LDT.moveHK()
-    Cur_LDT.createJSON()
-    Found_IDS.pop(Cur_LDT.Unit_ID)
 
 
 def compareHaCSV(ProcDir):
