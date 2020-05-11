@@ -241,7 +241,8 @@ def HaPacketDecode(PKT_HD, PKT_ID, PKT_LINES, curFile, IMG_RAW_DIR):
         if LDT_Cur_Pkt.PanCam:
             logger.info("New PanCam LDT part found with file ID: %s, and unitID %s",
                         LDT_Cur_Pkt.FILE_ID, LDT_Cur_Pkt.Unit_ID)
-            LDTHeader(PKT_Bin)
+
+        # If write is True, check to see if ID already exists
 
         # Check to see if ID already exists if not add to dict
         if (LDT_Cur_Pkt.Unit_ID in Found_IDS) and LDT_Cur_Pkt.PanCam:
@@ -261,7 +262,6 @@ def HaPacketDecode(PKT_HD, PKT_ID, PKT_LINES, curFile, IMG_RAW_DIR):
         # Check to see if Unit ID already started if not add to buffer
         if IntP.Unit_ID not in Found_IDS:
             logger.info("New Packet without first part - adding to buffer")
-            LDTHeader(PKT_Bin)
             Buffer.update({(IntP.Unit_ID, IntP.SEQ_No): PKT_Bin[20:-2]})
 
         else:
@@ -356,16 +356,6 @@ def writeBytesToFile(CurLDT, Bytes):
     with open(CurLDT.write_file, 'ab') as wf:
         wf.write(Bytes)
         CurLDT.writtenLen += len(Bytes)
-    return
-
-
-def LDTHeader(PKT_Bin):
-    """Decodes and write to a file the LDT first packet parts."""
-    bits_unpacked = bitstruct.unpack('u16u16u8u16u32u8u8', PKT_Bin[16:30])
-    LDT_HDR = namedtuple('LDT_HDR', [
-                         'Unit_ID', 'SEQ_No', 'PART_ID', 'FILE_ID', 'FILE_SIZE', 'FILE_TYPE', 'SPARE'])
-    SCI_LDT_HDR = LDT_HDR(*bits_unpacked)
-    logger.debug(SCI_LDT_HDR)
     return
 
 
