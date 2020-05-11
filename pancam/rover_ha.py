@@ -80,10 +80,8 @@ class LDT_Properties(object):
         # Determine FileName and check if exists
         write_filename = "PanCam_" + str(self.FILE_ID) + ".pci_raw.partial"
         self.write_file = DIR / write_filename
+        pancam_fns.exist_unlink(self.write_file)
         logger.info("Creating file: %s", self.write_file.name)
-        if self.write_file.exists():
-            self.write_file.unlink()
-            logger.info("Deleting file: %s", self.write_file.name)
 
     def updateWrite(self, Data):
         # Keep a running tally of the number of bytes written to file
@@ -137,9 +135,7 @@ class LDT_Properties(object):
         JSON_file = self.write_file.with_suffix(".json")
         TopLevDic = {"Processing Info": HaImageProcVer,
                      "LDT Information": LDTSource}
-        if JSON_file.exists():
-            JSON_file.unlink()
-            logger.info("Deleting file: %s", JSON_file.name)
+        pancam_fns.exist_unlink(JSON_file)
         with open(JSON_file, 'w') as f:
             json.dump(TopLevDic, f,  indent=4)
 
@@ -399,6 +395,7 @@ def RestructureHK(ROV_DIR):
         # Ignore if not all packets are complete
         if curfile.stat().st_size % es_line_len != 0:
             target = curfile.with_suffix('.HKES_raw.ignore')
+            pancam_fns.exist_unlink(target)
             curfile.rename(target)
             continue
 
@@ -416,6 +413,7 @@ def RestructureHK(ROV_DIR):
         # Ignore if not all packets are complete
         if curfile.stat().st_size % ne_line_len != 0:
             target = curfile.with_suffix('.HKNE_raw.ignore')
+            pancam_fns.exist_unlink(target)
             curfile.rename(target)
             continue
 

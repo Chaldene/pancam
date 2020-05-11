@@ -358,10 +358,9 @@ def bin_move(lv_dir: Path, archive: bool = False):
                     curfile.rename(arc_dir / curfile.name)
                     # If not a partial file can delete png preview
                     pngfile = curfile.with_suffix(".png")
-                    if (not curfile_partial) and pngfile.exists():
-                        logger.info(
-                            "Deleting png from LabView: %s", pngfile.name)
-                        pngfile.unlink()
+                    if (not curfile_partial):
+                        pancam_fns.exist_unlink(pngfile)
+
                 break
 
         if not curfile_matched:
@@ -525,8 +524,7 @@ def create_json(img_file: Path):
     json_file = img_file.with_suffix(".json")
     top_lev_dic = {"Processing Info": labviewProcVer}
 
-    if json_file.exists():
-        logger.info("Deleting file: %s", json_file.name)
+    pancam_fns.exist_unlink(json_file)
     with open(json_file, 'w') as f:
         json.dump(top_lev_dic, f, indent=4)
 
@@ -550,8 +548,8 @@ def create_repairedjson(img_file: Path):
 
     top_lev_dic = {"Processing Info": proc_info}
 
-    if json_file.exists():
-        logger.info("Deleting file: %s", json_file.name)
+    pancam_fns.exist_unlink(json_file)
+
     with open(json_file, 'w') as f:
         json.dump(top_lev_dic, f, indent=4)
 

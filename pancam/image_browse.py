@@ -71,9 +71,7 @@ def Img_RAW_Browse(PROC_DIR):
             # Create 8-bit .png thumbnail
             write_filename = curFile.stem
             write_file = BRW_DIR / (write_filename + ".png")
-            if write_file.exists():
-                write_file.unlink()
-                logger.info("Deleting file: %s", write_file.stem)
+            pancam_fns.exist_unlink(write_file)
 
             imageio.imwrite(write_file, Br_img)
             logger.info("Creating .png: %s", write_file.stem)
@@ -92,9 +90,8 @@ def Img_RAW_Browse(PROC_DIR):
 
             write_file = BRW_DIR / (write_filename + ".json")
 
-            if write_file.exists():
-                write_file.unlink()
-                logger.info("Deleting file: %s", write_file.stem)
+            pancam_fns.exist_unlink(write_file)
+
             with open(write_file, 'w') as f:
                 json.dump(RAWJson, f,  indent=4)
 

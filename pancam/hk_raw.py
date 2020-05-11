@@ -81,9 +81,8 @@ def decode(PROC_DIR):
 
     # Write a new file with RAW data
     write_file = PROC_DIR / ("RAW_HKTM.pickle")
-    if write_file.exists():
-        write_file.unlink()
-        logger.info("Deleting file: %s", write_file.name)
+    pancam_fns.exist_unlink(write_file)
+
     TM.to_pickle(write_file)
     logger.info("PanCam RAW TM pickled.")
 
@@ -598,9 +597,8 @@ def changelog(proc_dir, tm):
 
     # Create blank file
     write_file = proc_dir / ("Changelog.txt")
-    if write_file.exists():
-        write_file.unlink()
-        logger.info("Deleting file: %s", write_file.name)
+    pancam_fns.exist_unlink(write_file)
+
     wf = open(write_file, 'w')
 
     cols_drop = ['DT',

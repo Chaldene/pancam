@@ -67,9 +67,8 @@ def cal_HK(proc_dir):
     ctm['Temp_HRCA'] = raw['Temp_HRCA'] * cal_a[6] / raw['Volt_Ref'] + cal_b[6]
 
     write_file = proc_dir / "Cal_HKTM.pickle"
-    if write_file.exists():
-        write_file.unlink()
-        logger.info("Deleting file: %s", write_file.stem)
+    pancam_fns.exist_unlink(write_file)
+
     with open(write_file, 'w'):
         ctm.to_pickle(write_file)
         logger.info("PanCam Cal HK TM pickled.")
