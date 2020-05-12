@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 status = logging.getLogger('status')
 
 # Global parameters
-labviewProcVer = {'LVProcVer': 1.0}
+labviewProcVer = {'LVProcVer': '1.1.0'}
 
 
 def hk_extract(lv_dir: Path, archive: bool = False):
@@ -358,10 +358,9 @@ def bin_move(lv_dir: Path, archive: bool = False):
                     curfile.rename(arc_dir / curfile.name)
                     # If not a partial file can delete png preview
                     pngfile = curfile.with_suffix(".png")
-                    if (not curfile_partial) and pngfile.exists():
-                        logger.info(
-                            "Deleting png from LabView: %s", pngfile.name)
-                        pngfile.unlink()
+                    if (not curfile_partial):
+                        pancam_fns.exist_unlink(pngfile)
+
                 break
 
         if not curfile_matched:
@@ -525,8 +524,7 @@ def create_json(img_file: Path):
     json_file = img_file.with_suffix(".json")
     top_lev_dic = {"Processing Info": labviewProcVer}
 
-    if json_file.exists():
-        logger.info("Deleting file: %s", json_file.name)
+    pancam_fns.exist_unlink(json_file)
     with open(json_file, 'w') as f:
         json.dump(top_lev_dic, f, indent=4)
 
@@ -550,8 +548,8 @@ def create_repairedjson(img_file: Path):
 
     top_lev_dic = {"Processing Info": proc_info}
 
-    if json_file.exists():
-        logger.info("Deleting file: %s", json_file.name)
+    pancam_fns.exist_unlink(json_file)
+
     with open(json_file, 'w') as f:
         json.dump(top_lev_dic, f, indent=4)
 
@@ -577,6 +575,61 @@ def create_archive(lv_dir: Path):
     shutil.rmtree(target)
 
 
+def create_spw_images(dir_proc):
+    """Creates pci_raw files from the contents of the IMG_SPW folder.
+
+    In some cases useful images have not been saved as a '.bin' file during the
+    LabView session. As the data is still recorded in the SpW logs the images
+    are instead recreated from the IMG_SPW source.
+
+    Arguments:
+        dir_proc {pathlib.Path} -- Processing directory
+
+    Generates:
+        pci_raw_file -- Creates a copy of IMG_SPW contents within IMG_RAW
+        json_file -- For each IMG_RAW file copied creates a json with basic info.
+    """
+
+    logging.info("Creating images from SPW RAW images")
+
+    # Look into spacewire folder for images
+    dir_spw = dir_proc / 'IMG_SPW'
+    if not dir_spw.is_dir():
+        logger.error(
+            "No IMG_SPW directory found, unable to process SPW images")
+        return
+
+    raw_spw = pancam_fns.Find_Files(dir_spw, '*.pci_spw')
+    if not raw_spw:
+        return
+
+    # Create IMG_RAW folder
+    dir_raw = dir_proc / 'IMG_RAW'
+    if not dir_raw.is_dir():
+        dir_raw.mkdir()
+        logger.info("Creating IMG_RAW folder")
+
+    # Create normal images for them along with JSON
+    for curfile in raw_spw:
+        pci_raw_file = dir_raw / (curfile.stem + '.pci_raw')
+        pancam_fns.exist_unlink(pci_raw_file, logging.WARNING)
+
+        json_file = pci_raw_file.with_suffix('.json')
+        pancam_fns.exist_unlink(json_file, logging.WARNING)
+
+        logger.info("Moving %s to IMG_RAW dir", curfile.name)
+        copyfile(curfile, pci_raw_file)
+
+        # Create json file
+        proc_info = labviewProcVer
+        file_dic = {'Image not saved during session, SPW source:': curfile.name}
+        proc_info.update(file_dic)
+        top_lev_dic = {'Processing Info': proc_info}
+
+        with open(json_file, 'w') as f:
+            json.dump(top_lev_dic, f, indent=4)
+
+
 if __name__ == "__main__":
     dir = Path(
         input("Type the path to the folder where the LabWiew files are stored: "))
@@ -600,5 +653,6 @@ if __name__ == "__main__":
     # hs.decode(proc_dir)
     # hs.verify(proc_dir)
     # sci_extract(dir, archive=True)
-    bin_move(dir, archive=True)
+    # bin_move(dir, archive=True)
     # create_archive(dir)
+    create_spw_images(dir)

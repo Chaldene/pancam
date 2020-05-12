@@ -185,9 +185,7 @@ def NavCamBrowse(ROV_DIR):
         write_file = curFile.with_suffix(".png")
 
         # Check if file exists
-        if write_file.exists():
-            write_file.unlink()
-            logger.info("Deleting file: %s", write_file.name)
+        pancam_fns.exist_unlink(write_file)
         logger.info("Creating file: %s", write_file.name)
         imageio.imwrite(write_file, image)
 

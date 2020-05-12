@@ -168,3 +168,19 @@ def setup_proc_logging(logger, proc_dir):
     fh.setFormatter(fh_formatter)
 
     logger.addHandler(fh)
+
+
+def exist_unlink(purepath, loglevel=logging.INFO):
+    """Checks whether a file exists before unlinking.
+
+    If the file given by purepath does exist the file is added to the logger at
+    the level set by loglevel.
+
+    Arguments:
+        purepath -- pathlib purepath to file to be checked
+        loglevel -- logging level for output if file exists.
+    """
+
+    if purepath.exists():
+        purepath.unlink()
+        logger.log(loglevel, "Deleting file: %s", purepath.name)

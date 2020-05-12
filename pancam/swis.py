@@ -129,9 +129,7 @@ def hs_extract(swis_dir: Path):
 
         # New file within new folder
         write_file = (proc_dir / "HS.log")
-        if write_file.exists():
-            logger.info("HS.log file already exists - deleting")
-            write_file.unlink()
+        pancam_fns.exist_unlink(write_file)
         logger.info("Creating HS.log file")
         wf = open(write_file, 'w')
 
@@ -216,9 +214,7 @@ def nsvf_parse(swis_dir: Path):
     file['sc'] = proc_dir / 'Sci.txt'
 
     for key, value in file.items():
-        if value.exists():
-            value.unlink()
-            logger.info("Deleting file: %s", value.name)
+        pancam_fns.exist_unlink(value)
         f_acc[key] = open(value, 'w')
         f_wri[key] = csv.writer(f_acc[key], delimiter=' ',
                                 lineterminator='\r')
@@ -288,9 +284,7 @@ def nsvf_parse(swis_dir: Path):
     # Rename HK file with Unix time
     hk_time = hk_nsvf_epoch(swis_dir)
     hk_unix = proc_dir / ("nsvfHK_Unix" + hk_time + ".txt")
-    if hk_unix.exists():
-        logger.info("Target file exists -- deleting")
-        hk_unix.unlink()
+    pancam_fns.exist_unlink(hk_unix)
     logger.info("Renaming HK file to %s", hk_unix.name)
     file['hk'].rename(hk_unix)
 
@@ -492,8 +486,8 @@ def create_json(img_file: Path):
     json_file = img_file.with_suffix(".json")
     top_lev_dic = {"Processing Info": swisProcVer}
 
-    if json_file.exists():
-        logger.info("Deleting file: %s", json_file.name)
+    pancam_fns.exist_unlink(json_file)
+
     with open(json_file, 'w') as f:
         json.dump(top_lev_dic, f, indent=4)
 
