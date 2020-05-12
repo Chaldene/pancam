@@ -105,6 +105,7 @@ if __name__ == '__main__':
             labview.sci_extract(top_dir, archive=arch_logs)
             labview.bin_move(top_dir, archive=arch_logs)
             labview.psu_extract(top_dir, archive=arch_logs)
+            # labview.create_spw_images(proc_dir)
             if arch_logs:
                 labview.create_archive(top_dir)
 

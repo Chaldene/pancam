@@ -2,6 +2,7 @@
 
 ## Prioties
 
+* Within logger record git status
 * Be consistent with python style and capitalisation
 * SWIS Verify that HK-Ess is generated at the right points
 * Ensure all globals have Caps and Underscore
@@ -22,7 +23,6 @@
 * Plot points rather than lines
 * Create a calculation array that stores useful temps, voltages, HRC etc.
 * Look at creating a nice interface for it all
-* Break into powered chunks that can be easily navigated
 * Also look for PanCam service errors such as 5,2
 * Automatically generated ICD from files
 * Check all liscenses are valid
@@ -107,3 +107,4 @@
 * Add liscense for project
 * Create a terminal logger called status instead of using error.
 * Change console logging output to a STATUS Flag if possible
+* Break into powered chunks that can be easily navigated
