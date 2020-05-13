@@ -113,10 +113,10 @@ if __name__ == '__main__':
         elif rover.TM_extract(top_dir):
             status.info("Rover Type Found")
             rover.TC_extract(top_dir)
-            rover.NavCamBrowse(top_dir)
             rover_ha.HaScan(top_dir)
             rover_ha.RestructureHK(proc_dir)
             rover_ha.compareHaCSV(proc_dir)
+            rover.NavCamBrowse(top_dir)
 
         elif swis.nsvf_parse(top_dir):
             status.info("Single SWIS Type Found")

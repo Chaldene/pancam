@@ -34,6 +34,7 @@
 * Add borders around plot legends
 * Differentiate between WACL and WACR in WAC plots, especially for temperatures.
 * Calculate CRCs for WAC and verify
+* Rover files extract based on datetime range
 
 ## Completed
 

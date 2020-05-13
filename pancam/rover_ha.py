@@ -73,19 +73,29 @@ class LDT_Properties(object):
         else:
             self.HK = False
 
-        self.write = self.PanCam
+        self.write = True
         self.writtenLen = 0
         self.write_completed = False
         self.write_occurance = 0
 
     def setWriteFile(self, DIR, pkt_HD):
-        # Create filename
-        write_filename = "PanCam_" \
-            + str(self.FILE_ID) \
-            + "_" \
-            + str(self.write_occurance).zfill(2) \
-            + ".pci_raw.partial"
-        self.write_file = DIR / write_filename
+        if self.PanCam:
+            # Create filename
+            write_filename = "PanCam_" \
+                + str(self.FILE_ID) \
+                + "_" \
+                + str(self.write_occurance).zfill(2) \
+                + ".pci_raw.partial"
+            self.write_file = DIR / 'IMG_RAW' / write_filename
+
+        else:
+            write_filename = 'LDT_' \
+                + str(self.FILE_ID) \
+                + '_' \
+                + str(self.write_occurance).zfill(2) \
+                + '.nav_raw.partial'
+            self.write_file = DIR / 'LDT_RAW' / write_filename
+
         pancam_fns.exist_unlink(self.write_file)
         logger.info("Creating file: %s", self.write_file.name)
 
@@ -94,6 +104,8 @@ class LDT_Properties(object):
         self.writtenLen += len(Data)
 
     def moveHK(self):
+        if not self.PanCam:
+            return
         if self.DataType > 1:
             return
         elif self.DataType == 0:
@@ -158,7 +170,33 @@ class LDT_Properties(object):
                              self.writtenLen, self.FILE_SIZE)
 
         self.moveHK()
+        self.navcam()
         self.createJSON()
+
+    def navcam(self):
+        if self.PanCam:
+            return
+
+        # Check if expected NavCam size just for 1024x1024
+        if self.FILE_SIZE == 1024*1024 + 68:
+            logger.info(
+                "FileID: %s Packet length matches NavCam", self.FILE_ID)
+            name_new = self.write_file.with_suffix('.pgm').name
+            dir_nav = self.write_file.parents[1] / 'NAVCAM'
+            file_targ = dir_nav / name_new
+            pancam_fns.exist_unlink(file_targ)
+
+            logger.info('Creating pgm file: %s', name_new)
+            pgm_hdr = bytes('P5\n1024 1024 255\n', 'utf8')
+            src = open(self.write_file, 'rb')
+            src.read(68)
+
+            # Write file to NavCam
+            with open(file_targ, 'wb') as f:
+                f.write(pgm_hdr)
+                f.write(src.read())
+
+            src.close()
 
     def setOccurance(self, occurance):
         self.write_occurance = occurance
@@ -196,10 +234,26 @@ def HaScan(ROV_DIR):
         return
 
     # Create directory for binary file
-    IMG_RAW_DIR = ROV_DIR / "PROC" / "IMG_RAW"
+    dir_proc = ROV_DIR / "PROC"
+    if not dir_proc.is_dir():
+        logger.info("Generating 'PROC' directory")
+        dir_proc.mkdir()
+
+    # Create directory for binary file
+    IMG_RAW_DIR = dir_proc / "IMG_RAW"
     if not IMG_RAW_DIR.is_dir():
         logger.info("Generating 'IMG_RAW' directory")
         IMG_RAW_DIR.mkdir()
+
+    LDT_RAW_DIR = dir_proc / 'LDT_RAW'
+    if not LDT_RAW_DIR.is_dir():
+        logger.info("Generating 'LDT_RAW' directory")
+        LDT_RAW_DIR.mkdir()
+
+    dir_nav = dir_proc / "NAVCAM"
+    if not dir_nav.is_dir():
+        logger.info("Generating 'NAVCAM' directory")
+        dir_nav.mkdir()
 
     # Search through .ha files
     PKT_HD = [None] * 4
@@ -227,7 +281,7 @@ def HaScan(ROV_DIR):
                 if PKT_ID in LDT_IDs:
                     # Read ha file using repeating pattern a packet head is 4 lines
                     HaPacketDecode(PKT_HD, PKT_ID, PKT_LINES,
-                                   curFile, IMG_RAW_DIR)
+                                   curFile, dir_proc)
                 else:
                     for _ in range(PKT_LINES):
                         next(curFile)
@@ -255,7 +309,7 @@ def HaScan(ROV_DIR):
     logger.info("Processing Rover .ha Files - Completed")
 
 
-def HaPacketDecode(PKT_HD, PKT_ID, PKT_LINES, curFile, IMG_RAW_DIR):
+def HaPacketDecode(PKT_HD, PKT_ID, PKT_LINES, curFile, dir_proc):
     """Decodes the first packet"""
 
     global Found_IDS
@@ -268,8 +322,13 @@ def HaPacketDecode(PKT_HD, PKT_ID, PKT_LINES, curFile, IMG_RAW_DIR):
         LDT_Cur_Pkt = LDT_Properties(PKT_Bin)
 
         if LDT_Cur_Pkt.PanCam:
-            logger.info("New PanCam LDT part found with file ID: %s, and unitID %s",
-                        LDT_Cur_Pkt.FILE_ID, LDT_Cur_Pkt.Unit_ID)
+            log_message = 'New PanCam LDT part'
+
+        else:
+            log_message = '----Other LDT part'
+
+        logger.info(log_message + ' found with file ID: %s, and unitID %s',
+                    LDT_Cur_Pkt.FILE_ID, LDT_Cur_Pkt.Unit_ID)
 
         # If write is True, check to see if ID already exists
         if LDT_Cur_Pkt.write and (LDT_Cur_Pkt.Unit_ID in Found_IDS):
@@ -285,7 +344,7 @@ def HaPacketDecode(PKT_HD, PKT_ID, PKT_LINES, curFile, IMG_RAW_DIR):
 
         # Write packet contents to file
         if LDT_Cur_Pkt.write:
-            LDT_Cur_Pkt.setWriteFile(IMG_RAW_DIR, PKT_HD)
+            LDT_Cur_Pkt.setWriteFile(dir_proc, PKT_HD)
             writeBytesToFile(LDT_Cur_Pkt, PKT_Bin[29:-2])
 
         Found_IDS.update({LDT_Cur_Pkt.Unit_ID: LDT_Cur_Pkt})
@@ -465,7 +524,7 @@ def RestructureHK(ROV_DIR):
 
 
 def compareHaCSV(ProcDir):
-    """Looks for HK generated by .csv and .ha and compares the two. 
+    """Looks for HK generated by .csv and .ha and compares the two.
     The majority of the time the .ha files contain more data."""
 
     logger.info("Comparing .ha generated HK to .csv generated HK")
@@ -485,14 +544,14 @@ def compareHaCSV(ProcDir):
     ha_bin = pd.read_pickle(RAW_ha[0])
     csv = pd.read_pickle(RAW_csv[0])
     csv_bin = pd.DataFrame()
-    csv_bin['RAW'] = csv['RAW'].apply(lambda x: bytearray.fromhex(x))
+    csv_bin['RAW'] = csv['RAW'].apply(lambda x: bytes.fromhex(x))
     csv_bin = pancam_fns.ReturnCUC_RAW(csv_bin, csv_bin['RAW'])
 
-    result = pd.merge(ha_bin, csv_bin, on=['Pkt_CUC'], how='right')
+    result = pd.merge(ha_bin, csv_bin, on=['Pkt_CUC'], how='inner')
     comp = result['RAW_x'] != result['RAW_y']
     mismatch = result[comp]
 
-    if (len(result)-len(csv_bin)) > 0:
+    if (len(result)-len(csv_bin)) < 0:
         # First check that all the CUC entries within csv_bin are in ha_bin
         logger.error(
             "HK Data contained entries within .csv HK not present in .ha HK")
@@ -527,6 +586,6 @@ if __name__ == "__main__":
     logger.info("Running HaImageProc.py as main")
     logger.info("Reading directory: %s", proc_dir)
 
-    HaScan(dir)
+    # HaScan(dir)
     RestructureHK(proc_dir)
     compareHaCSV(proc_dir)
