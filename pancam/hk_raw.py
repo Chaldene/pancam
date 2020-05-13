@@ -556,8 +556,6 @@ def CUCtoUTC_DT(RAW):
 
     elif MajSource == '.ha':
         epoch = datetime(year=2000, month=1, day=1)
-        epoch_offset = timedelta(hours=+12)
-        epoch = epoch + epoch_offset
 
     else:
         # Rover uses time since Mid-day of the year 2000 minues 12 hours
