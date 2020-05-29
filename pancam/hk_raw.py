@@ -551,7 +551,7 @@ def CUCtoUTC_DT(RAW):
         # LabView provides the CUC time as the # seconds from the first day
         # of the month, minus an extra day.
         epoch = datetime(RAW['Year'][0], RAW['Month'][0], day=1)
-        epoch_offset = timedelta(day=-1)
+        epoch_offset = timedelta(days=-1)
         epoch = epoch + epoch_offset
 
     elif MajSource == '.ha':
