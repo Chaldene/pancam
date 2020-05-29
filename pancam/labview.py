@@ -461,7 +461,7 @@ def tc_extract(lv_dir: Path, archive: bool = False):
 
     if archive:
         # Create directory for archive
-        arc_dir = lv_dir / "ARCHIVE" / "PSU_Log"
+        arc_dir = lv_dir / "ARCHIVE" / "TC_Log"
         if not arc_dir.is_dir():
             logger.info("Generating 'ARCHIVE' directory")
             arc_dir.mkdir(parents=True)
