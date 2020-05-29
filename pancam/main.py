@@ -120,6 +120,8 @@ if __name__ == '__main__':
 
         elif swis.nsvf_parse(top_dir):
             status.info("Single SWIS Type Found")
+            swis.nsvf_lb_extract(top_dir)
+            swis.nsvf_tc_extract(top_dir)
             swis.hk_extract(proc_dir)
             hs.decode(proc_dir, spw_header=True)
             hs.verify(proc_dir)
