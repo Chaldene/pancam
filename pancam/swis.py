@@ -134,6 +134,7 @@ def hs_extract(swis_dir: Path):
         wf = open(write_file, 'w')
 
         # Scan through text log and save H&S lines
+        consec_skipped = 0  # Counter for number of consecutive lines skipped.
         with open(curfile, 'r') as f:
             logger.info("Reading %s", curfile.name)
             line = f.readline()
@@ -149,7 +150,15 @@ def hs_extract(swis_dir: Path):
                         split_line = line_red.split(" ")
                         new_line = "".join([entry.zfill(2)
                                             for entry in split_line]) + "\n"
-                        wf.write(new_line)
+
+                        if len(new_line) == 129:
+                            wf.write(new_line)
+                            consec_skipped = 0
+                        else:
+                            consec_skipped += 1
+                            if consec_skipped > 15:
+                                logger.error(
+                                    'Skipping lots of HS entries, count: %s', consec_skipped)
                 line = f.readline()
             wf.close()
 
