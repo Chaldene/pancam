@@ -102,8 +102,11 @@ if __name__ == '__main__':
             hs.decode(proc_dir)
             hs.verify(proc_dir)
             labview.tc_extract(top_dir)
-            labview.sci_extract(top_dir, archive=arch_logs)
-            labview.bin_move(top_dir, archive=arch_logs)
+            if hs.all_default_image_dim(proc_dir):
+                labview.sci_extract(top_dir, archive=arch_logs)
+                labview.bin_move(top_dir, archive=arch_logs)
+            else:
+                labview.bin_move(top_dir, archive=arch_logs, comp_spw=False)
             labview.psu_extract(top_dir, archive=arch_logs)
             # labview.create_spw_images(proc_dir)
             if arch_logs:

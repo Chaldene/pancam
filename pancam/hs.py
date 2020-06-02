@@ -186,6 +186,35 @@ def sci_cnt(proc_dir: Path):
     return img_cnt
 
 
+def all_default_image_dim(proc_dir):
+    """Returns false if any entries in hs Sci_Len not 0 or default size.
+
+    Arguments:
+        proc_dir {Path} -- Folder path to the hs.pickle file
+
+    Returns:
+        bool -- False if any enties are not 0 or 2,097,200 bytes.
+    """
+
+    # Constants
+    NORM_BYTE_LENS = {0, 2097200}
+
+    logger.info("Verifying all science images are default dimensions")
+    logger.info("Searching for hs.pickle file")
+    hs_file = pancam_fns.Find_Files(proc_dir, "hs.pickle", SingleFile=True)[0]
+    hs = pd.read_pickle(hs_file)
+
+    verify = pd.DataFrame()
+    verify['Sci_Len'] = ~hs['Sci_Len'].isin(NORM_BYTE_LENS)
+    err_df = hs[verify['Sci_Len']]
+    if err_df.shape[0] != 0:
+        status.info(
+            "Non-Default image dimensions found, not rebuilding from SpW packets and only using saved .bin")
+        return False
+
+    return True
+
+
 if __name__ == "__main__":
     proc_dir = Path(
         input("Type the path to thefolder where the hs.pickle files are stored: "))

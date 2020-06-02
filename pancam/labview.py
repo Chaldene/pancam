@@ -253,9 +253,12 @@ def sci_extract(lv_dir: Path, archive: bool = False):
     logger.info("--Extracting Science Images from SpW logs completed.")
 
 
-def bin_move(lv_dir: Path, archive: bool = False):
+def bin_move(lv_dir: Path, archive: bool = False, comp_spw=True):
 
-    logger.info("Moving saved science images that match SpW logs")
+    if comp_spw:
+        logger.info("Moving saved science images that match SpW logs")
+    else:
+        logger.info("Moving save science images but ignoring SpW logs")
 
     bin_files = pancam_fns.Find_Files(lv_dir, "*.bin")
     spw_files = pancam_fns.Find_Files(lv_dir, "*.pci_spw")
@@ -276,6 +279,20 @@ def bin_move(lv_dir: Path, archive: bool = False):
             logger.info("Generating 'ARCHIVE' directory")
             arc_dir.mkdir(parents=True)
 
+    # If not comparing against SpW simply move
+    if not comp_spw:
+        for curfile in bin_files:
+            logger.info("Reading file: %s", curfile.name)
+            pci_raw_file = img_dir / (curfile.stem + ".pci_raw")
+
+            pancam_fns.exist_unlink(pci_raw_file)
+            copyfile(curfile, pci_raw_file)
+            create_json(pci_raw_file)
+
+        logger.info("--Moving saved science images completed.")
+        return
+
+    # Else if comparing against SpW continue
     for curfile in bin_files:
         curfile_matched = False
         curfile_partial = False

@@ -12,6 +12,7 @@ import numpy as np
 import imageio
 import json
 import logging
+import bitstruct
 
 import pancam_fns
 from image_hdr_raw import decodeRAW_ImgHDR
@@ -27,6 +28,9 @@ class ImgRawBrError(Exception):
 
 def Img_RAW_Browse(PROC_DIR):
 
+    # Constants
+    BIN_RES = [1024, 512, 256, 128]
+
     logger.info("Generating Image Browse Products from RAW Images")
 
     # Search for pci_raw files in the process directory
@@ -40,11 +44,33 @@ def Img_RAW_Browse(PROC_DIR):
         logger.info("Reading %s", curFile.name)
         with open(curFile, 'rb') as file:
             img_rawheader = decodeRAW_ImgHDR(file.read(48))
-            raw_data = np.fromfile(file, dtype='>u2')
             BrowseProps = {'RAW_Source': curFile.name}
             BrowseProps.update({'PNG Bit-Depth': "8"})
 
-            ig = raw_data.reshape(1024, 1024)
+            # Determine resolution
+            if img_rawheader['Cam'] != 3:
+                res = BIN_RES[img_rawheader['W_Bin']]
+                pad = img_rawheader['W_Pad_F']
+            else:
+                res = 1024
+                pad = True
+
+            if res != 1024:
+                status.info("Non default image size: %s", res)
+
+            if pad:
+                raw_data = np.fromfile(file, dtype='>u2')
+            else:
+                status.info("Non padded image")
+                read_data = []
+                data = file.read(5)
+                while len(data) == 5:
+                    updata = bitstruct.unpack('u10u10u10u10', data)
+                    read_data.extend([*updata])
+                    data = file.read(5)
+                raw_data = np.asarray(read_data)
+
+            ig = raw_data.reshape(res, res)
             img = ig >> 2
 
             # Determine image rotation for preview
