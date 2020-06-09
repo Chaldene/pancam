@@ -32,9 +32,11 @@
 * Create a kind of WAC and HRC command history but not necessarily a plot
 * Set FW numbers and colors to be consistent across WACs and FW plot
 * Add borders around plot legends
+* Perhaps add FDIS limits to the RAW plots
 * Differentiate between WACL and WACR in WAC plots, especially for temperatures.
 * Calculate CRCs for WAC and verify
 * Rover files extract based on datetime range
+* See if editor maximum line width can include comments
 * When reporting WAC Memory check performed and successful, state which camera
 
 ## Completed

@@ -554,6 +554,7 @@ def sci_extract(swis_dir: Path, nsvf: bool = False):
     pkts = 7
     cur_img = 0
     cur_pkt = 1
+    blank_file = False
     with open(sci_file) as sci:
         if nsvf:
             reader = csv.reader(sci, delimiter=' ')
@@ -599,23 +600,37 @@ def sci_extract(swis_dir: Path, nsvf: bool = False):
                         "Incorrect final LDT Length. Image: %d", cur_img)
                     logger.info("Expected: 254000")
                     logger.info("Got: %d", len(data))
-                    # ! Temp workaround
-                    data = binary_format[:254000]
-                    # ! Temp workaround
+
+                # Check if ancillary data is empty
+                if (cur_pkt == 1):
+                    blank_file = (data[:49] == bytes(49))
 
                 f[cur_img].write(data)
 
                 # Limit to writing 7 packets to each binary file
                 if cur_pkt == pkts:
+                    f[cur_img].close()
+
+                    if blank_file:
+                        logger.error(
+                            'Image #%d is a blank image, ignoring', cur_img)
+                        filename = Path(f[cur_img].name)
+                        filename.rename(filename.with_suffix('.pci_blank'))
+                        logger.info(
+                            'Deleting blank image json: %s', filename.stem)
+                        filename.with_suffix('.json').unlink()
+
                     cur_img += 1
                     cur_pkt = 1
+
                 else:
                     cur_pkt += 1
 
                 line = sci.readline()
 
-            # Compare temp file to original bin file
             f_tmp.close()
+
+            # Compare temp file to original bin file
             ref = sci_file.with_suffix(".bin")
             if filecmp.cmp(tmp_file, ref, shallow=False):
                 logger.info(
@@ -625,10 +640,6 @@ def sci_extract(swis_dir: Path, nsvf: bool = False):
                     "Temporary file does not match output .bin %s", sci_file.name)
 
             tmp_file.unlink()
-
-        # Close all files
-        for file in f:
-            file.close()
 
     logger.info("--Extracting Science Images completed.")
 
