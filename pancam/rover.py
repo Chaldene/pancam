@@ -110,7 +110,7 @@ def TM_extract(ROV_DIR):
 
             DRT = DRT.append(DK, ignore_index=True)
 
-    # logger.info("Number of PanCam TMs found: %d", DF.shape[0])
+    logger.info("Number of PanCam TMs found: %d", DF.shape[0])
     logger.info("Number of Rover Status Entries found: %d", DRS.shape[0])
     logger.info("Number of Rover Temperature Entries found: %d", DRT.shape[0])
 
