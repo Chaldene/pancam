@@ -32,6 +32,7 @@ EndBuffer = {}
 LDT_IDs = ["AB.TM.MRSS0697",
            "AB.TM.MRSS0698",
            "AB.TM.MRSS0699"]
+RAW_IMG_SZE = 2097200
 
 
 class HaReadError(Exception):
@@ -124,8 +125,10 @@ class LDT_Properties(object):
         self.write_file = newDir / newName
 
     def createJSON(self):
+        # If HK ignore
         if self.DataType < 2:
             return
+
         # Create dictionary of data to be written
         LDTSource = {
             'Source': 'Rover .ha files',
@@ -158,9 +161,17 @@ class LDT_Properties(object):
 
             # Once all parts of the file have been received then finish
             # Check written equals expected and rename file
-            if self.writtenLen == self.FILE_SIZE:
-                logger.info("Packet Length as expected - renaming")
+            # if (self.PanCam) and (self.writtenLen == RAW_IMG_SZE + 14):
+            if (self.PanCam) and (self.writtenLen == RAW_IMG_SZE):
+                logger.info("Packet Length as expected for RAW IMG - renaming")
                 newFile = self.write_file.with_suffix("")
+                pancam_fns.exist_unlink(newFile)
+                self.write_file.rename(newFile)
+                self.write_file = newFile
+
+            elif self.writtenLen == self.FILE_SIZE:
+                logger.info("Packet Length likely compressed - renaming")
+                newFile = self.write_file.with_suffix(".ignore")
                 pancam_fns.exist_unlink(newFile)
                 self.write_file.rename(newFile)
                 self.write_file = newFile
@@ -292,9 +303,9 @@ def HaScan(ROV_DIR):
     # Merge buffers
     FinalBuf = {**Buffer, **EndBuffer}
     if len(FinalBuf) > 0:
-        logger.info("Items remaining in buffers")
+        logger.error("Items remaining in buffers")
         for item in FinalBuf:
-            logger.error(item)
+            logger.info(item)
             if item[0] in Found_IDS:
                 Cur_LDT = Found_IDS.get(item[0])
                 checkBuffers(Cur_LDT)
@@ -306,6 +317,7 @@ def HaScan(ROV_DIR):
         logger.info("Still %d items in buffer", len(Buffer)+len(EndBuffer))
     else:
         logger.info("LDT Buffer Empty")
+        status.info("LDT Buffer Now Empty")
     logger.info("Processing Rover .ha Files - Completed")
 
 

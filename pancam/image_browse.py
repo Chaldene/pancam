@@ -59,7 +59,8 @@ def Img_RAW_Browse(PROC_DIR):
                 status.info("Non default image size: %s", res)
 
             if pad:
-                raw_data = np.fromfile(file, dtype='>u2')
+                # Using count ignores the last extra 14 bytes.
+                raw_data = np.fromfile(file, dtype='>u2', count=1048576)
             else:
                 status.info("Non padded image")
                 read_data = []
