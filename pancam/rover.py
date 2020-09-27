@@ -3,7 +3,7 @@
 Created on Thu Oct 31 17:18:02 2019
 
 @author: ucasbwh
-Parses Rover .ha and .csv files by extracting PanCam data. 
+Parses Rover .ha and .csv files by extracting PanCam data.
 """
 
 import pandas as pd
@@ -190,6 +190,65 @@ def NavCamBrowse(ROV_DIR):
         imageio.imwrite(write_file, image)
 
 
+def type(ROV_DIR):
+    """Returns the Rover model"""
+
+    # Constants
+    sources = {1: 'exm_pfm_ccs', 2: 'exm_gtm_ccs'}
+
+    logger.info("Searching for Rover model")
+
+    # Find all Rover TC files within folder and subfolders
+    TCfiles = pancam_fns.Find_Files(ROV_DIR, 'STDChrono*.csv')
+
+    if TCfiles:
+        # Read CSV file and parse to find model
+        file = TCfiles[0]
+        logger.info("Reading %s", file.name)
+        dt = pd.read_csv(file, sep=';', encoding="ISO-8859-1",
+                         header=0, dtype=object, index_col=False)
+    else:
+        logger.error("Unable to find details of Rover type")
+
+    try:
+        # Try to search logs for known entry
+        dp = dt[dt['TEMPLATE'] == 'LG'].iloc[0]
+        dm = dp['VARIABLE_PART']
+        model = dm.split(',')[-3]
+        if model not in sources.values():
+            raise ValueError("Unrecognised Rover model")
+
+    except:
+        # If not found then ask user
+        usr_ch = input(
+            'Unable to determine Rover model, select as appropriate:\n'
+            f'\t{sources[1]}: [1 = Default]\n'
+            f'\t{sources[2]}: [2]\n\n'
+            'Selection:  ')
+
+        try:
+            model = sources[int(usr_ch)]
+        except:
+            model = sources[1]
+
+    return model
+
+
+def sw_ver(ROV_DIR):
+    """Returns the rover module software version RMSW"""
+
+    logger.info("Searching for RMSW_Ver")
+
+    user_ch = input("Input Rover Module Software Version [Default = 2.0]: ")
+
+    if user_ch == '':
+        user_ch = 2.0
+
+    rmsw_ver = float(user_ch)
+
+    return rmsw_ver
+
+
 if __name__ == "__main__":
     dir = Path(
         input("Type the path to thefolder where the Rover files are stored: "))
@@ -208,6 +267,8 @@ if __name__ == "__main__":
     logger.info("Running rover.py as main")
     logger.info("Reading directory: %s", proc_dir)
 
+    # RoverType(dir)
+    # sw_ver(dir)
     TM_extract(dir)
     TC_extract(dir)
     NavCamBrowse(dir)

@@ -25,7 +25,7 @@ class decodeRAW_HK_Error(Exception):
     pass
 
 
-def decode(PROC_DIR):
+def decode(PROC_DIR, source, rov_type=None):
     """Takes the unprocessed telemetry and produces a RAW pandas array of all the PanCam parameters"""
 
     logger.info("---Processing RAW TM Files")
@@ -49,7 +49,7 @@ def decode(PROC_DIR):
     RTM = pancam_fns.ReturnCUC_RAW(RTM, Bin)
 
     # Time stamp data from CUC
-    TM['DT'] = pd.to_datetime(CUCtoUTC_DT(RTM))
+    TM['DT'] = pd.to_datetime(CUCtoUTC_DT(RTM, source, rov_type))
 
     TM, Bin = decode_hkheader(TM, Bin)
     TM = DecodeParam_HKVoltTemps(TM, Bin)
@@ -522,28 +522,17 @@ def DecodeHRC_CamRes(TM, HRCBin):
     return TM
 
 
-def CUCtoUTC_DT(RAW):
+def CUCtoUTC_DT(RAW, source, rov_type=None):
     """Function that takes the 4,2 CUC and converts it to a datetime object"""
-
-    Sources = RAW['Source'].value_counts().index.tolist()
-    if len(Sources) > 1:
-        logger.error(
-            "More than one data source found within HK. Using the most common source")
-
-    elif len(Sources) == 0:
-        logger.error("No HK source column found! ABORTING")
-        return
-
-    MajSource = Sources[0]
 
     # First calculate the fractional seconds
     RAW['CUCfrac'] = RAW['Pkt_CUC'].apply(lambda x: (x & 0xFFFF)/0x10000)
 
-    if MajSource == 'SWIS':
+    if source == 'SWIS':
         CalcTime = pd.to_datetime(RAW['Unix_Time'], unit='ms')
         return CalcTime
 
-    elif MajSource == 'LabView':
+    elif source == 'LabView':
         RAW['DT'] = pd.to_datetime(RAW['Time'], format='%Y-%m-%d\t%H:%M:%S.%f')
         RAW['Year'] = RAW['DT'].dt.year
         RAW['Month'] = RAW['DT'].dt.month
@@ -554,11 +543,14 @@ def CUCtoUTC_DT(RAW):
         epoch_offset = timedelta(days=-1)
         epoch = epoch + epoch_offset
 
-    elif MajSource == '.ha':
-        epoch = datetime(year=2000, month=1, day=1)
+    elif source == 'Rover':
+        if rov_type == 'exm_pfm_ccs':
+            # PFM Rover uses time since Mid-day of the year 2000 plus 12 hours
+            epoch = datetime(year=2000, month=1, day=1, hour=12)
+        else:
+            epoch = datetime(year=2000, month=1, day=1)
 
     else:
-        # Rover uses time since Mid-day of the year 2000 minues 12 hours
         epoch = datetime(year=2000, month=1, day=1)
 
     CalcTime = RAW.apply(lambda row:
@@ -653,8 +645,38 @@ def changelog(proc_dir, tm):
 
 
 if __name__ == "__main__":
+    sources = {1: 'LabView', 2: 'Rover', 3: 'SWIS', 4: 'Single SWIS'}
+    rov_types = {1: 'exm_pfm_ccs', 2: 'exm_gtm_ccs'}
     proc_dir = Path(
         input("Type the path to the PROC folder where the processed files are stored: "))
+
+    user_ch = input(
+        "Select source:\n"
+        f"\t{sources[1]}: [1 = Default]\n"
+        f"\t{sources[2]}: [2]\n"
+        f"\t{sources[3]}: [3]\n"
+        f"\t{sources[4]}: [4]\n\n"
+        "Selection:  ")
+
+    try:
+        source = sources[int(user_ch)]
+    except:
+        source = sources[1]
+
+    print(source)
+
+    if source == 'Rover':
+        user_ch = input(
+            "Select Rover Type:\n"
+            f"\t{rov_types[1]}: [1 = Default]\n"
+            f"\t{rov_types[2]}: [2]\n\n"
+            "Selection:  "
+        )
+
+        try:
+            rov_type = rov_types[int(user_ch)]
+        except:
+            rov_type = rov_types[1]
 
     logger, status = pancam_fns.setup_logging()
     pancam_fns.setup_proc_logging(logger, proc_dir)
@@ -663,4 +685,4 @@ if __name__ == "__main__":
     logger.info("Running hk_raw.py as main")
     logger.info("Reading directory: %s", proc_dir)
 
-    decode(proc_dir)
+    decode(proc_dir, source, rov_type)

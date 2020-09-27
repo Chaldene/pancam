@@ -25,14 +25,14 @@ logger = logging.getLogger(__name__)
 status = logging.getLogger('status')
 
 # Global parameters
-HaImageProcVer = {'HaImageProcVer': 0.5}
+HaImageProcVer = {'HaImageProcVer': 0.6}
 Found_IDS = {}
 Buffer = {}
 EndBuffer = {}
 LDT_IDs = ["AB.TM.MRSS0697",
            "AB.TM.MRSS0698",
            "AB.TM.MRSS0699"]
-RAW_IMG_SZE = 2097200
+RMSW_VER = 2.0
 
 
 class HaReadError(Exception):
@@ -152,17 +152,25 @@ class LDT_Properties(object):
             json.dump(TopLevDic, f,  indent=4)
 
     def complete_file(self):
+
+        global RMSW_VER
+
         if self.write_completed:
             logger.error("%s unitID completed but attempt to complete again!")
 
         else:
             self.write_completed = True
             logger.info("%s unitID now complete", self.Unit_ID)
-
             # Once all parts of the file have been received then finish
+
+            # Newer software has an extra 16bytes to account for image compression structure
+            if RMSW_VER > 3:
+                raw_img_sze = 2097200 + 14
+            else:
+                raw_img_sze = 2097200
+
             # Check written equals expected and rename file
-            # if (self.PanCam) and (self.writtenLen == RAW_IMG_SZE + 14):
-            if (self.PanCam) and (self.writtenLen == RAW_IMG_SZE):
+            if (self.PanCam) and (self.writtenLen == raw_img_sze):
                 logger.info("Packet Length as expected for RAW IMG - renaming")
                 newFile = self.write_file.with_suffix("")
                 pancam_fns.exist_unlink(newFile)
@@ -237,6 +245,7 @@ def HaScan(ROV_DIR):
     logger.info("Processing Rover .ha Files")
 
     global Found_IDS
+    global RMSW_VER
 
     # Find Files
     ROVER_HA = pancam_fns.Find_Files(ROV_DIR, "*.ha")
@@ -244,13 +253,24 @@ def HaScan(ROV_DIR):
         logger.error("No files found - ABORTING")
         return
 
-    # Create directory for binary file
+    # Determine RMSW Version
+    config_files = pancam_fns.Find_Files(
+        ROV_DIR, "config.json", SingleFile=True)
+    if not config_files:
+        logger.error(
+            f"No config.json file found. Assuming RMSW Version is {RMSW_VER}")
+    else:
+        with open(config_files[0], 'r') as curfile:
+            config = json.load(curfile)
+            RMSW_VER = config['Source Details']['RMSW Ver']
+            status.info(f"Using structure for RMSW_Ver {RMSW_VER}")
+
+    # Create directories
     dir_proc = ROV_DIR / "PROC"
     if not dir_proc.is_dir():
         logger.info("Generating 'PROC' directory")
         dir_proc.mkdir()
 
-    # Create directory for binary file
     IMG_RAW_DIR = dir_proc / "IMG_RAW"
     if not IMG_RAW_DIR.is_dir():
         logger.info("Generating 'IMG_RAW' directory")
@@ -598,6 +618,6 @@ if __name__ == "__main__":
     logger.info("Running HaImageProc.py as main")
     logger.info("Reading directory: %s", proc_dir)
 
-    # HaScan(dir)
+    HaScan(dir)
     RestructureHK(proc_dir)
     compareHaCSV(proc_dir)
