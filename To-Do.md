@@ -2,6 +2,7 @@
 
 ## Prioties
 
+* Check Block ID in image json file is being parsed correctly.
 * Within logger record git status
 * Be consistent with python style and capitalisation
 * SWIS Verify that HK-Ess is generated at the right points

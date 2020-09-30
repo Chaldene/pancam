@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 status = logging.getLogger('status')
 
 # Global parameters
-HaImageProcVer = {'HaImageProcVer': 0.6}
+ProcInfo = {'HaImageProcVer': 0.7}
 Found_IDS = {}
 Buffer = {}
 EndBuffer = {}
@@ -86,7 +86,7 @@ class LDT_Properties(object):
                 + str(self.FILE_ID) \
                 + "_" \
                 + str(self.write_occurance).zfill(2) \
-                + ".pci_raw.partial"
+                + ".ldt_raw.partial"
             self.write_file = DIR / 'IMG_RAW' / write_filename
 
         else:
@@ -124,6 +124,37 @@ class LDT_Properties(object):
         self.write_file.rename(newDir / newName)
         self.write_file = newDir / newName
 
+    def verifyImg(self):
+
+        global RMSW_VER
+
+        # Newer software has an extra 16bytes to account for image compression structure
+        if RMSW_VER > 3:
+            raw_img_sze = 2097200 + 14
+        else:
+            raw_img_sze = 2097200
+
+        # Check written equals expected and rename file
+        if self.writtenLen == raw_img_sze:
+            logger.info("Restructuring to .pci_raw format")
+            newFile = self.write_file.with_suffix(".pci_raw")
+            pancam_fns.exist_unlink(newFile)
+            with open(self.write_file, 'rb') as in_file:
+                with open(newFile, 'wb') as out_file:
+                    out_file.write(
+                        in_file.read()[:2097200])
+            self.write_file.unlink()
+            self.write_file = newFile
+
+        else:
+            logger.info(
+                "Image likely compressed - renaming")
+            newFile = self.write_file.with_suffix(
+                ".ldt_raw.ignore")
+            pancam_fns.exist_unlink(newFile)
+            self.write_file.rename(newFile)
+            self.write_file = newFile
+
     def createJSON(self):
         # If HK ignore
         if self.DataType < 2:
@@ -145,7 +176,7 @@ class LDT_Properties(object):
 
         # Write LDT properties to a json file
         JSON_file = self.write_file.with_suffix(".json")
-        TopLevDic = {"Processing Info": HaImageProcVer,
+        TopLevDic = {"Processing Info": ProcInfo,
                      "LDT Information": LDTSource}
         pancam_fns.exist_unlink(JSON_file)
         with open(JSON_file, 'w') as f:
@@ -153,42 +184,31 @@ class LDT_Properties(object):
 
     def complete_file(self):
 
-        global RMSW_VER
-
         if self.write_completed:
             logger.error("%s unitID completed but attempt to complete again!")
-
         else:
             self.write_completed = True
             logger.info("%s unitID now complete", self.Unit_ID)
             # Once all parts of the file have been received then finish
 
-            # Newer software has an extra 16bytes to account for image compression structure
-            if RMSW_VER > 3:
-                raw_img_sze = 2097200 + 14
-            else:
-                raw_img_sze = 2097200
+            if (self.PanCam):
+                if self.writtenLen == self.FILE_SIZE:
+                    logger.info("Packet Length as expected - renaming")
+                    # Remove .partial from file name
+                    newFile = self.write_file.with_suffix("")
+                    pancam_fns.exist_unlink(newFile)
+                    self.write_file.rename(newFile)
+                    self.write_file = newFile
 
-            # Check written equals expected and rename file
-            if (self.PanCam) and (self.writtenLen == raw_img_sze):
-                logger.info("Packet Length as expected for RAW IMG - renaming")
-                newFile = self.write_file.with_suffix("")
-                pancam_fns.exist_unlink(newFile)
-                self.write_file.rename(newFile)
-                self.write_file = newFile
+                    if self.HK:
+                        self.moveHK()
+                    else:
+                        self.verifyImg()
 
-            elif self.writtenLen == self.FILE_SIZE:
-                logger.info("Packet Length likely compressed - renaming")
-                newFile = self.write_file.with_suffix(".ignore")
-                pancam_fns.exist_unlink(newFile)
-                self.write_file.rename(newFile)
-                self.write_file = newFile
+                else:
+                    logger.error("Warning written length: %d not equal to FILE_SIZE %d ",
+                                 self.writtenLen, self.FILE_SIZE)
 
-            else:
-                logger.error("Warning written length: %d not equal to FILE_SIZE %d ",
-                             self.writtenLen, self.FILE_SIZE)
-
-        self.moveHK()
         self.navcam()
         self.createJSON()
 
@@ -264,6 +284,9 @@ def HaScan(ROV_DIR):
             config = json.load(curfile)
             RMSW_VER = config['Source Details']['RMSW Ver']
             status.info(f"Using structure for RMSW_Ver {RMSW_VER}")
+
+    # Update Processing info
+    ProcInfo.update({'RMSW Version': RMSW_VER})
 
     # Create directories
     dir_proc = ROV_DIR / "PROC"

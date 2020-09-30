@@ -4,6 +4,14 @@ A set of tools developed to aid processing of all PanCam produced data. So far s
 
 Generally the script Main.py should be run and the directory containing the PanCam files should be input. The script will then search through the folder contents to find data it recognises. Subsequent scripts are then called depending on what was found, the output should be any generated RAW images along with HK plots and several pickle files of the data.
 
-## Note
+## Installation Instructions
 
-I've still yet to package this up properly but as a quick solution I have included a requirements.txt file of everything installed within my conda environment. 
+This software uses Python 3.7 with pipenv used to manage module dependancies and versions. 
+
+To duplicate the enviornment as intended first install pipenv using the command `pip install pipenv` using the terminal/powershell.
+
+Next navigate to the folder containing a copy of this repo above and type `pipenv shell` to create an environment for this program.
+
+Install all the dependencies by simply running `pipenv install` this will use the pipfile.lock to capture the same configuration as I have. (The command `pipenv install --dev` can be used to also install development modules).
+
+Finally, run the main.py and paste the location of the files in the terminal/powershell and it will process everything it finds. 
