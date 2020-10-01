@@ -29,7 +29,7 @@ status = logging.getLogger('status')
 swisProcVer = {'swisProcVer': 1.0}
 
 
-def hk_extract(swis_dir: Path):
+def hk_extract(swis_dir):
     """Generates a Unproc_HKTM.pickle from the given SWIS source
 
     Arguments:
@@ -100,7 +100,7 @@ def hk_extract(swis_dir: Path):
         dl.to_pickle(cur_dir / "Unproc_HKTM.pickle")
 
 
-def hs_extract(swis_dir: Path):
+def hs_extract(swis_dir):
     """Extracts the H&S from the SWIS log and puts in a new file
 
     Arguments:
@@ -169,7 +169,7 @@ def hs_extract(swis_dir: Path):
         logger.info("PanCam H+S pickled.")
 
 
-def nsvf_parse(swis_dir: Path):
+def nsvf_parse(swis_dir):
     """Searches through the NSVF generated packet_log and generates new files from any found PanCam telemetry.
 
     Arguments:
@@ -453,7 +453,7 @@ def nsvf_tc_extract(swis_dir):
     return
 
 
-def hk_nsvf_epoch(swis_dir: Path):
+def hk_nsvf_epoch(swis_dir):
     """Determines the elsapsed time of the first nsvf hk packet and returns the Unix time.
 
     Arguments:
@@ -496,7 +496,7 @@ def hk_nsvf_epoch(swis_dir: Path):
     return epoch_str
 
 
-def sci_extract(swis_dir: Path, nsvf: bool = False):
+def sci_extract(swis_dir, nsvf=False):
     """Creates pci_raw files from the generated Sci.txt file. HS must be decoded and verified first
 
     Arguments:
@@ -644,7 +644,7 @@ def sci_extract(swis_dir: Path, nsvf: bool = False):
     logger.info("--Extracting Science Images completed.")
 
 
-def create_json(img_file: Path):
+def create_json(img_file):
     """Creates a json file to accompany .pci_raw image.
 
     Arguments:
@@ -663,7 +663,7 @@ def create_json(img_file: Path):
         json.dump(top_lev_dic, f, indent=4)
 
 
-def sci_compare(proc_dir: Path):
+def sci_compare(proc_dir):
     """Compares the contents of the generated images to the references.
 
     Reference image used depends on cam type stated in the generated
@@ -724,7 +724,7 @@ def sci_compare(proc_dir: Path):
         gen.close()
 
 
-def create_instances(swis_dir: Path):
+def create_instances(swis_dir):
     """Used for SWIS TB. Creates a folder for each HK file found and copies all corresponding files to that folder.
 
     Arguments:

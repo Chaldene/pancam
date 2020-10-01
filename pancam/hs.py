@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 status = logging.getLogger('status')
 
 
-def decode(proc_dir: Path, spw_header: bool = False):
+def decode(proc_dir, spw_header=False):
     """Searches the proc_dir for hs_raw.pickle and decodes PanCam parameters generating a new pickle file
 
     Arguments:
@@ -65,7 +65,7 @@ def decode(proc_dir: Path, spw_header: bool = False):
     logger.info("--Parsing HS decode completed.")
 
 
-def verify(proc_dir: Path):
+def verify(proc_dir):
     """Finds the decoded HS.pickle and runs the following checks on the data:
         - HK Address is constant
         - HK Length is a valid value
@@ -160,7 +160,7 @@ def verify(proc_dir: Path):
     logger.info("--HS Verify Completed.")
 
 
-def sci_cnt(proc_dir: Path):
+def sci_cnt(proc_dir):
     """Calculates the number of science images generated as reported in HS
 
     Arguments:

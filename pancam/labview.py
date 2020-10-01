@@ -29,7 +29,7 @@ status = logging.getLogger('status')
 labviewProcVer = {'LVProcVer': '1.1.0'}
 
 
-def hk_extract(lv_dir: Path, archive: bool = False):
+def hk_extract(lv_dir, archive=False):
     """Generates a Unproc_HKTM.pickle from the found HK txt files
 
     Arguments:
@@ -88,7 +88,7 @@ def hk_extract(lv_dir: Path, archive: bool = False):
     return True
 
 
-def hs_extract(lv_dir: Path, archive: bool = False):
+def hs_extract(lv_dir, archive=False):
     """Extracts the H&S from the .txt logs into a single pickel for furhter processing
 
     Arguments:
@@ -140,7 +140,7 @@ def hs_extract(lv_dir: Path, archive: bool = False):
     logger.info("--HS Extract Completed")
 
 
-def sci_extract(lv_dir: Path, archive: bool = False):
+def sci_extract(lv_dir, archive=False):
     """Creates pci_spw files from the RMAP Sci packets. HS must be decoded and verified first.
 
     Arguments:
@@ -253,7 +253,7 @@ def sci_extract(lv_dir: Path, archive: bool = False):
     logger.info("--Extracting Science Images from SpW logs completed.")
 
 
-def bin_move(lv_dir: Path, archive: bool = False, comp_spw=True):
+def bin_move(lv_dir, archive=False, comp_spw=True):
 
     if comp_spw:
         logger.info("Moving saved science images that match SpW logs")
@@ -389,7 +389,7 @@ def bin_move(lv_dir: Path, archive: bool = False, comp_spw=True):
     logger.info("--Moving saved science images completed.")
 
 
-def psu_extract(lv_dir: Path, archive: bool = False):
+def psu_extract(lv_dir, archive=False):
 
     logger.info("Extracting PSU measurements.")
 
@@ -465,7 +465,7 @@ def psu_extract(lv_dir: Path, archive: bool = False):
     logger.info("--PSU Extract Completed")
 
 
-def tc_extract(lv_dir: Path, archive: bool = False):
+def tc_extract(lv_dir, archive=False):
     logger.info("Extracting Labview TC commands.")
 
     files_tc = pancam_fns.Find_Files(lv_dir, "RMAP_CMD_*.txt")
@@ -528,7 +528,7 @@ def tc_extract(lv_dir: Path, archive: bool = False):
     logger.info("--TC Extract Completed")
 
 
-def create_json(img_file: Path):
+def create_json(img_file):
     """Creates a json file to accompany .pci_raw image.
 
     Arguments:
@@ -546,7 +546,7 @@ def create_json(img_file: Path):
         json.dump(top_lev_dic, f, indent=4)
 
 
-def create_repairedjson(img_file: Path):
+def create_repairedjson(img_file):
     """Creates a json file to accompany repaired.pci_raw image.
 
     Arguments:
@@ -571,7 +571,7 @@ def create_repairedjson(img_file: Path):
         json.dump(top_lev_dic, f, indent=4)
 
 
-def create_archive(lv_dir: Path):
+def create_archive(lv_dir):
     """Creates a compressed tar archive of the archive folder
 
     Arguments:

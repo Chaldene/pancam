@@ -97,7 +97,7 @@ def plot_cycles(proc_dir):
     return limits
 
 
-def all_plots(proc_dir: Path):
+def all_plots(proc_dir):
     """Generates one of each defined plots.
 
     Arguments:
@@ -169,7 +169,7 @@ def format_axes(fig, integers=False):
                 matplotlib.ticker.MaxNLocator(integer=True))
 
 
-def add_text(axes: matplotlib.axes, text: str):
+def add_text(axes, text):
     """Adds axes text to the subplot
 
     Arguments:
@@ -185,7 +185,7 @@ def add_text(axes: matplotlib.axes, text: str):
               transform=axes.transAxes)
 
 
-def adjust_xscale(ax0: matplotlib.axes):
+def adjust_xscale(ax0):
     """Rescales plot x-axis by 10% to avoid overlap with axes text
 
     Arguments:
@@ -966,7 +966,7 @@ def HRC_CS(PROC_DIR, Interact=False):
     logger.info("Producing HRC CS Plot Completed")
 
 
-def wac_res(proc_dir: Path, Interact=False):
+def wac_res(proc_dir, Interact=False):
 
     logger.info("Producing WAC Plot")
 

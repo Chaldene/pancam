@@ -47,7 +47,7 @@ hrc_cmd_dict = {0x00: "RST",
                 0xF6: "Enc Inver"}
 
 
-def decode_all(proc_dir: Path):
+def decode_all(proc_dir):
     """Decodes all commands into thier specific functions
 
     Arguments:
@@ -74,7 +74,7 @@ def decode_all(proc_dir: Path):
     logger.info("--TC Camera Decode Completed")
 
 
-def cam_decode(tc: pd.DataFrame()):
+def cam_decode(tc):
     """Decodes the camera specific telecommands
 
     Arguments:

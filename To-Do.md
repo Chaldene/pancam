@@ -2,12 +2,10 @@
 
 ## Prioties
 
-* Check Block ID in image json file is being parsed correctly.
 * Within logger record git status
 * Be consistent with python style and capitalisation
 * SWIS Verify that HK-Ess is generated at the right points
 * Ensure all globals have Caps and Underscore
-* Don't define function types
 * Use more lines for pandas long expressions
 * Multi-line functions have closing bracket on new line
 * Improve Docstrings and follow standard conventions
@@ -113,3 +111,4 @@
 * Create a terminal logger called status instead of using error.
 * Change console logging output to a STATUS Flag if possible
 * Break into powered chunks that can be easily navigated
+* Don't define function types
