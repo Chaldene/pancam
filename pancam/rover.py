@@ -18,6 +18,13 @@ import pancam_fns
 logger = logging.getLogger(__name__)
 status = logging.getLogger('status')
 
+# Variables for the script
+name_hk_es = "AB.TM.TM_RMI000402"
+name_hk_ne = "AB.TM.TM_RMI000401"
+
+name_rov_ls = "AB.TM.MRSP8001"
+name_rov_hs = "AB.TM.MRSP8002"
+
 
 def TM_extract(ROV_DIR):
     """Searches for TM with Rover files and creates a binary array of each file found"""
@@ -33,23 +40,29 @@ def TM_extract(ROV_DIR):
         logger.warning("No files found - ABORTING")
         return False
 
+    DF_es_entries = 0
+    DF_ne_entries = 0
+
     # Read CSV files and parse
     for file in TMfiles:
         logger.info("Reading %s", file.name)
         DT = pd.read_csv(file, sep=';', header=0, index_col=False)
 
         # Search for PanCam housekeeping
-        DL = DT[(DT['NAME'] == "AB.TM.TM_RMI000401") | (
-            DT['NAME'] == "AB.TM_TM_RMI000402")].copy()
+        DF_es_entries += DT[DT['NAME'] == name_hk_es].shape[0]
+        DF_ne_entries += DT[DT['NAME'] == name_hk_ne].shape[0]
+
+        DL = DT[(DT['NAME'] == name_hk_es) | (
+            DT['NAME'] == name_hk_ne)].copy()
         if not DL.empty:
-            DL['RAW'] = DL.RAW_DATA.apply(lambda x: x[38:-4])
+            DL['RAW'] = DL.RAW_DATA.apply(lambda x: x[38: -4])
             DL['DT'] = pd.to_datetime(
                 DL['GROUND_REFERENCE_TIME'], format='%d/%m/%Y %H:%M:%S.%f')
             DF = DF.append(DL[['RAW', 'DT']], ignore_index=True)
 
         # Rover HK both low and high speed
-        DP = DT[(DT['NAME'] == "AB.TM.MRSP8001") | (
-            DT['NAME'] == "AB.TM.MRSP8002")].copy()
+        DP = DT[(DT['NAME'] == name_rov_ls) | (
+            DT['NAME'] == name_rov_hs)].copy()
         if not DP.empty:
             DG = DP.RAW_DATA.apply(lambda x: x[2:])
             DG = DG.apply(lambda x: bytearray.fromhex(x))
@@ -76,7 +89,7 @@ def TM_extract(ROV_DIR):
             DRS = DRS.append(DP, ignore_index=True)
 
         # Rover HK Thermistors Only contained within low speed HK
-        DK = DT.loc[DT['NAME'] == "AB.TM.MRSP8001"].copy()
+        DK = DT.loc[DT['NAME'] == name_rov_ls].copy()
         if not DK.empty:
             DW = DK.RAW_DATA.apply(lambda x: x[2:])
             DW = DW.apply(lambda x: bytearray.fromhex(x))
