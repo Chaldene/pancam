@@ -127,8 +127,8 @@ def all_plots(proc_dir):
 
     psu(proc_dir)
 
-    HRC_CS(proc_dir)
-    wac_res(proc_dir)
+    HRC_CS(proc_dir, limits=cyc_lims)
+    wac_res(proc_dir, limits=cyc_lims)
 
 
 def MakeHKPlotsDir(PROC_DIR):
@@ -182,7 +182,8 @@ def add_text(axes, text):
               fontweight='bold',
               horizontalalignment='right',
               verticalalignment='top',
-              transform=axes.transAxes)
+              transform=axes.transAxes
+              )
 
 
 def adjust_xscale(ax0):
@@ -832,7 +833,7 @@ def HK_Deltas(PROC_DIR, Interact=False, limits=None):
     logger.info("Producing HK Delta Plot Completed")
 
 
-def HRC_CS(PROC_DIR, Interact=False):
+def HRC_CS(PROC_DIR, Interact=False, limits=None):
     """Produces a plot of the HRC Camera Status from pickle files"""
 
     logger.info("Producing HRC Status Plots")
@@ -857,18 +858,31 @@ def HRC_CS(PROC_DIR, Interact=False):
         return
 
     # Search for PanCam Telecommands
-    TCPikFile = pancam_fns.Find_Files(
+    cal_tc_file = pancam_fns.Find_Files(
         PROC_DIR, "*Cal_TC.pickle", SingleFile=True)
-    if not TCPikFile:
-        logger.info("No TC file found - Leaving Blank")
-        TC = pd.DataFrame()
-        TCPlot = False
-    else:
+
+    if cal_tc_file:
+        TC = pd.read_pickle(cal_tc_file[0])
+        hrc_tc = TC[TC['ACTION'] == 'HRC '].reset_index()
+        logger.info("HRC plot using calibrated TC")
         TCPlot = True
 
-    if TCPlot:
-        TC = pd.read_pickle(TCPikFile[0])
-        hrc_tc = TC[TC['ACTION'] == 'HRC '].reset_index()
+    else:
+        logger.info("No CAL TC file found")
+        TCPlot = False
+
+        action_tc_file = pancam_fns.Find_Files(
+            PROC_DIR, "*Unproc_TC.pickle", SingleFile=True)
+
+        if action_tc_file:
+            TC = pd.read_pickle(action_tc_file[0])
+            logger.info("HRC plot using uncalibrated TCs")
+            actionPlot = True
+
+        else:
+            logger.info("No TC file found - Leaving Blank")
+            TC = pd.DataFrame()
+            actionPlot = False
 
     # Create plot structure
     fig = plt.figure(figsize=(14.0, 9))
@@ -883,7 +897,7 @@ def HRC_CS(PROC_DIR, Interact=False):
     ax5 = fig.add_subplot(gs[5], sharex=ax0)
     ax6 = fig.add_subplot(gs[6], sharex=ax0)
 
-    # Action List
+    # Calibrated TCs
     if TCPlot:
         size = hrc_tc.shape[0]
         level = hrc_tc['Cam_Cmd'].apply(lambda x: -1 if x == "CS" else 1)
@@ -906,6 +920,25 @@ def HRC_CS(PROC_DIR, Interact=False):
             i = first_hrc_cs
             ax0.annotate(hrc_tc.Cam_Cmd.iloc[i], xy=(hrc_tc.DT.iloc[i], level.iloc[i]), xytext=(
                 0, -2), textcoords="offset points", va="bottom", ha="right", rotation=90)
+
+        add_text(ax0, 'HRC CMD List')
+
+    # Rover actions instead
+    elif actionPlot:
+        size = TC.shape[0]
+        TC['LEVEL'] = 1
+        markerline, _, _ = ax0.stem(
+            TC['DT'], TC['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
+        plt.setp(markerline, mec="k", mfc="w", zorder=3)
+        markerline.set_ydata(np.zeros(size))
+        for i in range(0, size):
+            ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0, -2),
+                         textcoords="offset points", va="top", ha="right", rotation=90)
+
+        add_text(ax0, 'Action List')
+
+    else:
+        ax0.get_yaxis().set_visible(False)
 
     # remove y axis and spines
     ax0.get_yaxis().set_visible(False)
@@ -959,7 +992,9 @@ def HRC_CS(PROC_DIR, Interact=False):
     adjust_xscale(ax0)
 
     fig.tight_layout()
-    fig.savefig(HK_DIR / 'HRC_CS.png')
+    fig_path = HK_DIR / 'HRC_CS.png'
+    fig.savefig(fig_path)
+    plot_subsets(fig, fig_path, limits)
 
     if Interact:
         plt.show(block=True)
@@ -969,7 +1004,7 @@ def HRC_CS(PROC_DIR, Interact=False):
     logger.info("Producing HRC CS Plot Completed")
 
 
-def wac_res(proc_dir, Interact=False):
+def wac_res(proc_dir, Interact=False, limits=None):
 
     logger.info("Producing WAC Plot")
 
@@ -989,19 +1024,32 @@ def wac_res(proc_dir, Interact=False):
         return
 
     # Search for PanCam TCs
-    tcpikfile = pancam_fns.Find_Files(
+    cal_tc_file = pancam_fns.Find_Files(
         proc_dir, "*Cal_TC.pickle", SingleFile=True)
-    if not tcpikfile:
-        logger.info("No TC file found - leaving blank")
-        tc = pd.DataFrame()
-        TCPlot = False
-    else:
-        TCPlot = True
 
-    if TCPlot:
-        tc = pd.read_pickle(tcpikfile[0])
+    if cal_tc_file:
+        tc = pd.read_pickle(cal_tc_file[0])
         wac_tc = tc[(tc['ACTION'] == 'WACL ') | (
             tc['ACTION'] == 'WACR ')].reset_index()
+        logger.info("WAC Res plot using calibrated TC")
+        TCPlot = True
+
+    else:
+        logger.info("No CAL TC file found")
+        TCPlot = False
+
+        action_tc_file = pancam_fns.Find_Files(
+            PROC_DIR, "*Unproc_TC.pickle", SingleFile=True)
+
+        if action_tc_file:
+            tc = pd.read_pickle(action_tc_file[0])
+            logger.info("WAC Res plot using uncalibrated TCs")
+            actionPlot = True
+
+        else:
+            logger.info("No TC file found - Leaving Blank")
+            tc = pd.DataFrame()
+            actionPlot = False
 
     # Create plot structure
     fig = plt.figure(figsize=(14.0, 9))
@@ -1050,7 +1098,24 @@ def wac_res(proc_dir, Interact=False):
             ax0.annotate(wac_hk.Cam_Cmd.iloc[0], xy=(wac_hk.DT.iloc[0], -0.8), xytext=(
                 0, -2), textcoords="offset points", va="bottom", ha="right", rotation=90)
 
+        add_text(ax0, 'WAC CMD List')
         xrange = ax0.get_xlim()
+
+    elif actionPlot:
+        size = TC.shape[0]
+        TC['LEVEL'] = 1
+        markerline, _, _ = ax0.stem(
+            TC['DT'], TC['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
+        plt.setp(markerline, mec="k", mfc="w", zorder=3)
+        markerline.set_ydata(np.zeros(size))
+        for i in range(0, size):
+            ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0, -2),
+                         textcoords="offset points", va="top", ha="right", rotation=90)
+
+        add_text(ax0, 'Action List')
+
+    else:
+        ax0.get_yaxis().set_visible(False)
 
     # remove y axis and spines
     add_text(ax0, 'WAC Actions')
@@ -1103,7 +1168,9 @@ def wac_res(proc_dir, Interact=False):
     adjust_xscale(ax0)
 
     fig.tight_layout()
-    fig.savefig(hk_dir / 'WAC.png')
+    fig_path = hk_dir / 'WAC.png'
+    fig.savefig(fig_path)
+    plot_subsets(fig, fig_path, limits)
 
     if Interact:
         plt.show(block=True)
@@ -1340,12 +1407,14 @@ if __name__ == "__main__":
     logger.info("Running plotter.py as main")
     logger.info("Reading directory: %s", proc_dir)
 
+    # cyc_lims = plot_cycles(proc_dir)
     # HK_Temperatures(proc_dir, True)
-    # Rover_Temperatures(proc_dir)
+    # Rover_Temperatures(proc_dir, True)
     # Rover_Power(proc_dir)
     # HK_Overview(proc_dir, True)
     # HK_Voltages(proc_dir, True)
-    # HRC_CS(proc_dir, True)
+
+    # HRC_CS(proc_dir, limits=cyc_lims, Interact=False)
     # wac_res(proc_dir, True)
     # FW(proc_dir, Interact=True)
     # psu(proc_dir, Interact=True)
