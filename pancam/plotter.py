@@ -804,11 +804,14 @@ def HK_Deltas(PROC_DIR, Interact=False, limits=None):
 
     # HK Essential Delta
     ess_tm = RAW[RAW['TM_Type_ID'] == 0].copy()
-    ess_tm['CUC_Delta'] = ess_tm.Pkt_CUC.apply(lambda x: x >> 16).diff()
-    ax4.plot(ess_tm.DT, ess_tm.CUC_Delta, 'ko-')
-    ax4.set_ylim(bottom=-0.1)
-    ax4.grid(True)
-    add_text(ax4, r'Ess. HK $\Delta$s')
+    if (ess_tm.shape[0] > 1):
+        ess_tm['CUC_Delta'] = ess_tm.Pkt_CUC.apply(lambda x: x >> 16).diff()
+        ax4.plot(ess_tm.DT, ess_tm.CUC_Delta, 'ko-')
+        ax4.set_ylim(bottom=-0.1)
+        ax4.grid(True)
+        add_text(ax4, r'Ess. HK $\Delta$s')
+    else:
+        logger.error("Partial HK plots as no HK ES found.")
 
     format_axes(fig)
     ax4.tick_params(labelbottom=True)

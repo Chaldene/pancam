@@ -361,6 +361,26 @@ def HaScan(ROV_DIR):
     else:
         logger.info("LDT Buffer Empty")
         status.info("LDT Buffer Now Empty")
+
+    if len(Found_IDS) > 0:
+        msg = (f"Found the following PanCam LDT files: \n")
+        for _, value in Found_IDS.items():
+            msg += f"\t\t{value.FILE_ID}\n"
+        status.info(msg)
+
+    # Clean up directories if empty
+    if not (any(IMG_RAW_DIR.iterdir())):
+        IMG_RAW_DIR.rmdir()
+        logger.info(f"No files found in IMG_RAW dir. Removing")
+
+    if not (any(LDT_RAW_DIR.iterdir())):
+        LDT_RAW_DIR.rmdir()
+        logger.info(f"No files found in LDT_RAW dir. Removing")
+
+    if not (any(dir_nav.iterdir())):
+        dir_nav.rmdir()
+        logger.info(f"No files found in NAVCAM dir. Removing")
+
     logger.info("Processing Rover .ha Files - Completed")
 
 

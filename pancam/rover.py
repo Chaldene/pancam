@@ -123,6 +123,16 @@ def TM_extract(ROV_DIR):
 
             DRT = DRT.append(DK, ignore_index=True)
 
+    if (DF_es_entries > 0):
+        logger.info(f"Number of PanCam HK Ess found: {DF_es_entries}")
+    else:
+        logger.error(f"Rover TM_extract found no HK Ess")
+
+    if (DF_ne_entries > 0):
+        logger.info(f"Rover TM_extract total HK NonE found: {DF_ne_entries}")
+    else:
+        logger.error(f"Rover TM_extract found no HK NonE")
+
     logger.info("Number of PanCam TMs found: %d", DF.shape[0])
     logger.info("Number of Rover Status Entries found: %d", DRS.shape[0])
     logger.info("Number of Rover Temperature Entries found: %d", DRT.shape[0])

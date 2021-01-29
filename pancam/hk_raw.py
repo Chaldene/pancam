@@ -34,7 +34,8 @@ def decode(PROC_DIR, source, rov_type=None):
     PikFile = pancam_fns.Find_Files(
         PROC_DIR, "*Unproc_HKTM.pickle", SingleFile=True)
     if not PikFile:
-        logger.warning("No files found - ABORTING")
+        logger.error("No files found - ABORTING")
+        status.error("No HK files found.")
         return
 
     RTM = pd.read_pickle(PikFile[0])
@@ -272,6 +273,9 @@ def DecodeParam_HKNE(TM, Bin):
         del NEBin
 
         TM, Bin = verify.hkne(TM, Bin)
+
+    else:
+        logger.error("No Non-Essential HK found")
 
     return TM
 
