@@ -866,6 +866,7 @@ def HRC_CS(PROC_DIR, Interact=False, limits=None):
         hrc_tc = TC[TC['ACTION'] == 'HRC '].reset_index()
         logger.info("HRC plot using calibrated TC")
         TCPlot = True
+        actionPlot = False
 
     else:
         logger.info("No CAL TC file found")
@@ -1033,13 +1034,14 @@ def wac_res(proc_dir, Interact=False, limits=None):
             tc['ACTION'] == 'WACR ')].reset_index()
         logger.info("WAC Res plot using calibrated TC")
         TCPlot = True
+        actionPlot = False
 
     else:
         logger.info("No CAL TC file found")
         TCPlot = False
 
         action_tc_file = pancam_fns.Find_Files(
-            PROC_DIR, "*Unproc_TC.pickle", SingleFile=True)
+            proc_dir, "*Unproc_TC.pickle", SingleFile=True)
 
         if action_tc_file:
             tc = pd.read_pickle(action_tc_file[0])
@@ -1102,14 +1104,14 @@ def wac_res(proc_dir, Interact=False, limits=None):
         xrange = ax0.get_xlim()
 
     elif actionPlot:
-        size = TC.shape[0]
-        TC['LEVEL'] = 1
+        size = tc.shape[0]
+        tc['LEVEL'] = 1
         markerline, _, _ = ax0.stem(
-            TC['DT'], TC['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
+            tc['DT'], tc['LEVEL'], linefmt='C3-', basefmt="k-", use_line_collection=True)
         plt.setp(markerline, mec="k", mfc="w", zorder=3)
         markerline.set_ydata(np.zeros(size))
         for i in range(0, size):
-            ax0.annotate(TC.ACTION.iloc[i], xy=(TC.DT.iloc[i], TC.LEVEL.iloc[i]), xytext=(0, -2),
+            ax0.annotate(tc.ACTION.iloc[i], xy=(tc.DT.iloc[i], tc.LEVEL.iloc[i]), xytext=(0, -2),
                          textcoords="offset points", va="top", ha="right", rotation=90)
 
         add_text(ax0, 'Action List')
@@ -1118,7 +1120,6 @@ def wac_res(proc_dir, Interact=False, limits=None):
         ax0.get_yaxis().set_visible(False)
 
     # remove y axis and spines
-    add_text(ax0, 'WAC Actions')
     ax0.set_ylim([-1.1, 1.6])
     ax0.get_yaxis().set_visible(False)
 
