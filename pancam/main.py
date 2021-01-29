@@ -182,6 +182,7 @@ if __name__ == '__main__':
     elif source == "Rover":
         # Rover files
         rover.TC_extract(top_dir)
+        rover.TM_extract(top_dir)
         rover_ha.HaScan(top_dir)
         rover_ha.RestructureHK(proc_dir)
         rover_ha.compareHaCSV(proc_dir)
