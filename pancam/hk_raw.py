@@ -476,7 +476,7 @@ def DecodeHRC_CamRes(TM, HRCBin):
         TM['HRC_R3_LRS'] = PandUPF(HR3, 'u10', 44, 6)  # PAN_TM_HRC_RB3_LRS
         TM['HRC_R3_DPN'] = PandUPF(HR3, 'u16', 46, 0)  # PAN_TM_HRC_RB3_DPN
         TM['HRC_R3_TOL'] = PandUPF(HR3, 'u8', 48, 0)  # PAN_TM_HRC_RB3_TOL
-        TM['HRC_R3_MSC'] = PandUPF(HR3, 'u16', 49, 0)  # PAN_TM_HRC_RB3_MSC
+        TM['HRC_R3_MSC'] = PandUPF(HR3, 's16', 49, 0)  # PAN_TM_HRC_RB3_MSC
     del HR3
 
     # HRC RB4
