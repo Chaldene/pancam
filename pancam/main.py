@@ -148,6 +148,7 @@ if __name__ == '__main__':
             json.dump(config, f, indent=4, sort_keys=True)
 
     if source == 'SWIS':
+        instances = swis.get_instances(top_dir)
         for inst in instances:
             proc_dir = inst / "PROC"
             status.info("Analysing %s", inst.name)

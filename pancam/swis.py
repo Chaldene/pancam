@@ -787,6 +787,34 @@ def create_instances(swis_dir):
     return instances
 
 
+def get_instances(swis_dir: Path):
+    """Used for SWIS TB to get a list of all test directories to itterate through. 
+
+   Arguments:
+        swis_dir {Path} -- Source path to TB output, usual "Bin" folder.
+
+    Returns:
+        instances {List of Paths} -- Returns a list of generated instance folders.
+    """
+    # Creates a folder for each HK file found and moves all corresponding files to that folder.
+    logger.info("Looking for Instances of SWIS TB")
+
+    hk_files = pancam_fns.Find_Files(swis_dir, "*HK.txt", Recursive=False)
+
+    if hk_files:
+        logger.info("HK Files found in this directory assuming working folder")
+        return [swis_dir]
+
+    if swis_dir.stem != "PROC":
+        swis_dir = swis_dir.joinpath('PROC')
+
+        if not swis_dir.exists:
+            logger.error("No Proc folder found for SWIS instances.")
+            raise ValueError('No Proc folder found for SWIS instances')
+
+    return [inst for inst in swis_dir.iterdir() if inst.is_dir()]
+
+
 if __name__ == "__main__":
     dir = Path(
         input("Type the path to the folder where the SWIS files are stored: "))

@@ -146,6 +146,19 @@ class LDT_Properties(object):
             self.write_file.unlink()
             self.write_file = newFile
 
+        # Check if multiple files in the same packet
+        elif self.writtenLen % raw_img_sze == 0:
+            parts = self.writtenLen / raw_img_sze
+            logger.info("LDT File likely contains {parts} images")
+
+            newFile = self.write_file.with_suffix(".pci_multiple")
+            pancam_fns.exist_unlink(newFile)
+            with open(self.write_file, 'rb') as in_file:
+                with open(newFile, 'wb') as out_file:
+                    out_file.write(in_file.read())
+            self.write_file.unlink()
+            self.write_file = newFile
+
         else:
             logger.info(
                 "Image likely compressed - renaming")
@@ -544,8 +557,8 @@ def RestructureHK(ROV_DIR):
     if not RAW_NE:
         logger.info("No .ha generated HK files found")
 
-    ES = pd.DataFrame(columns=['RAW'])
-    NE = pd.DataFrame(columns=['RAW'])
+    ES = pd.DataFrame()
+    NE = pd.DataFrame()
     raw_data = []
 
     es_line_len = 72
