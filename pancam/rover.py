@@ -100,13 +100,19 @@ def TM_extract(ROV_DIR):
             dtime0 = DK['DT'].iloc[0]
             # If after Feb 2020 use new Cal
             if dtime0 < datetime(2020, 2, 1):
-                logger.info("Using old thermistor calibration")
+                logger.info("Using old thermistor calibration 511,3 and 559,3")
                 piu_loc = (511, 3, 'u13')
                 dcdc_loc = (559, 3, 'u13')
-            else:
-                logger.info("Using new thermistor calibration")
+
+            elif dtime0 < datetime(2021, 2, 1):
+                logger.info("Using thermistor calibration 508,3 and 556,3")
                 piu_loc = (508, 3, 's13')
                 dcdc_loc = (556, 3, 's13')
+
+            else:
+                logger.info("Using new thermistor calibration 510,3 and 558,3")
+                piu_loc = (510, 3, 's13')
+                dcdc_loc = (558, 3, 's13')
 
             # PIU Temp
             (OffBy, OffBi, Len) = piu_loc
