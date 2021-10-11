@@ -184,9 +184,9 @@ if __name__ == '__main__':
         # Rover files
         rover.TC_extract(top_dir)
         rover.TM_extract(top_dir)
-        rover_ha.HaScan(top_dir)
-        rover_ha.RestructureHK(proc_dir)
-        rover_ha.compareHaCSV(proc_dir)
+        rover_ha.ha_scan(top_dir)
+        rover_ha.hkraw2unproc_pickle(proc_dir)
+        rover_ha.compare_ha2csv(proc_dir)
         rover.NavCamBrowse(top_dir)
 
     elif source == "Single SWIS":
