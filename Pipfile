@@ -20,6 +20,7 @@ imageio = "*"
 pylint = "*"
 pandas = "==0.25.3"
 autopep8 = "*"
+colour-science = "*"
 
 [requires]
 python_version = "3.7"

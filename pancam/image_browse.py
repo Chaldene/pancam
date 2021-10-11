@@ -13,6 +13,7 @@ import imageio
 import json
 import logging
 import bitstruct
+import colour
 
 import pancam_fns
 from image_hdr_raw import decodeRAW_ImgHDR
@@ -71,7 +72,8 @@ def Img_RAW_Browse(PROC_DIR):
                 raw_data = np.asarray(read_data)
 
             ig = raw_data.reshape(res, res)
-            img = ig >> 2
+            #img = ig >> 2
+            img = colour.gamma_function(ig, 0.8)
 
             # Determine image rotation for preview
             if img_rawheader['Cam'] == 1:
@@ -105,7 +107,7 @@ def Img_RAW_Browse(PROC_DIR):
             # Read existing JSON file associated with RAW
             RAWJsonFile = curFile.with_suffix(".JSON")
             if not RAWJsonFile.exists():
-                ImgRawBrError("Warning RAW JSon does not exist", RAWJsonFile)
+                ImgRawBrError("Warning RAW JSON does not exist", RAWJsonFile)
             with open(RAWJsonFile, 'r') as read_file:
                 RAWJson = json.load(read_file)
 
