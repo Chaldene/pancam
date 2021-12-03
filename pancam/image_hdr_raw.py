@@ -5,6 +5,9 @@ Created on Thu Nov 14 17:03:24 2019
 @author: ucasbwh
 """
 from bitstruct import unpack_from as upf
+import pandas as pd
+
+import pancam_fns
 
 
 class decodeRAW_IMGHDR_Error(Exception):
@@ -12,7 +15,7 @@ class decodeRAW_IMGHDR_Error(Exception):
     pass
 
 
-def decodeRAW_ImgHDR(header_bytes):
+def decodeRAW_ImgHDR(header_bytes, source, model=None):
     """returns a dict of image metadata"""
 
     img_info = {}
@@ -57,7 +60,14 @@ def decodeRAW_ImgHDR(header_bytes):
         img_info['W_Bin'] = upf('u2', header_bytes, offset=195)[0]   # PAN_TM_WAC_DT_BIN
         img_info['W_ID'] = upf('u3', header_bytes, offset=197)[0]    # PAN_TM_WAC_DT_WID
         # Byte 25-30
-        img_info['W_Start_Time'] = '0x' + header_bytes[25:30].hex()  # PAN_TM_WAC_DT_ITS
+        cuc_raw = header_bytes[25:31]
+        cuc = upf('u48', cuc_raw)[0]
+        img_info['W_Start_Time'] = f"{cuc:#016_X}"                   # PAN_TM_WAC_DT_ITS
+
+        cuc_df = pd.DataFrame({'Pkt_CUC': [cuc]}).astype('Int64')
+        cuc_dt = pancam_fns.CUCtoUTC_DT(cuc_df, source, model)
+        img_info['Img_Start_Time'] = cuc_dt[0].strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+
         # Byte 31-36
         img_info['W_Time'] = f"{upf('u48', header_bytes[31:37])[0]:#016_X}"   # PAN_TM_WAC_DT_WTS
         # Byte 37-40
@@ -110,6 +120,12 @@ def decodeRAW_ImgHDR(header_bytes):
         img_info['H_Max_Int'] = upf('u16', header_bytes, offset=264)[0]    # PAN_TM_HRC_RB1_MAI
         # Byte 35-36
         img_info['H_Min_Int'] = upf('u16', header_bytes, offset=280)[0]    # PAN_TM_HRC_RB1_MII
+        # Estimate Image time from PIU_Time
+        cuc_raw = header_bytes[18:24]
+        cuc = upf('u48', cuc_raw)[0]
+        cuc_df = pd.DataFrame({'Pkt_CUC': [cuc]}).astype('Int64')
+        cuc_dt = pancam_fns.CUCtoUTC_DT(cuc_df, source, model)
+        img_info['Img_Start_Time'] = cuc_dt[0].strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
         # Byte 37-39
         if upf('u4', header_bytes, offset=296)[0] != 0:
             raise decodeRAW_IMGHDR_Error("Header Byte 37 Bit 7-4 not 0")

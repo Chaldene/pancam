@@ -27,7 +27,7 @@ class ImgRawBrError(Exception):
     pass
 
 
-def Img_RAW_Browse(PROC_DIR):
+def Img_RAW_Browse(PROC_DIR, source, model=None, ptu_exists=False):
 
     # Constants
     BIN_RES = [1024, 512, 256, 128]
@@ -44,7 +44,7 @@ def Img_RAW_Browse(PROC_DIR):
     for curFile in RAW_FILES:
         logger.info("Reading %s", curFile.name)
         with open(curFile, 'rb') as file:
-            img_rawheader = decodeRAW_ImgHDR(file.read(48))
+            img_rawheader = decodeRAW_ImgHDR(file.read(48), source, model)
             BrowseProps = {'RAW_Source': curFile.name}
             BrowseProps.update({'PNG Bit-Depth': "8"})
 
@@ -137,4 +137,4 @@ if __name__ == "__main__":
     logger.info("Running ImageRAWtoBrowse.py as main")
     logger.info("Reading directory: %s", proc_dir)
 
-    Img_RAW_Browse(proc_dir)
+    Img_RAW_Browse(proc_dir, source='Rover', model='exm_gtm_ccs', ptu_exists=True)
