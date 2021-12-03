@@ -11,6 +11,7 @@ from bitstruct import unpack_from as upf
 import pandas as pd
 import binascii
 import logging
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 status = logging.getLogger('status')
@@ -184,3 +185,43 @@ def exist_unlink(purepath, loglevel=logging.INFO):
     if purepath.exists():
         purepath.unlink()
         logger.log(loglevel, "Deleting file: %s", purepath.name)
+
+
+def CUCtoUTC_DT(RAW, source, rov_type=None):
+    """Function that takes the 4,2 CUC and converts it to a datetime object"""
+
+    # First calculate the fractional seconds
+    RAW['CUCfrac'] = RAW['Pkt_CUC'].apply(lambda x: (x & 0xFFFF)/0x10000)
+
+    if source == 'SWIS':
+        CalcTime = pd.to_datetime(RAW['Unix_Time'], unit='ms')
+        return CalcTime
+
+    elif source == 'LabView':
+        RAW['DT'] = pd.to_datetime(RAW['Time'], format='%Y-%m-%d\t%H:%M:%S.%f')
+        RAW['Year'] = RAW['DT'].dt.year
+        RAW['Month'] = RAW['DT'].dt.month
+
+        # LabView provides the CUC time as the # seconds from the first day
+        # of the month, minus an extra day.
+        epoch = datetime(RAW['Year'][0], RAW['Month'][0], day=1)
+        epoch_offset = timedelta(days=-1)
+        epoch = epoch + epoch_offset
+
+    elif source == 'Rover':
+        if rov_type == 'exm_pfm_ccs':
+            # PFM Rover uses time since Mid-day of the year 2000 plus 12 hours
+            epoch = datetime(year=2000, month=1, day=1, hour=12)
+        else:
+            epoch = datetime(year=2000, month=1, day=1)
+
+    else:
+        epoch = datetime(year=2000, month=1, day=1)
+
+    CalcTime = RAW.apply(lambda row:
+                         (epoch
+                          + timedelta(seconds=(row['Pkt_CUC'] >> 16))
+                          + timedelta(seconds=row['CUCfrac'])
+                          ), axis=1)
+
+    return CalcTime
