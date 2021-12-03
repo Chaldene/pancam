@@ -21,6 +21,7 @@ from pathlib import Path
 import logging
 
 import pancam_fns
+from image_hdr_raw import decodeRAW_ImgHDR
 
 logger = logging.getLogger(__name__)
 status = logging.getLogger('status')
@@ -130,13 +131,16 @@ class LdtProperties(object):
 
         global RMSW_VER
 
-        # Newer software has an extra 16bytes to account for image compression structure
+        # Newer software has an extra 14 bytes to account for image compression structure
         if RMSW_VER > 3:
             raw_img_sze = 2097200 + 14
         else:
             raw_img_sze = 2097200
 
-        tm_pkt_hdr = pkt_identify(self.write_file)
+        with open(self.write_file, 'rb') as tm_pkt:
+            tm_hdr_bytes = tm_pkt.read(11)
+
+        tm_pkt_hdr = pkt_identify(tm_hdr_bytes)
 
         # Check for uncompressed files first
         # 1024 x 1024 pixels
@@ -172,7 +176,7 @@ class LdtProperties(object):
 
             # Move to a compressed folder
             new_dir = self.write_file.parents[1] / "COMPRESSED_IMG"
-            new_file = self.write_file.with_suffix(".ldt_file_ccsds").name
+            new_file = self.write_file.with_suffix(".ldt_file").name
 
             pancam_fns.exist_unlink(new_dir / new_file, logging.WARNING)
 
@@ -567,19 +571,24 @@ def write_bytes2file(CurLDT, Bytes):
     return
 
 
-def hkraw2unproc_pickle(ROV_DIR):
-    """Searches for .HKNE_raw and .HKES_raw generated from HaScan, produces the a single Unrpoc_HKTM pickle file"""
+def hkraw2unproc_pickle(proc_dir):
+    """Searches for .HKNE_raw and .HKES_raw generated from HaScan, produces a single Unrpoc_HKTM pickle file"""
     logger.info("Processing any .ha HK that has been created")
 
     # Find Files
-    RAW_ES = pancam_fns.Find_Files(ROV_DIR, "*.HKES_raw")
+    RAW_ES = pancam_fns.Find_Files(proc_dir, "*.HKES_raw")
     if not RAW_ES:
         logger.info("No .ha generated HK files found")
         return
 
-    RAW_NE = pancam_fns.Find_Files(ROV_DIR, "*.HKNE_raw")
+    RAW_NE = pancam_fns.Find_Files(proc_dir, "*.HKNE_raw")
     if not RAW_NE:
         logger.info("No .ha generated HK files found")
+
+    dir_comp_hk = proc_dir / "COMPRESSED_HK"
+    if not dir_comp_hk.is_dir():
+        logger.info("Generating 'COMPRESSED_HK' directory")
+        dir_comp_hk.mkdir()
 
     ES = pd.DataFrame()
     NE = pd.DataFrame()
@@ -592,6 +601,16 @@ def hkraw2unproc_pickle(ROV_DIR):
     for curfile in RAW_ES:
         # Ignore if not all packets are complete
         if curfile.stat().st_size % es_line_len != 0:
+
+            if hk_is_compressed(curfile):
+                # A compressed file so rename and move to folder
+                new_name = curfile.with_suffix('.HKES.tm_pkt_ccsds121').name
+                new_dir = curfile.parents[0] / "COMPRESSED_HK"
+                target = new_dir / new_name
+                pancam_fns.exist_unlink(target)
+                curfile.rename(target)
+            else:
+                # Else rename to incomplete file
             target = curfile.with_suffix('.HKES_raw.incomplete')
             pancam_fns.exist_unlink(target)
             curfile.rename(target)
@@ -610,6 +629,15 @@ def hkraw2unproc_pickle(ROV_DIR):
     for curfile in RAW_NE:
         # Ignore if not all packets are complete
         if curfile.stat().st_size % ne_line_len != 0:
+
+            if hk_is_compressed(curfile):
+                # A compressed file so rename and move to folder
+                new_name = curfile.with_suffix('.HKNE.tm_pkt_ccsds121').name
+                new_dir = curfile.parents[0] / "COMPRESSED_HK"
+                target = new_dir / new_name
+                pancam_fns.exist_unlink(target)
+                curfile.rename(target)
+            else:
             target = curfile.with_suffix('.HKNE_raw.incomplete')
             pancam_fns.exist_unlink(target)
             curfile.rename(target)
@@ -632,7 +660,11 @@ def hkraw2unproc_pickle(ROV_DIR):
 
     # Then save file
     curName = (RAW_ES + RAW_NE)[0].stem
-    RTM.to_pickle(ROV_DIR / (curName + "_ha_Unproc_HKTM.pickle"))
+    RTM.to_pickle(proc_dir / (curName + "_ha_Unproc_HKTM.pickle"))
+
+    if not (any(dir_comp_hk.iterdir())):
+        dir_comp_hk.rmdir()
+        logger.info("No files found in COMPRESSED_HK dir. Removing")
 
 
 def compare_ha2csv(ProcDir):
@@ -679,34 +711,27 @@ def compare_ha2csv(ProcDir):
         Path.unlink(RAW_csv[0])
 
 
-def pkt_identify(pkt):
+def pkt_identify(tm_header_bytes):
     tm_pkt_hdr_names = ['block_type', 'tm_crit', 'mms_dest',
                         'instr_id', 'tm_type', 'seq_fl', 'cuc_s',  'cuc_ms', 'data_len']
-    # sci_hdr_names = namedtuple('sci_hdr_names', ['ancil_len', 'pad',
-    #                                              'sol', 'task_id', 'task_run', 'cam', 'filt', 'img_no'])
 
-    # Read TM packet header, split if multiples
-    if isinstance(pkt, Path):
-        with open(pkt, "rb") as tm_pkt:
-            tm_header = tm_pkt.read(11)
-            # sci_header = tm_pkt.read(7)
-            # tm_pkt.read(36)
-            # comp_header = tm_pkt.read(10)
-
-        # unpacked = bitstruct.unpack('u8u8u12u7u7u2u4u8', sci_header)
-        # tm_sci_hdr = sci_hdr_names(*unpacked)
-        # unpacked = bitstruct.unpack('u8u8u8u16u16u1u1u1', comp_header)
-        # tm_comp_hdr = comp_hdr_names(*unpacked)
-
-    else:
-        tm_header = pkt
-
-    tm_pkt_hdr = bitstruct.unpack_dict('u1u2u1u4u6u2r32r16u24', tm_pkt_hdr_names, tm_header)
-    # tm_pkt_hdr = tm_pkt_hdr_names(*unpacked)
+    tm_pkt_hdr = bitstruct.unpack_dict('u1u2u1u4u6u2r32r16u24', tm_pkt_hdr_names, tm_header_bytes)
     tm_pkt_hdr['cuc_s'] = "0x" + str(tm_pkt_hdr.get('cuc_s').hex())
     tm_pkt_hdr['cuc_ms'] = "0x" + str(tm_pkt_hdr.get('cuc_ms').hex())
 
     return tm_pkt_hdr
+
+
+def pkt_proc_hdr_decode(pkt):
+    proc_hdr_names = ['Corrected_SubframeCoordX', 'Corrected_SubframeCoordY',
+                      'Subframe Rows', 'Subframe Cols', 'superPixelSize', 'mode', 'backupFlga', 'Padding']
+
+    tm_proc_hdr = bitstruct.unpack_dict('u10u10u10u10u3u2u1u2', proc_hdr_names, pkt)
+    tm_proc_hdr.update({"raw hex": f"0x{pkt.hex()}"})
+
+    # Create Error here if padding not zero
+
+    return tm_proc_hdr
 
 
 def pkt_comp_hdr_decode(pkt):
@@ -714,6 +739,7 @@ def pkt_comp_hdr_decode(pkt):
                       'data_type', 'img_width', 'img_height', 'ratio', 'min_ratio', 'pad']
 
     tm_comp_hdr = bitstruct.unpack_dict('u8u8u8u16u16u1u1u1', comp_hdr_names, pkt)
+    tm_comp_hdr.update({"raw hex": f"0x{pkt.hex()}"})
 
     return tm_comp_hdr
 
@@ -735,26 +761,34 @@ def split_comp_files(CompDir):
 
             # Next loop through each tm packet
             while tm_hdr_bytes:
-                file_part = file.with_name(file.stem + f"_{pkt:02d}.tm_pkt_ccsds")
+                hdr_len = 0
+                file_part = file.with_name(file.stem + f"_{pkt:02d}.tm_pkt_ccsds122")
                 new_file = open(file_part, 'wb')
 
                 tm_pkt_hdr = pkt_identify(tm_hdr_bytes)
 
-                ancil_hdr_bytes = tm_pkt.read(43)
-                new_file.write(ancil_hdr_bytes)
+                ancil_hdr_bytes = tm_pkt.read(37)
+                ancil_hdr = decodeRAW_ImgHDR(tm_hdr_bytes + ancil_hdr_bytes, 'Rover')
+                hdr_len += len(ancil_hdr_bytes)
+
+                proc_hdr_bytes = tm_pkt.read(6)
+                proc_hdr = pkt_proc_hdr_decode(proc_hdr_bytes)
+                hdr_len += len(proc_hdr_bytes)
 
                 compr_hdr_bytes = tm_pkt.read(10)
                 compr_hdr = pkt_comp_hdr_decode(compr_hdr_bytes)
-                new_file.write(compr_hdr_bytes)
+                hdr_len += len(compr_hdr_bytes)
 
                 # Read the number of packets set in the header and write to new file
-                new_file.write(tm_pkt.read(tm_pkt_hdr.get('data_len')-53))
+                new_file.write(tm_pkt.read(tm_pkt_hdr.get('data_len') - hdr_len))
                 new_file.close()
 
                 # Create associated json
                 # Add pkt part as well and maybe other stuff such as comp header etc.
                 pkt_info = {"TM packet number within file": pkt}
                 pkt_info.update({"TM Packet Header": tm_pkt_hdr})
+                pkt_info.update({"Ancillary Data Header": ancil_hdr})
+                pkt_info.update({"Rover Ancillary Data Header": proc_hdr})
                 pkt_info.update({"Compression Header": compr_hdr})
 
                 pkt_json = {**ldt_json, **pkt_info}
@@ -767,6 +801,38 @@ def split_comp_files(CompDir):
                 # Continue Loop
                 pkt += 1
                 tm_hdr_bytes = tm_pkt.read(11)
+
+
+def hk_is_compressed(tm_file: Path):
+    """Checks header of tm_file to see if compressed as ccsds121 with expected header
+
+    Args:
+        tm_file (pathlib.Path): Path to tm file to check for compression header. 
+
+    Returns:
+        [bool]: True if file header matches compression header
+    """
+    with open(tm_file, 'rb') as hk_tm:
+        # Checking for compressed header
+        # Check if 0 byte is 0x1 = 'CCSDS-121'
+        val = hk_tm.read(1)
+        if val != b'\x01':
+            return False
+
+        # Skip bytes 1-4
+        hk_tm.read(4)
+
+        # Check Sample Data Type is 0x1 = 'unsigned integer'
+        # Check Sample Data Size is 16
+        # Check sample per dateset is 8
+        # Check Reference Sample Interval is 16
+        val = hk_tm.read(5)
+        if val == b'\x01\x10\x08\x00\x10':
+            # A compressed file so rename and move to folder
+            return True
+        else:
+            print(val)
+            return False
 
 
 if __name__ == "__main__":
