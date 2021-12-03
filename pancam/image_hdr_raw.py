@@ -28,7 +28,7 @@ def decodeRAW_ImgHDR(header_bytes):
     img_info['UTM_Type_ID'] = upf('u6', header_bytes, offset=8)[0]
     img_info['Seq_Flag'] = upf('u2', header_bytes, offset=14)[0]
     # Byte 2-7
-    img_info['Pkt_CUC'] = '0x' + header_bytes[2:8].hex()
+    img_info['Pkt_CUC'] = f"{upf('u48', header_bytes[2:8])[0]:#016_X}"
     # Byte 8-10
     img_info['Data_Len'] = upf('u24', header_bytes, offset=64)[0]
     # Byte 11
@@ -45,7 +45,7 @@ def decodeRAW_ImgHDR(header_bytes):
     # Byte 17
     img_info['Img_No'] = upf('u8', header_bytes, offset=136)[0]    # PAN_TM_PIU_HKN_SIID_IN
     # Byte 18-23
-    img_info['PIU_Time'] = '0x' + header_bytes[18:24].hex()        # No label in ICD
+    img_info['PIU_Time'] = f"{upf('u48', header_bytes[18:24])[0]:#016_X}"  # No label in ICD
 
     # Some checks for common header here!
 
@@ -59,9 +59,11 @@ def decodeRAW_ImgHDR(header_bytes):
         # Byte 25-30
         img_info['W_Start_Time'] = '0x' + header_bytes[25:30].hex()  # PAN_TM_WAC_DT_ITS
         # Byte 31-36
-        img_info['W_Time'] = '0x' + header_bytes[31:36].hex()        # PAN_TM_WAC_DT_WTS
+        img_info['W_Time'] = f"{upf('u48', header_bytes[31:37])[0]:#016_X}"   # PAN_TM_WAC_DT_WTS
         # Byte 37-40
         img_info['W_Int_Time'] = upf('u20', header_bytes, offset=296)[0]  # PAN_TM_WAC_DT_IT
+        img_info['Img_Exposure_sec'] = f"{(img_info['W_Int_Time']+1) * 0.001}"
+
         img_info['W_End_Temp'] = upf('u12', header_bytes, offset=316)[0]  # PAN_TM_WAC_DT_STP
         # Byte 41
         img_info['W_Inh_F'] = upf('u1', header_bytes, offset=328)[0]     # PAN_TM_WAC_DT_INH
@@ -112,6 +114,7 @@ def decodeRAW_ImgHDR(header_bytes):
         if upf('u4', header_bytes, offset=296)[0] != 0:
             raise decodeRAW_IMGHDR_Error("Header Byte 37 Bit 7-4 not 0")
         img_info['H_Int_Time'] = upf('u20', header_bytes, offset=300)[0]   # PAN_TM_HRC_RB2_IT
+        img_info['Img_Exposure_sec'] = f"{(img_info['H_Int_Time'] * 0.350) * 0.001:.3f}"
         # Byte 40-42
         img_info['H_Foc_X'] = upf('u10', header_bytes, offset=320)[0]      # PAN_TM_HRC_RB2_FXC
         img_info['H_Foc_Y'] = upf('u10', header_bytes, offset=330)[0]      # PAN_TM_HRC_RB2_FYC
