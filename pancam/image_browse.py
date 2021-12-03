@@ -90,11 +90,12 @@ def Img_RAW_Browse(PROC_DIR, source, model=None, ptu_exists=False):
                 BrowseProps.update({'Browse_Transform': 'None'})
                 ImgRawBrError("Warning invalid CAM number")
 
-            # Create directory for Browse images
-            BRW_DIR = PROC_DIR / "IMG_Browse"
+            # Create directory for Browse images of format IMG_Browse/SOL_RUN_TASK
+            BRW_DIR = PROC_DIR / "IMG_Browse" / \
+                f"S{img_rawheader['SOL']:02d}_R{img_rawheader['Task_RNO']:02d}_T{img_rawheader['Task_ID']:02d}"
             if not BRW_DIR.is_dir():
                 logger.info("Generating 'Processing' directory")
-                BRW_DIR.mkdir()
+                BRW_DIR.mkdir(parents=True)
 
             # Create 8-bit .png thumbnail
             write_filename = curFile.stem
