@@ -39,30 +39,7 @@ if __name__ == '__main__':
         logging.error("Non-Valid path provided - exiting")
         quit()
 
-    # Determine if working with archived folder
-    arch = input("Is the folder in a tar.bz2 archive? [Y/N (Default)]: ")
-    if arch == 'Y' or arch == 'y':
-        file_arch = input("Input the archive full filename: ")
-        file_path = top_dir / file_arch
-
-        if file_path.suffixes != ['.tar', '.bz2']:
-            logger.error("Not a valid archive format - exiting")
-            quit()
-
-        logger.info("Unpacking archive to: %s", top_dir)
-        shutil.unpack_archive(file_path, top_dir, 'bztar')
-
-        # New top dir
-        top_dir = top_dir / file_path.stem[:-4]
-
-        arch_logs = False
-
-    else:
-        arch_user = input(
-            "Do you want to archive the files after processing? [Y/N (Default)]: ")
-        if arch_user == 'Y' or arch_user == 'y':
-            arch_logs = True
-        else:
+    # Removed archive option as never used
             arch_logs = False
 
     # Test if processed directory folder exists, if not create it.
