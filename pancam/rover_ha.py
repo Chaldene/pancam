@@ -319,30 +319,9 @@ def ha_scan(ROV_DIR):
     ProcInfo.update({'RMSW Version': RMSW_VER})
 
     # Create directories
-    dir_proc = ROV_DIR / "PROC"
-    if not dir_proc.is_dir():
-        logger.info("Generating 'PROC' directory")
-        dir_proc.mkdir()
+    proc_dir = ROV_DIR / "PROC"
 
-    IMG_RAW_DIR = dir_proc / "IMG_RAW"
-    if not IMG_RAW_DIR.is_dir():
-        logger.info("Generating 'IMG_RAW' directory")
-        IMG_RAW_DIR.mkdir()
-
-    LDT_RAW_DIR = dir_proc / 'LDT_RAW'
-    if not LDT_RAW_DIR.is_dir():
-        logger.info("Generating 'LDT_RAW' directory")
-        LDT_RAW_DIR.mkdir()
-
-    dir_nav = dir_proc / "NAVCAM"
-    if not dir_nav.is_dir():
-        logger.info("Generating 'NAVCAM' directory")
-        dir_nav.mkdir()
-
-    dir_comp_img = dir_proc / "COMPRESSED_IMG"
-    if not dir_comp_img.is_dir():
-        logger.info("Generating 'COMPRESSED_IMG' directory")
-        dir_comp_img.mkdir()
+    created_directories = create_directories(ROV_DIR)
 
     # Search through .ha files
     PKT_HD = [None] * 4
@@ -369,8 +348,7 @@ def ha_scan(ROV_DIR):
                 PKT_LINES = math.ceil(pkt_Len(PKT_HD)/32)
                 if PKT_ID in LDT_IDs:
                     # Read ha file using repeating pattern a packet head is 4 lines
-                    ha_pkt_decode(PKT_HD, PKT_ID, PKT_LINES,
-                                  curFile, dir_proc)
+                    ha_pkt_decode(PKT_ID, PKT_LINES, curFile, proc_dir)
                 else:
                     for _ in range(PKT_LINES):
                         next(curFile)
@@ -404,28 +382,15 @@ def ha_scan(ROV_DIR):
         status.info(msg)
 
     # Clean up directories if empty
-    if not (any(IMG_RAW_DIR.iterdir())):
-        IMG_RAW_DIR.rmdir()
-        logger.info("No files found in IMG_RAW dir. Removing")
+    clean_directories(created_directories)
 
-    if not (any(LDT_RAW_DIR.iterdir())):
-        LDT_RAW_DIR.rmdir()
-        logger.info("No files found in LDT_RAW dir. Removing")
-
-    if not (any(dir_nav.iterdir())):
-        dir_nav.rmdir()
-        logger.info("No files found in NAVCAM dir. Removing")
-
-    if not (any(dir_comp_img.iterdir())):
-        dir_comp_img.rmdir()
-        logger.info("No files found in COMPRESSED_IMG dir. Removing")
-    else:
-        split_comp_files(dir_comp_img)
+    # Split any compressed images files if they contain multiple images
+    split_comp_files(proc_dir)
 
     logger.info("Processing Rover .ha Files - Completed")
 
 
-def ha_pkt_decode(PKT_HD, PKT_ID, PKT_LINES, curFile, dir_proc):
+def ha_pkt_decode(PKT_ID, PKT_LINES, curFile, dir_proc):
     """Decodes the first packet"""
 
     global Found_IDS
@@ -744,10 +709,16 @@ def pkt_comp_hdr_decode(pkt):
     return tm_comp_hdr
 
 
-def split_comp_files(CompDir):
+def split_comp_files(proc_dir):
     """Searches through the compressed images folder, and splits files depending on header contents."""
 
-    comp_files = pancam_fns.Find_Files(CompDir, "*.ldt_file_ccsds")
+    CompDir = proc_dir / "Compressed_IMG"
+
+    comp_files = pancam_fns.Find_Files(CompDir, "*.ldt_file")
+
+    if not comp_files:
+        logger.info("No Compressed Images found")
+        return
 
     for file in comp_files:
         pkt = 00
@@ -835,6 +806,36 @@ def hk_is_compressed(tm_file: Path):
             return False
 
 
+def create_directories(rov_dir: Path):
+
+    directories = [
+        "PROC",
+        "PROC/IMG_RAW",
+        "PROC/LDT_RAW",
+        "PROC/NAVCAM",
+        "PROC/COMPRESSED_IMG"
+    ]
+
+    created_directories = []
+
+    for item in directories:
+        directory_path = rov_dir / item
+        if not directory_path.is_dir():
+            logger.info(f"Generating '{item}' directory")
+            directory_path.mkdir()
+        created_directories.append(directory_path)
+
+    return created_directories
+
+
+def clean_directories(directories):
+
+    for item in directories:
+        if not (any(item.iterdir())):
+            item.rmdir()
+            logger.info(f"No files found in {item.name} dir. Removing")
+
+
 if __name__ == "__main__":
 
     dir = Path(
@@ -857,4 +858,4 @@ if __name__ == "__main__":
     ha_scan(dir)
     hkraw2unproc_pickle(proc_dir)
     compare_ha2csv(proc_dir)
-    split_comp_files(proc_dir / "COMPRESSED_IMG")
+    split_comp_files(proc_dir)
