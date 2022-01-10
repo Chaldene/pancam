@@ -11,7 +11,7 @@ from pathlib import Path
 from bitstruct import unpack_from as upf
 import logging
 import imageio
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pancam_fns
 
@@ -24,6 +24,9 @@ name_hk_ne = "AB.TM.TM_RMI000401"
 
 name_rov_ls = "AB.TM.MRSP8001"
 name_rov_hs = "AB.TM.MRSP8002"
+
+NAME_PAN_TM = "AB.TM.TRPR0479"
+NAME_TILT_TM = "AB.TM.TRPL0480"
 
 
 def TM_extract(ROV_DIR):
@@ -181,16 +184,33 @@ def TC_extract(ROV_DIR):
         dt = pd.read_csv(file, sep=';', encoding="ISO-8859-1",
                          header=0, dtype=object, index_col=False)
 
-        dp = dt[dt['DESCRIPTION'].str.contains(
+        dp_rov_cmd = dt[dt['DESCRIPTION'].str.contains(
             "Pan Cam", na=False) & dt['NAME'].str.contains("CRM", na=False)].copy()
-        dm = dp['VARIABLE_PART'].str.split(',', -1, expand=True)
 
-        if not dp.empty:
-            TC = pd.concat(
-                [dp[['NAME', 'DESCRIPTION', 'GROUND_REFERENCE_TIME']], dm.loc[:, 9:]], axis=1)
+        dp_action_start = dt[dt['DESCRIPTION'].str.contains(
+            "Pan Cam", na=False) & dt['NAME'].str.contains("RMI000331", na=False)].copy()
+
+        if not dp_rov_cmd.empty:
+            TC_rov = dp_rov_cmd[['NAME', 'DESCRIPTION', 'GROUND_REFERENCE_TIME']].copy()
+            TC_rov['ACTION'] = dp_rov_cmd['DESCRIPTION'].map(lambda x: x.lstrip('Pan Cam'))
+        else:
+            TC_rov = pd.DataFrame()
+
+        # TC_action = pd.DataFrame()
+        if not dp_action_start.empty:
+            dm_action_start = dp_action_start['VARIABLE_PART'].str.split(',', -1, expand=True).copy()
+            dm_action_start['ACTION_CODE'] = dm_action_start[17]
+            dm_action_start['ACTION'] = dm_action_start['ACTION_CODE'].map(lambda x: x[x.find('=')+1: x.find('|')])
+            TC_action = pd.concat(
+                [dp_action_start[['NAME', 'DESCRIPTION', 'GROUND_REFERENCE_TIME']], dm_action_start['ACTION']], axis=1)
+        else:
+            TC_action = pd.DataFrame()
+
+        TC = pd.concat([TC_rov, TC_action])
+
+        if not TC.empty:
             TC['DT'] = pd.to_datetime(
-                TC['GROUND_REFERENCE_TIME'], format='%d/%m/%Y %H:%M:%S.%f')
-            TC['ACTION'] = TC['DESCRIPTION'].map(lambda x: x.lstrip('Pan Cam'))
+                TC['GROUND_REFERENCE_TIME'], format='%d/%m/%Y %H:%M:%S.%f')  # + pd.DateOffset(hours=2)
             TC['LEVEL'] = 1
 
     logger.info("Number of PanCam TCs found: %d", TC.shape[0])
@@ -278,6 +298,67 @@ def sw_ver(ROV_DIR):
     return rmsw_ver
 
 
+def ptu_extract(ROV_DIR):
+    """Searches for a STDParamAnalysis.csv and if found extracts all PTU TMs into a pickle file
+
+    Args:
+        ROV_DIR ([pathlib]): Rover directory containing STDParamAnalysis.csv in a subfolder
+
+    Returns:
+        bool: True if file found and processed, otherwise False
+
+    Generates:
+        PTU_DATA.pickle: A pickle file containing PTU information with duplicate entries removed.
+    """
+
+    logger.info("Processing PTU Files")
+
+    std_files = pancam_fns.Find_Files(ROV_DIR, "STDParamAnalysis*.csv")
+    if not std_files:
+        logger.warning("No STDParamAnalysis*.csv files found - Skipping PTU parsing")
+        return False
+
+    raw_pan = pd.DataFrame()
+    raw_tilt = pd.DataFrame()
+
+    # Read top of first file to get column names
+    # Necessary as a mix of ';' and ',' are used as seperators
+
+    for file in std_files:
+        logger.info("Reading %s", file.name)
+
+        # Import from CSV, drop duplicates (as coming from multiple packets)
+        raw_ptufile = pd.read_csv(file, sep=';|,', header=0, index_col=False, engine='python')
+        raw_ptufile.drop_duplicates(subset=["NAME", "ON_BOARD_TIME", "RAW_DATA"], inplace=True)
+        #raw_ptufile[~raw_ptufile.duplicated(subset=["NAME", "ON_BOARD_TIME", "RAW_DATA"])]
+        raw_ptufile['DT'] = pd.to_datetime(raw_ptufile['ON_BOARD_TIME'], format='%d/%m/%Y %H:%M:%S.%f')
+
+        # Remove RAW zero values
+        raw_ptufile = raw_ptufile[raw_ptufile.RAW_DATA > 0]
+
+        raw_pan = raw_pan.append(raw_ptufile[raw_ptufile.NAME == NAME_PAN_TM])
+        raw_tilt = raw_tilt.append(raw_ptufile[raw_ptufile.NAME == NAME_TILT_TM])
+
+    pan_entries = raw_pan.shape[0]
+    tilt_entries = raw_tilt.shape[0]
+
+    if (pan_entries > 0):
+        logger.info(f"Number of unique PTU Pan positions found: {pan_entries}")
+        raw_pan.to_pickle(ROV_DIR / "PROC" / "ptu_pan.pickle")
+        logger.info("Rover PTU Pan pickled.")
+    else:
+        logger.error(f"Rover ptu_extract found no Pan entries despite ParamAnalysis file.")
+
+    if (tilt_entries > 0):
+        logger.info(f"Number of unique PTU Tilt positions found: {tilt_entries}")
+        raw_tilt.to_pickle(ROV_DIR / "PROC" / "ptu_tilt.pickle")
+        logger.info("Rover PTU tilt pickled.")
+    else:
+        logger.error(f"Rover ptu_extract found no Tilt entries despite ParamAnalysis file.")
+
+    return True
+
+
 if __name__ == "__main__":
     dir = Path(
         input("Type the path to thefolder where the Rover files are stored: "))
@@ -301,3 +382,4 @@ if __name__ == "__main__":
     TM_extract(dir)
     TC_extract(dir)
     NavCamBrowse(dir)
+    ptu_extract(dir)

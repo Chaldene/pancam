@@ -57,6 +57,7 @@ if __name__ == '__main__':
     config_file = top_dir / "config.json"
     source = None
     model = None
+    ptu_exists = False
     if config_file.exists():
         # Read source type
         with open(config_file, 'r') as f:
@@ -166,6 +167,7 @@ if __name__ == '__main__':
         rover_ha.hkraw2unproc_pickle(proc_dir)
         rover_ha.compare_ha2csv(proc_dir)
         rover.NavCamBrowse(top_dir)
+        ptu_exists = rover.ptu_extract(top_dir)
 
     elif source == "Single SWIS":
         swis.nsvf_lb_extract(top_dir)

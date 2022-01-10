@@ -71,6 +71,8 @@ def plot_cycles(proc_dir):
         off_dt = rv_status['DT'][rv_status.PWR_ST.diff() == -1].tolist()
         output = True
 
+        # TODO: Want to go through and ensure that on/off is greater than 5 min.
+
     elif psu_files:
         psu_status = pd.read_pickle(psu_files[0])
 
@@ -126,6 +128,7 @@ def all_plots(proc_dir):
     Rover_Power(proc_dir)
 
     psu(proc_dir)
+    ptu(proc_dir, limits=cyc_lims)
 
     HRC_CS(proc_dir, limits=cyc_lims)
     wac_res(proc_dir, limits=cyc_lims)
@@ -562,7 +565,7 @@ def Rover_Power(PROC_DIR, Interact=False):
         fig2.savefig(HK_DIR / 'ROV_PWR_EXT.png')
 
     if Interact:
-        plt.show()
+        plt.show(block=False)
 
     plt.close(fig)
 
@@ -1068,6 +1071,10 @@ def wac_res(proc_dir, Interact=False, limits=None):
     # WAC Data
     wac_raw = raw[raw['WAC_CID'].notna()]
 
+    if len(wac_raw) < 5:
+        logger.info("Less than 5 entries for WAC HK skipping WAC plot")
+        return
+
     # Action List
     if TCPlot:
         wac_hk = wac_tc[wac_tc['Cam_Cmd'] == 'HK']
@@ -1397,6 +1404,63 @@ def psu(proc_dir, Interact=False, limits=None):
         plt.show(block=True)
 
 
+def ptu(proc_dir, Interact=False, limits=None):
+    """Produce a plot of the PTU positions over time.
+
+    Args:
+        proc_dir ([type]): [description]
+        Interact (bool, optional): [description]. Defaults to False.
+        limits ([type], optional): [description]. Defaults to None.
+    """
+
+    logger.info("Producing PTU Plot")
+
+    hk_dir = MakeHKPlotsDir(proc_dir)
+
+    pan_pik_file = pancam_fns.Find_Files(proc_dir, "ptu_pan.pickle", SingleFile=True)
+    tilt_pik_file = pancam_fns.Find_Files(proc_dir, "ptu_tilt.pickle", SingleFile=True)
+
+    if (not pan_pik_file) | (not tilt_pik_file):
+        logger.warning("No PTU pickle files found - ABORTING")
+        return
+
+    pan_data = pd.read_pickle(pan_pik_file[0])
+    tilt_data = pd.read_pickle(tilt_pik_file[0])
+
+    fig = plt.figure(figsize=(14.0, 9.0))
+    gs = gridspec.GridSpec(2, 1, height_ratios=[1, 1], figure=fig)
+    ax0 = fig.add_subplot(gs[0])
+    ax1 = fig.add_subplot(gs[1], sharex=ax0)
+
+    ax0.plot(pan_data['DT'], pan_data['REAL_PHYSICAL_VALUE'], 'k-')
+    ax0.set_ylabel('Pan [deg]')
+
+    ax1.plot(tilt_data['DT'], tilt_data['REAL_PHYSICAL_VALUE'], 'k-')
+    ax1.set_ylabel('Tilt [deg]')
+    ax1.set_xlabel('Date Time')
+
+    format_axes(fig)
+    ax1.tick_params(labelbottom=True)
+    adjust_xscale(ax0)
+
+    fig.tight_layout()
+    fig_path = hk_dir / 'PTU_TimeSeries.png'
+    fig.savefig(fig_path)
+
+    if limits:
+        pan = pan_data.set_index('DT')['REAL_PHYSICAL_VALUE'].rename('PAN')
+        tilt = tilt_data.set_index('DT')['REAL_PHYSICAL_VALUE'].rename('TILT')
+
+        ptu = pd.merge_asof(tilt, pan, on='DT')
+
+        fig2 = plt.figure(figsize=(14.0, 9.0))
+        fig2 = plt.plot(ptu.PAN, ptu.TILT, 'C0-')
+        fig2.set_xlabel('Pan [deg]')
+        fig2.set_ylabel('Tilt [deg]')
+        fig2_path = hk_dir / 'PSU.png'
+        plot_subsets(fig2, fig2_path, limits)
+
+
 if __name__ == "__main__":
     proc_dir = Path(
         input("Type the path to the PROC folder where the processed files are stored: "))
@@ -1411,7 +1475,7 @@ if __name__ == "__main__":
     # cyc_lims = plot_cycles(proc_dir)
     # HK_Temperatures(proc_dir, True)
     # Rover_Temperatures(proc_dir, True)
-    # Rover_Power(proc_dir)
+    # Rover_Power(proc_dir, True)
     # HK_Overview(proc_dir, True)
     # HK_Voltages(proc_dir, True)
 
@@ -1420,4 +1484,6 @@ if __name__ == "__main__":
     # FW(proc_dir, Interact=True)
     # psu(proc_dir, Interact=True)
     # HK_Deltas(proc_dir, Interact=True)
-    all_plots(proc_dir)
+    # wac_res(proc_dir, limits=None)
+    # all_plots(proc_dir)
+    ptu(proc_dir)

@@ -14,6 +14,7 @@ import json
 import logging
 import bitstruct
 import colour
+import pandas as pd
 
 import pancam_fns
 from image_hdr_raw import decodeRAW_ImgHDR
@@ -39,6 +40,20 @@ def Img_RAW_Browse(PROC_DIR, source, model=None, ptu_exists=False):
     if not RAW_FILES:
         logger.warning("No files found - ABORTING")
         return
+
+    # Load ptu data
+    if ptu_exists:
+
+        pan_pik_file = pancam_fns.Find_Files(proc_dir, "ptu_pan.pickle", SingleFile=True)
+        tilt_pik_file = pancam_fns.Find_Files(proc_dir, "ptu_tilt.pickle", SingleFile=True)
+
+        if (not pan_pik_file) | (not tilt_pik_file):
+            logger.warning("No PTU pickle files found but data was expected- ABORTING")
+
+        pan_data = pd.read_pickle(pan_pik_file[0])
+        tilt_data = pd.read_pickle(tilt_pik_file[0])
+        pan = pan_data.set_index('DT')['REAL_PHYSICAL_VALUE'].rename('PAN')
+        tilt = tilt_data.set_index('DT')['REAL_PHYSICAL_VALUE'].rename('TILT')
 
     # Create for loop here
     for curFile in RAW_FILES:
@@ -72,7 +87,7 @@ def Img_RAW_Browse(PROC_DIR, source, model=None, ptu_exists=False):
                 raw_data = np.asarray(read_data)
 
             ig = raw_data.reshape(res, res)
-            #img = ig >> 2
+            # img = ig >> 2
             img = colour.gamma_function(ig, 0.8)
 
             # Determine image rotation for preview
@@ -117,6 +132,67 @@ def Img_RAW_Browse(PROC_DIR, source, model=None, ptu_exists=False):
             RAWJson['Processing Info'].update(
                 {"Browse Properties": BrowseProps})
 
+            # If ptu data determine positions whilst imaging and add to JSON file
+            if ptu_exists:
+                exp_start = pd.to_datetime(img_rawheader.get('Img_Start_Time'))
+                exp_dur = pd.Timedelta(seconds=float(img_rawheader.get('Img_Exposure_sec')))
+                exp_end = exp_start + exp_dur
+
+                pan_valid = pan[(pan.index >= exp_start) & (pan.index <= exp_end)]
+                if not pan_valid.empty:
+                    pan_info = {
+                        "samples": f"{pan_valid.count()}",
+                        "mean": f"{pan_valid.mean():.4f}",
+                        "std": f"{pan_valid.std():.4f}",
+                        "min": f"{pan_valid.min():.4f}",
+                        "max": f"{pan_valid.max():.4f}",
+                        "samples_start_time": f"{pan_valid.index[0]}"[:-3],
+                        "samples_end_time": f"{pan_valid.index[-1]}"[:-3]
+                    }
+
+                else:
+                    pan_last = pan[pan.index <= exp_start].tail(1)
+                    if not pan_last.empty:
+                        pan_info = {
+                            "samples": "0",
+                            "last_known_value": f"{pan_last[0]:.4f}",
+                            "sample_time": f"{pan_last.index[0]}"[:-3]
+                        }
+                    else:
+                        pan_info = {
+                            "samples": "0",
+                            "last_known_value": "undetermined"
+                        }
+
+                tilt_valid = tilt[(tilt.index >= exp_start) & (tilt.index <= exp_end)]
+                if not tilt_valid.empty:
+                    tilt_info = {
+                        "samples": f"{tilt_valid.count()}",
+                        "mean": f"{tilt_valid.mean():.4f}",
+                        "std": f"{tilt_valid.std():.4f}",
+                        "min": f"{tilt_valid.min():.4f}",
+                        "max": f"{tilt_valid.max():.4f}",
+                        "samples_start_time": f"{tilt_valid.index[0]}"[:-3],
+                        "samples_end_time": f"{tilt_valid.index[-1]}"[:-3]
+                    }
+
+                else:
+                    tilt_last = tilt[tilt.index <= exp_start].tail(1)
+                    if not tilt_last.empty:
+                        tilt_info = {
+                            "samples": "0",
+                            "last_known_value": f"{tilt_last[0]:.4f}",
+                            "sample_time": f"{pan_last.index[0]}"[:-3]
+                        }
+                    else:
+                        tilt_info = {
+                            "samples": "0",
+                            "last_known_value": "undetermined"
+                        }
+
+                RAWJson.update({"PTU Pan": pan_info})
+                RAWJson.update({"PTU Tilt": tilt_info})
+
             write_file = BRW_DIR / (write_filename + ".json")
 
             pancam_fns.exist_unlink(write_file)
@@ -138,4 +214,4 @@ if __name__ == "__main__":
     logger.info("Running ImageRAWtoBrowse.py as main")
     logger.info("Reading directory: %s", proc_dir)
 
-    Img_RAW_Browse(proc_dir, source='Rover', model='exm_gtm_ccs', ptu_exists=True)
+    Img_RAW_Browse(proc_dir, source='Rover', model='exm_gtm_ccs', ptu_exists=False)
