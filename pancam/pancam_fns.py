@@ -194,8 +194,11 @@ def CUCtoUTC_DT(RAW, source, rov_type=None):
     RAW['CUCfrac'] = RAW['Pkt_CUC'].apply(lambda x: (x & 0xFFFF)/0x10000)
 
     if source == 'SWIS':
-        CalcTime = pd.to_datetime(RAW['Unix_Time'], unit='ms')
-        return CalcTime
+        if 'Unix_Time' in RAW:
+            CalcTime = pd.to_datetime(RAW['Unix_Time'], unit='ms')
+            return CalcTime
+        else:
+            epoch = datetime(year=1970, month=1, day=1)
 
     elif source == 'LabView':
         RAW['DT'] = pd.to_datetime(RAW['Time'], format='%Y-%m-%d\t%H:%M:%S.%f')

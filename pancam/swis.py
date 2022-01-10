@@ -782,7 +782,6 @@ def create_instances(swis_dir):
             orig = swis_dir / ref
             if orig.exists():
                 copyfile(orig, inst_dir / ref)
-                orig.unlink()
 
     return instances
 

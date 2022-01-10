@@ -40,7 +40,7 @@ if __name__ == '__main__':
         quit()
 
     # Removed archive option as never used
-            arch_logs = False
+    arch_logs = False
 
     # Test if processed directory folder exists, if not create it.
     proc_dir = top_dir / 'PROC'
@@ -125,7 +125,8 @@ if __name__ == '__main__':
             json.dump(config, f, indent=4, sort_keys=True)
 
     if source == 'SWIS':
-        instances = swis.get_instances(top_dir)
+        if not instances:
+            instances = swis.get_instances(top_dir)
         for inst in instances:
             proc_dir = inst / "PROC"
             status.info("Analysing %s", inst.name)
@@ -139,7 +140,7 @@ if __name__ == '__main__':
             plotter.all_plots(proc_dir)
             swis.sci_extract(inst)
             swis.sci_compare(inst)
-            image_browse.Img_RAW_Browse(proc_dir)
+            image_browse.Img_RAW_Browse(proc_dir, 'SWIS')
 
     elif source == 'LabView':
         # LabView Files

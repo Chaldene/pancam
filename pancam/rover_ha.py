@@ -576,9 +576,9 @@ def hkraw2unproc_pickle(proc_dir):
                 curfile.rename(target)
             else:
                 # Else rename to incomplete file
-            target = curfile.with_suffix('.HKES_raw.incomplete')
-            pancam_fns.exist_unlink(target)
-            curfile.rename(target)
+                target = curfile.with_suffix('.HKES_raw.incomplete')
+                pancam_fns.exist_unlink(target)
+                curfile.rename(target)
             continue
 
         with open(curfile, 'rb') as f:
@@ -603,9 +603,9 @@ def hkraw2unproc_pickle(proc_dir):
                 pancam_fns.exist_unlink(target)
                 curfile.rename(target)
             else:
-            target = curfile.with_suffix('.HKNE_raw.incomplete')
-            pancam_fns.exist_unlink(target)
-            curfile.rename(target)
+                target = curfile.with_suffix('.HKNE_raw.incomplete')
+                pancam_fns.exist_unlink(target)
+                curfile.rename(target)
             continue
 
         with open(curfile, 'rb') as f:
