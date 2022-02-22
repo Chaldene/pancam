@@ -87,29 +87,34 @@ def Img_RAW_Browse(PROC_DIR, source, model=None, ptu_exists=False):
                 raw_data = np.asarray(read_data)
 
             ig = raw_data.reshape(res, res)
-            # img = ig >> 2
-            img = colour.gamma_function(ig, 0.8)
 
             # Determine image rotation for preview
             if img_rawheader['Cam'] == 1:
-                Br_img = np.rot90(img, k=3)
+                img = np.rot90(ig, k=3)
                 BrowseProps.update({'Browse_Rotation': '-90'})
             elif img_rawheader['Cam'] == 2:
-                Br_img = np.rot90(img, k=1)
+                img = np.rot90(ig, k=1)
                 BrowseProps.update({'Browse_Rotation': '+90'})
             elif img_rawheader['Cam'] == 3:
-                Br_img = np.fliplr(img)
+                img = np.fliplr(ig)
                 BrowseProps.update({'Browse_Transpose': "Left_Right"})
             else:
-                Br_img = img
+                img = ig
                 BrowseProps.update({'Browse_Transform': 'None'})
                 ImgRawBrError("Warning invalid CAM number")
+
+            # Standard img for browse as normal
+            img8 = img >> 2
+            Br_img = colour.gamma_function(img8, 0.8)
+
+            # Img for further processing
+            img_anl = (img << 6).astype(np.uint16)
 
             # Create directory for Browse images of format IMG_Browse/SOL_RUN_TASK
             BRW_DIR = PROC_DIR / "IMG_Browse" / \
                 f"S{img_rawheader['SOL']:02d}_R{img_rawheader['Task_RNO']:02d}_T{img_rawheader['Task_ID']:02d}"
             if not BRW_DIR.is_dir():
-                logger.info("Generating 'Processing' directory")
+                logger.info("Generating 'Browse' directory")
                 BRW_DIR.mkdir(parents=True)
 
             # Create 8-bit .png thumbnail
@@ -194,9 +199,25 @@ def Img_RAW_Browse(PROC_DIR, source, model=None, ptu_exists=False):
                 RAWJson.update({"PTU Tilt": tilt_info})
 
             write_file = BRW_DIR / (write_filename + ".json")
-
             pancam_fns.exist_unlink(write_file)
+            with open(write_file, 'w') as f:
+                json.dump(RAWJson, f,  indent=4)
 
+            # Create directory for Image analysis format
+            ANL_DIR = PROC_DIR / "IMG_Analysis"
+            if not ANL_DIR.is_dir():
+                logger.info("Generating 'Analysis' directory")
+                ANL_DIR.mkdir(parents=True)
+
+            # Create 16-bit .png version
+            write_filename = f"{img_rawheader['Pkt_CUC']}_{('_').join(curFile.stem.split('_')[1:])}_{img_rawheader['Cam']}"
+            write_file = ANL_DIR / (write_filename + ".png")
+            pancam_fns.exist_unlink(write_file)
+            imageio.imwrite(write_file, img_anl)
+            logger.info("Creating .png: %s", write_file.stem)
+
+            write_file = ANL_DIR / (write_filename + ".json")
+            pancam_fns.exist_unlink(write_file)
             with open(write_file, 'w') as f:
                 json.dump(RAWJson, f,  indent=4)
 
